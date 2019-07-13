@@ -1,0 +1,17 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" viewBox="0 0 400 50">
+	<rect width="400" height="50" fill="#000000" />
+	<rect x="12" y="12" width="0" height="26" fill="#FFFFFF">
+		<animate id="f1" attributeName="width" attributeType="XML" from="0" to="38" begin="0s;f10.end+0.5s" dur="0.01s"  fill="freeze"/>
+		<animate id="f2" attributeName="width" attributeType="XML" from="38" to="75" begin="f1.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f3" attributeName="width" attributeType="XML" from="75" to="122" begin="f2.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f4" attributeName="width" attributeType="XML" from="112" to="150" begin="f3.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f5" attributeName="width" attributeType="XML" from="150" to="188" begin="f4.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f6" attributeName="width" attributeType="XML" from="188" to="225" begin="f5.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f7" attributeName="width" attributeType="XML" from="225" to="263" begin="f6.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f8" attributeName="width" attributeType="XML" from="263" to="300" begin="f7.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f9" attributeName="width" attributeType="XML" from="300" to="338" begin="f8.end+0.5s" dur="0.01s" fill="freeze"/>
+		<animate id="f10" attributeName="width" attributeType="XML" from="338" to="376" begin="f9.end+0.5s" dur="0.01s" fill="freeze"/>
+	</rect>
+	<rect x="6" y="6" width="388" height="38" style="stroke:#FFFFFF;stroke-width:4;fill-opacity:0" />
+</svg>
