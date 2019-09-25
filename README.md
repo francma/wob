@@ -79,4 +79,4 @@ bindsym XF86MonBrightnessDown exec light -U 5 && light -G | cut -d'.' -f1 > /tmp
 
 ## License
 
-GPL3, see [LICENSE](/LICENSE).
+ISC, see [LICENSE](/LICENSE).
