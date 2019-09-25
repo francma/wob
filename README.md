@@ -46,14 +46,8 @@ Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled
 
 ### Sway WM example
 
-Exec on start & reload on Sway reload:
-
 ```
-exec_always {
-    killall -q wob || true
-    mkfifo /tmp/wobpipe
-    tail -f /tmp/wobpipe | wob
-}
+exec mkfifo /tmp/wobpipe && tail -f /tmp/wobpipe | wob
 ```
 
 Volume using alsa:
