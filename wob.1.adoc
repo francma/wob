@@ -1,0 +1,47 @@
+= wob(1)
+Martin Franc <me@martinfranc.eu>
+:Date:          September 25 2019
+:Revision:      0.1
+:man source:    wob
+:man version:   {revision}
+:man manual:    User Commands
+
+== NAME
+wob - A lightweight overlay volume/backlight/progress/anything bar for Wayland
+
+== SYNOPSIS
+wob
+
+== GENERAL CASE
+You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. /tmp/wobpipe, on your filesystem with the command: ::
+$ mkfifo /tmp/wobpipe
+
+Connect the named pipe to the standard input of an wob instance: ::
+$ tail -f /tmp/wobpipe | wob
+
+Set up your environment so that after updating audio volume, backlight intensity, or whatever, to a new value like 43, it writes that value into the pipe: ::
+$ echo 43 > /tmp/wobpipe
+
+== USING WOB WITH SWAY
+Add this line to your sway configuration file to start wob with sway::
+exec mkfifo /tmp/wobpipe && tail -f /tmp/wobpipe | wob
+
+Volume adjustment and display with alsa: ::
+bindsym XF86AudioRaiseVolume exec amixer -q set Master 2%+ unmute && amixer sget Master | grep \'Right:' | awk -F\'[][]' \'{ print substr($2, 0, length($2)-1) }' > /tmp/wobpipe +
+bindsym XF86AudioLowerVolume exec amixer -q set Master 2%- unmute && amixer sget Master | grep \'Right:' | awk -F\'[][]' \'{ print substr($2, 0, length($2)-1) }' > /tmp/wobpipe
+
+Volume adjustment and display with Pulseaudio: ::
+bindsym XF86AudioRaiseVolume exec pamixer -ui 2 && pamixer --get-volume > /tmp/wobpipe +
+bindsym XF86AudioLowerVolume exec pamixer -ud 2 && pamixer --get-volume > /tmp/wobpipe
+
+Brightness adjustment and display with light: ::
+bindsym XF86MonBrightnessUp exec light -A 5 && light -G | cut -d'.' -f1 > /tmp/wobpipe +
+bindsym XF86MonBrightnessDown exec light -U 5 && light -G | cut -d'.' -f1 > /tmp/wobpipe
+
+You may find light at: https://github.com/haikarainen/light
+
+== BUGS
+Please report any bugs at: https://github.com/francma/wob
+
+== LICENSES
+wob is licensed under the ISC license.
