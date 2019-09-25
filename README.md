@@ -14,6 +14,10 @@ ninja -C build-release
 sudo ninja -C build-release install
 ```
 
+There are packages for the following Linux distributions:
+
+- [Arch Linux package on the AUR](https://aur.archlinux.org/packages/wob/)
+
 ## Usage
 
 Launch wob in a terminal, enter a value (positive integer), press return.
