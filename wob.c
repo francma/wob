@@ -307,7 +307,7 @@ main(int argc, char **argv)
 
 	
 	bool hidden = true;
-	for(;;) {
+	for (;;) {
 		uint8_t percentage = 0;
 		struct timeval timeout = {
 			.tv_sec = TIMEOUT_SECONDS,
