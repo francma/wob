@@ -23,7 +23,7 @@ Set up your environment so that after updating audio volume, backlight intensity
 $ echo 43 > /tmp/wobpipe
 
 == USING WOB WITH SWAY
-Add this line to your sway configuration file to start wob with sway::
+Add this line to your sway configuration file to start wob with sway: ::
 exec mkfifo /tmp/wobpipe && tail -f /tmp/wobpipe | wob
 
 Volume adjustment and display with alsa: ::
