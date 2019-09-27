@@ -313,6 +313,7 @@ main(int argc, char **argv)
 			.tv_sec = TIMEOUT_SECONDS,
 			.tv_usec = 0,
 		};
+		int scanf_rv;
 
 		fd_set fds;
 		FD_ZERO(&fds);
@@ -330,7 +331,12 @@ main(int argc, char **argv)
 				hidden = true;
 				break;
 			case 1:
-				if (scanf("%hhu", &percentage) != 1 || percentage > 100 || percentage < 0) {
+				scanf_rv = scanf("%hhu", &percentage);
+				if (scanf_rv == EOF) {
+					wob_destroy(&app);
+					return EXIT_SUCCESS;
+				}
+				if (scanf_rv != 1 || percentage > 100 || percentage < 0) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -377,8 +383,4 @@ main(int argc, char **argv)
 				break;
 		}
 	}
-
-	wob_destroy(&app);
-
-	return EXIT_SUCCESS;
 }
