@@ -244,6 +244,37 @@ wob_destroy(struct wob *app)
 	wl_display_disconnect(app->wl_display);
 }
 
+static bool 
+wob_parse_input(char * input_buffer, uint8_t * percentage) 
+{
+	char * strtoul_end, * newline_position;
+	unsigned long parsed_percentage;
+
+	newline_position = strchr(input_buffer, '\n');
+	if (newline_position == NULL) {
+		return false;
+	}
+
+	if (newline_position == input_buffer) {
+		return false;
+	}
+
+
+	parsed_percentage = strtoul(input_buffer, &strtoul_end, 10);
+	if (strtoul_end != newline_position) {
+		return false;
+	}
+
+
+	if (parsed_percentage > 100) {
+		return false;
+	}
+
+	*percentage = parsed_percentage;
+
+	return true;
+}
+
 int 
 main(int argc, char **argv) 
 {
@@ -313,7 +344,8 @@ main(int argc, char **argv)
 			.tv_sec = TIMEOUT_SECONDS,
 			.tv_usec = 0,
 		};
-		int scanf_rv;
+		char input_buffer[6] = { 0 };
+		char * fgets_rv;
 
 		fd_set fds;
 		FD_ZERO(&fds);
@@ -331,12 +363,13 @@ main(int argc, char **argv)
 				hidden = true;
 				break;
 			case 1:
-				scanf_rv = scanf("%hhu", &percentage);
-				if (scanf_rv == EOF) {
+				fgets_rv = fgets(input_buffer, 6, stdin);
+				if (feof(stdin)) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
-				if (scanf_rv != 1 || percentage > 100 || percentage < 0) {
+
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage)) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
