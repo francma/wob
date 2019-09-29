@@ -256,7 +256,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	uint32_t * argb = wob_create_argb_buffer(&app), i;
+	uint32_t * argb = wob_create_argb_buffer(&app), i, k;
 	assert(argb);
 	assert(app.shmid);
 
@@ -265,44 +265,32 @@ main(int argc, char **argv)
 		argb[i] = BLACK;
 	}
 
-	// create top line
+	// create top and bottom line
 	i = WIDTH * BORDER_OFFSET;
+	k = WIDTH * (HEIGHT - BORDER_OFFSET - BORDER_SIZE);
 	for (int line = 0; line < BORDER_SIZE; ++line) {
 		i += BORDER_OFFSET;
-		for (int pixel = 0; pixel < WIDTH - 2 * BORDER_OFFSET; ++pixel) {
-			argb[i++] = WHITE;
-		}
-		i += BORDER_OFFSET;
-	}
-
-	// create bottom line
-	i = WIDTH * (HEIGHT - BORDER_OFFSET - BORDER_SIZE);
-	for (int line = 0; line < BORDER_SIZE; ++line) {
-		i += BORDER_OFFSET;
+		k += BORDER_OFFSET;
 		for (int pixel = 0; pixel < WIDTH - 2*BORDER_OFFSET; ++pixel) {
 			argb[i++] = WHITE;
+			argb[k++] = WHITE;
 		}
 		i += BORDER_OFFSET;
+		k += BORDER_OFFSET;
 	}
 
-	// create left horizontal line
+	// create left and right horizontal line
 	i = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
+	k = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
 	for (int line = 0; line < HEIGHT - 2 * (BORDER_SIZE + BORDER_OFFSET); ++line) {
 		i += BORDER_OFFSET;
+		k += WIDTH - BORDER_OFFSET - BORDER_SIZE;
 		for (int pixel = 0; pixel < BORDER_SIZE; ++pixel) {
 			argb[i++] = WHITE;
+			argb[k++] = WHITE;
 		}
 		i += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-	}
-
-	// create right horizontal line
-	i = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
-	for (int line = 0; line < HEIGHT - 2 * (BORDER_SIZE + BORDER_OFFSET); ++line) {
-		i += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-		for (int pixel = 0; pixel < BORDER_SIZE; ++pixel) {
-			argb[i++] = WHITE;
-		}
-		i += BORDER_OFFSET;
+		k += BORDER_OFFSET;
 	}
 
 	
