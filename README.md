@@ -9,7 +9,7 @@ A lightweight overlay volume/backlight/progress/anything bar for Wayland. This p
 ## Installation
 
 ```
-meson build-release --buildtype release
+git clone --recursive git@github.com:francma/wob.git
 ninja -C build-release
 sudo ninja -C build-release install
 ```
