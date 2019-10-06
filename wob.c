@@ -2,7 +2,6 @@
 #define HEIGHT 50
 #define BORDER_OFFSET 4
 #define BORDER_SIZE 4
-#define TIMEOUT_SECONDS 1
 
 #define BLACK 0xFF000000
 // #define BLACK 0xFFFFFFFF
@@ -11,6 +10,7 @@
 
 #define STRIDE WIDTH * 4
 #define SIZE STRIDE * HEIGHT
+#define MS_TO_NS(MS) MS*1000
 
 #define _POSIX_C_SOURCE 200809L
 #ifndef DEBUG
@@ -256,6 +256,21 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	// Parse arguments
+	int c;
+	int timeout_msec = 1000;
+	while ((c = getopt(argc, argv, "t:")) != -1) {
+		switch (c){
+			case 't':
+				timeout_msec = atoi(optarg);
+				if (timeout_msec < 0){
+					fprintf(stderr, "Timeout must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+		}
+	}
+
 	uint32_t * argb = wob_create_argb_buffer(&app), i, k;
 	assert(argb);
 	assert(app.shmid);
@@ -298,8 +313,8 @@ main(int argc, char **argv)
 	for (;;) {
 		uint8_t percentage = 0;
 		struct timeval timeout = {
-			.tv_sec = TIMEOUT_SECONDS,
-			.tv_usec = 0,
+			.tv_sec = 0,
+			.tv_usec = MS_TO_NS(timeout_msec),
 		};
 		int scanf_rv;
 
