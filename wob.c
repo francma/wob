@@ -17,14 +17,14 @@
 #define NDEBUG
 #endif
 #include <assert.h>
-#include <fcntl.h> // shm
-#include <stdbool.h> // true, false
-#include <stdio.h> // NULL
-#include <stdlib.h> // EXIT_FAILURE
-#include <string.h> // strcmp
+#include <fcntl.h>    // shm
+#include <stdbool.h>  // true, false
+#include <stdio.h>    // NULL
+#include <stdlib.h>   // EXIT_FAILURE
+#include <string.h>   // strcmp
 #include <sys/mman.h> // shm
 #include <sys/select.h>
-#include <time.h> // nanosleep
+#include <time.h>   // nanosleep
 #include <unistd.h> // shm, ftruncate
 
 #include "wlr-layer-shell-unstable-v1.h"
@@ -44,8 +44,8 @@ struct wob {
 	int shmid;
 };
 
-static void 
-layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h) 
+static void
+layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
 {
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 }
@@ -53,20 +53,19 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint3
 static void
 layer_surface_closed(void *data, struct zwlr_layer_surface_v1 *surface)
 {
-
 }
 
 static void
-handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version) 
+handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
 {
 	struct wob *app = (struct wob *) data;
-	
+
 	if (strcmp(interface, wl_shm_interface.name) == 0) {
 		app->wl_shm = wl_registry_bind(registry, name, &wl_shm_interface, 1);
-	} 
+	}
 	else if (strcmp(interface, wl_compositor_interface.name) == 0) {
 		app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
-	} 
+	}
 	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
 		app->xdg_wm_base = wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
 	}
@@ -74,23 +73,22 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 		if (!app->wl_output) {
 			app->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 1);
 		}
-	} 
+	}
 	else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
 		app->zwlr_layer_shell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 1);
 	}
 }
 
-static void 
-handle_global_remove(void *data, struct wl_registry *registry, uint32_t name) 
+static void
+handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
-
 }
 
 static uint32_t *
 wob_create_argb_buffer(struct wob *app)
 {
 	int shmid = -1;
-	char shm_name[8] = { 0 }; 
+	char shm_name[8] = {0};
 	for (uint8_t i = 0; i < UINT8_MAX; ++i) {
 		sprintf(shm_name, "wob-%d", i);
 		shmid = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);
@@ -123,7 +121,7 @@ wob_create_argb_buffer(struct wob *app)
 }
 
 static void
-wob_create_surface(struct wob *app) 
+wob_create_surface(struct wob *app)
 {
 	const static struct wl_registry_listener wl_registry_listener = {
 		.global = handle_global,
@@ -136,23 +134,20 @@ wob_create_surface(struct wob *app)
 	};
 
 	app->wl_registry = wl_display_get_registry(app->wl_display);
-	if (app->wl_registry == NULL)
-	{
+	if (app->wl_registry == NULL) {
 		fprintf(stderr, "wl_display_get_registry failed\n");
 		exit(EXIT_FAILURE);
 	}
 
 	wl_registry_add_listener(app->wl_registry, &wl_registry_listener, app);
-	
-	if (wl_display_roundtrip(app->wl_display) == -1)
-	{
+
+	if (wl_display_roundtrip(app->wl_display) == -1) {
 		fprintf(stderr, "wl_display_roundtrip failed\n");
 		exit(EXIT_FAILURE);
 	}
-	
+
 	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, SIZE);
-	if (pool == NULL)
-	{
+	if (pool == NULL) {
 		fprintf(stderr, "wl_shm_create_pool failed\n");
 		exit(EXIT_FAILURE);
 	}
@@ -169,13 +164,7 @@ wob_create_surface(struct wob *app)
 		fprintf(stderr, "wl_compositor_create_surface failed\n");
 		exit(EXIT_FAILURE);
 	}
-	app->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(
-		app->zwlr_layer_shell,
-		app->wl_surface,
-		app->wl_output,
-		ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY,
-		"wob"
-	);
+	app->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->zwlr_layer_shell, app->wl_surface, app->wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
 	if (app->zwlr_layer_surface == NULL) {
 		fprintf(stderr, "wl_compositor_create_surface failed\n");
 		exit(EXIT_FAILURE);
@@ -184,7 +173,7 @@ wob_create_surface(struct wob *app)
 	zwlr_layer_surface_v1_set_size(app->zwlr_layer_surface, WIDTH, HEIGHT);
 	zwlr_layer_surface_v1_set_anchor(app->zwlr_layer_surface, 0);
 	zwlr_layer_surface_v1_add_listener(app->zwlr_layer_surface, &zwlr_layer_surface_listener, app->zwlr_layer_surface);
-	
+
 	wl_surface_commit(app->wl_surface);
 	if (wl_display_roundtrip(app->wl_display) == -1) {
 		fprintf(stderr, "wl_display_roundtrip failed\n");
@@ -192,8 +181,8 @@ wob_create_surface(struct wob *app)
 	}
 }
 
-static void 
-wob_flush(struct wob *app) 
+static void
+wob_flush(struct wob *app)
 {
 	wl_surface_attach(app->wl_surface, app->wl_buffer, 0, 0);
 	wl_surface_damage(app->wl_surface, 0, 0, WIDTH, HEIGHT);
@@ -205,7 +194,7 @@ wob_flush(struct wob *app)
 }
 
 static void
-wob_destroy_surface(struct wob *app) 
+wob_destroy_surface(struct wob *app)
 {
 	if (app->wl_registry == NULL) {
 		return;
@@ -237,17 +226,17 @@ wob_destroy_surface(struct wob *app)
 	}
 }
 
-static void 
-wob_destroy(struct wob *app) 
+static void
+wob_destroy(struct wob *app)
 {
 	wob_destroy_surface(app);
 	wl_display_disconnect(app->wl_display);
 }
 
-static bool 
-wob_parse_input(char * input_buffer, uint8_t * percentage) 
+static bool
+wob_parse_input(char *input_buffer, uint8_t *percentage)
 {
-	char * strtoul_end, * newline_position;
+	char *strtoul_end, *newline_position;
 	unsigned long parsed_percentage;
 
 	newline_position = strchr(input_buffer, '\n');
@@ -259,12 +248,10 @@ wob_parse_input(char * input_buffer, uint8_t * percentage)
 		return false;
 	}
 
-
 	parsed_percentage = strtoul(input_buffer, &strtoul_end, 10);
 	if (strtoul_end != newline_position) {
 		return false;
 	}
-
 
 	if (parsed_percentage > 100) {
 		return false;
@@ -275,10 +262,10 @@ wob_parse_input(char * input_buffer, uint8_t * percentage)
 	return true;
 }
 
-int 
-main(int argc, char **argv) 
+int
+main(int argc, char **argv)
 {
-	struct wob app = { 0 };
+	struct wob app = {0};
 
 	app.wl_display = wl_display_connect(NULL);
 	assert(app.wl_display);
@@ -287,7 +274,7 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
-	uint32_t * argb = wob_create_argb_buffer(&app), i, k;
+	uint32_t *argb = wob_create_argb_buffer(&app), i, k;
 	assert(argb);
 	assert(app.shmid);
 
@@ -302,7 +289,7 @@ main(int argc, char **argv)
 	for (int line = 0; line < BORDER_SIZE; ++line) {
 		i += BORDER_OFFSET;
 		k += BORDER_OFFSET;
-		for (int pixel = 0; pixel < WIDTH - 2*BORDER_OFFSET; ++pixel) {
+		for (int pixel = 0; pixel < WIDTH - 2 * BORDER_OFFSET; ++pixel) {
 			argb[i++] = WHITE;
 			argb[k++] = WHITE;
 		}
@@ -324,7 +311,6 @@ main(int argc, char **argv)
 		k += BORDER_OFFSET;
 	}
 
-	
 	bool hidden = true;
 	for (;;) {
 		uint8_t percentage = 0;
@@ -332,8 +318,8 @@ main(int argc, char **argv)
 			.tv_sec = TIMEOUT_SECONDS,
 			.tv_usec = 0,
 		};
-		char input_buffer[6] = { 0 };
-		char * fgets_rv;
+		char input_buffer[6] = {0};
+		char *fgets_rv;
 
 		fd_set fds;
 		FD_ZERO(&fds);
@@ -376,7 +362,7 @@ main(int argc, char **argv)
 					assert(app.zwlr_layer_shell);
 					assert(app.zwlr_layer_surface);
 				}
-				
+
 				// clear percentage
 				i = WIDTH * (2 * BORDER_OFFSET + BORDER_SIZE);
 				for (int line = 0; line < HEIGHT - 2 * BORDER_SIZE - 4 * BORDER_OFFSET; ++line) {
@@ -386,7 +372,7 @@ main(int argc, char **argv)
 					}
 					i += 2 * BORDER_OFFSET + BORDER_SIZE;
 				}
-				
+
 				// render percentage bar
 				uint32_t bar_length = ((WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET) * percentage) / 100;
 				i = WIDTH * (2 * BORDER_OFFSET + BORDER_SIZE);
