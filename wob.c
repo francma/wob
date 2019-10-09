@@ -10,7 +10,6 @@
 
 #define STRIDE WIDTH * 4
 #define SIZE STRIDE * HEIGHT
-#define MS_TO_NS(MS) MS*1000
 
 #define _POSIX_C_SOURCE 200809L
 #ifndef DEBUG
@@ -23,9 +22,9 @@
 #include <stdlib.h>   // EXIT_FAILURE
 #include <string.h>   // strcmp
 #include <sys/mman.h> // shm
-#include <sys/select.h>
 #include <time.h>   // nanosleep
 #include <unistd.h> // shm, ftruncate
+#include <poll.h>
 
 #include "wlr-layer-shell-unstable-v1.h"
 #include "xdg-shell-client-protocol.h"
@@ -326,22 +325,25 @@ main(int argc, char **argv)
 		k += BORDER_OFFSET;
 	}
 
+	struct pollfd fds[2];
+	fds[0] = (struct pollfd) {
+		.fd = wl_display_get_fd(app.wl_display),
+		.events = POLLIN,
+	};
+	fds[1] = (struct pollfd) {
+		.fd = STDIN_FILENO,
+		.events = POLLIN,
+	};
+
 	bool hidden = true;
 	for (;;) {
 		uint8_t percentage = 0;
-		struct timeval timeout = {
-			.tv_sec = 0,
-			.tv_usec = MS_TO_NS(timeout_msec),
-		};
 		char input_buffer[6] = {0};
 		char *fgets_rv;
 
-		fd_set fds;
-		FD_ZERO(&fds);
-		FD_SET(STDIN_FILENO, &fds);
-		switch (select(1, &fds, NULL, NULL, (hidden ? NULL : &timeout))) {
+		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
-				perror("select");
+				perror("poll");
 				wob_destroy(&app);
 				return EXIT_FAILURE;
 			case 0:
@@ -351,7 +353,18 @@ main(int argc, char **argv)
 
 				hidden = true;
 				break;
-			case 1:
+			default:
+				if (fds[0].revents & POLLIN) {
+					if (wl_display_dispatch(app.wl_display) == -1) {
+						wob_destroy(&app);
+						return EXIT_FAILURE;
+					}
+				}
+
+				if (!(fds[1].revents & POLLIN)) {
+					break;
+				}
+
 				fgets_rv = fgets(input_buffer, 6, stdin);
 				if (feof(stdin)) {
 					wob_destroy(&app);
