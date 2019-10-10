@@ -4,9 +4,7 @@
 #define BORDER_SIZE 4
 
 #define BLACK 0xFF000000
-// #define BLACK 0xFFFFFFFF
 #define WHITE 0xFFFFFFFF
-// #define WHITE 0xFFFF0000
 
 #define STRIDE WIDTH * 4
 #define SIZE STRIDE * HEIGHT
