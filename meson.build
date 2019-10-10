@@ -1,4 +1,10 @@
-project('wob', 'c', default_options: ['c_std=c99'])
+project(
+  'wob',
+  'c',
+  version: '0.2',
+  license: 'ISC',
+  default_options: ['c_std=c99']
+  )
 
 cc = meson.get_compiler('c')
 
@@ -7,6 +13,9 @@ wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
+
+wob_version = '"@0@"'.format(meson.project_version())
+add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
 
 if get_option('buildtype').startswith('debug')
 	add_project_arguments('-DDEBUG', language: 'c')
