@@ -274,7 +274,7 @@ main(int argc, char **argv)
 	// Parse arguments
 	int c;
 	int timeout_msec = 1000;
-	while ((c = getopt(argc, argv, "t:")) != -1) {
+	while ((c = getopt(argc, argv, "t:v")) != -1) {
 		switch (c){
 			case 't':
 				timeout_msec = atoi(optarg);
@@ -282,6 +282,10 @@ main(int argc, char **argv)
 					fprintf(stderr, "Timeout must be a positive value.");
 					return EXIT_FAILURE;
 				}
+				break;
+			case 'v':
+				fprintf(stdout, "Wob version: " WOB_VERSION "\n");
+				return EXIT_SUCCESS;
 				break;
 		}
 	}
