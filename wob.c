@@ -262,6 +262,15 @@ wob_parse_input(char *input_buffer, uint8_t *percentage)
 int
 main(int argc, char **argv)
 {
+	const char *usage = 
+		"Usage: wob [options]\n"
+		"\n"
+		"  -h      Show help message and quit.\n"
+		"  -v      Show the version number and quit.\n"
+		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
+		"\n"
+	;
+
 	struct wob app = {0};
 
 	app.wl_display = wl_display_connect(NULL);
@@ -274,7 +283,7 @@ main(int argc, char **argv)
 	// Parse arguments
 	int c;
 	int timeout_msec = 1000;
-	while ((c = getopt(argc, argv, "t:v")) != -1) {
+	while ((c = getopt(argc, argv, "t:v:h")) != -1) {
 		switch (c){
 			case 't':
 				timeout_msec = atoi(optarg);
@@ -284,9 +293,16 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'v':
-				fprintf(stdout, "Wob version: " WOB_VERSION "\n");
+				fprintf(stdout, "wob version: " WOB_VERSION "\n");
 				return EXIT_SUCCESS;
 				break;
+			case 'h':
+				fprintf(stdout, "%s", usage);
+				return EXIT_SUCCESS;
+				break;
+			default:
+				fprintf(stderr, "%s", usage);
+				exit(EXIT_FAILURE);
 		}
 	}
 
