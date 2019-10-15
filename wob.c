@@ -295,11 +295,9 @@ main(int argc, char **argv)
 			case 'v':
 				fprintf(stdout, "wob version: " WOB_VERSION "\n");
 				return EXIT_SUCCESS;
-				break;
 			case 'h':
 				fprintf(stdout, "%s", usage);
 				return EXIT_SUCCESS;
-				break;
 			default:
 				fprintf(stderr, "%s", usage);
 				exit(EXIT_FAILURE);
