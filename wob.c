@@ -283,7 +283,7 @@ main(int argc, char **argv)
 	// Parse arguments
 	int c;
 	int timeout_msec = 1000;
-	while ((c = getopt(argc, argv, "t:v:h")) != -1) {
+	while ((c = getopt(argc, argv, "t:vh")) != -1) {
 		switch (c){
 			case 't':
 				timeout_msec = atoi(optarg);
