@@ -231,7 +231,7 @@ wob_destroy(struct wob *app)
 }
 
 static bool
-wob_parse_input(char *input_buffer, uint8_t *percentage)
+wob_parse_input(char *input_buffer, uint16_t *percentage)
 {
 	char *strtoul_end, *newline_position;
 	unsigned long parsed_percentage;
@@ -250,10 +250,6 @@ wob_parse_input(char *input_buffer, uint8_t *percentage)
 		return false;
 	}
 
-	if (parsed_percentage > 100) {
-		return false;
-	}
-
 	*percentage = parsed_percentage;
 
 	return true;
@@ -268,6 +264,7 @@ main(int argc, char **argv)
 		"  -h      Show help message and quit.\n"
 		"  -v      Show the version number and quit.\n"
 		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
+		"  -m <%>  Define the maximum percentage, must be a value between 1 and 65535 \n"
 		"\n"
 	;
 
@@ -282,13 +279,21 @@ main(int argc, char **argv)
 
 	// Parse arguments
 	int c;
+	uint16_t maximum = 100;
 	int timeout_msec = 1000;
-	while ((c = getopt(argc, argv, "t:v:h")) != -1) {
+	while ((c = getopt(argc, argv, "t:m:vh")) != -1) {
 		switch (c){
 			case 't':
 				timeout_msec = atoi(optarg);
 				if (timeout_msec < 0){
 					fprintf(stderr, "Timeout must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'm':
+				maximum = (uint16_t) atoi(optarg);
+				if (maximum < 1){
+					fprintf(stdout, "Maximum must be a value between 1 and %d \n", UINT16_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
@@ -353,7 +358,7 @@ main(int argc, char **argv)
 
 	bool hidden = true;
 	for (;;) {
-		uint8_t percentage = 0;
+		uint16_t percentage = 0;
 		char input_buffer[6] = {0};
 		char *fgets_rv;
 
@@ -381,13 +386,13 @@ main(int argc, char **argv)
 					break;
 				}
 
-				fgets_rv = fgets(input_buffer, 6, stdin);
+				fgets_rv = fgets(input_buffer, 7, stdin);
 				if (feof(stdin)) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
 
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage)) {
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -418,7 +423,7 @@ main(int argc, char **argv)
 				}
 
 				// render percentage bar
-				uint32_t bar_length = ((WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET) * percentage) / 100;
+				uint32_t bar_length = ((WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET) * percentage) / maximum;
 				i = WIDTH * (2 * BORDER_OFFSET + BORDER_SIZE);
 				for (int line = 0; line < HEIGHT - 2 * BORDER_SIZE - 4 * BORDER_OFFSET; ++line) {
 					i += 2 * BORDER_OFFSET + BORDER_SIZE;
