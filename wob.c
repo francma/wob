@@ -292,7 +292,7 @@ main(int argc, char **argv)
 				break;
 			case 'm':
 				maximum = (uint16_t) atoi(optarg);
-				if (maximum < 1){
+				if (maximum < 1) {
 					fprintf(stdout, "Maximum must be a value between 1 and %d \n", UINT16_MAX);
 					return EXIT_FAILURE;
 				}
