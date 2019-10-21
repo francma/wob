@@ -231,7 +231,7 @@ wob_destroy(struct wob *app)
 }
 
 static bool
-wob_parse_input(char *input_buffer, uint16_t *percentage)
+wob_parse_input(const char *input_buffer, uint16_t *percentage)
 {
 	char *strtoul_end, *newline_position;
 	unsigned long parsed_percentage;
