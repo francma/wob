@@ -231,11 +231,17 @@ wob_destroy(struct wob *app)
 	wl_display_disconnect(app->wl_display);
 }
 
+/*
+Input format:
+percentage bgColor borderColor barColor
+25 #FF000000 #FFFFFFFF #FFFFFFFF
+*/
 static bool
-wob_parse_input(const char *input_buffer, uint16_t *percentage)
+wob_parse_input(const char *input_buffer, uint16_t *percentage,
+	uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color, bool *redraw_statics)
 {
+	*redraw_statics = false;
 	char *strtoul_end, *newline_position;
-	unsigned long parsed_percentage;
 
 	newline_position = strchr(input_buffer, '\n');
 	if (newline_position == NULL) {
@@ -246,13 +252,22 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage)
 		return false;
 	}
 
-	parsed_percentage = strtoul(input_buffer, &strtoul_end, 10);
+	*percentage = strtoul(input_buffer, &strtoul_end, 10);
 	if (strtoul_end != newline_position) {
-		return false;
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*background_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+			*redraw_statics = true;
+		}
+
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*border_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+			*redraw_statics = true;
+		}
+
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*bar_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		}
 	}
-
-	*percentage = parsed_percentage;
-
 	return true;
 }
 
@@ -370,7 +385,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	uint32_t *argb = wob_create_argb_buffer(&app), i;
+	uint32_t *argb = wob_create_argb_buffer(&app);
 	assert(argb);
 	assert(app.shmid);
 
@@ -378,9 +393,6 @@ main(int argc, char **argv)
 	uint32_t background_color = BLACK;
 	uint32_t bar_color = WHITE;
 	uint32_t border_color = WHITE;
-
-	wob_draw_background(argb, background_color);
-	wob_draw_border(argb, border_color);
 
 	struct pollfd fds[2];
 	fds[0] = (struct pollfd) {
@@ -392,10 +404,11 @@ main(int argc, char **argv)
 		.events = POLLIN,
 	};
 
+	bool redraw_statics = false;
 	bool hidden = true;
 	for (;;) {
 		uint16_t percentage = 0;
-		char input_buffer[6] = {0};
+		char input_buffer[36] = {0};
 		char *fgets_rv;
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
@@ -422,13 +435,13 @@ main(int argc, char **argv)
 					break;
 				}
 
-				fgets_rv = fgets(input_buffer, 7, stdin);
+				fgets_rv = fgets(input_buffer, 37, stdin);
 				if (feof(stdin)) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
 
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage) || percentage > maximum) {
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &background_color, &border_color, &bar_color, &redraw_statics) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -448,6 +461,10 @@ main(int argc, char **argv)
 					assert(app.zwlr_layer_surface);
 				}
 
+				if (redraw_statics) {
+					wob_draw_background(argb, background_color);	
+					wob_draw_border(argb, border_color);
+				}
 				wob_draw_percentage(argb, bar_color, background_color, percentage, maximum);
 
 				wob_flush(&app);
