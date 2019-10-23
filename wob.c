@@ -394,6 +394,10 @@ main(int argc, char **argv)
 	uint32_t bar_color = WHITE;
 	uint32_t border_color = WHITE;
 
+    // Draw these at least once
+	wob_draw_background(argb, background_color);	
+	wob_draw_border(argb, border_color);
+
 	struct pollfd fds[2];
 	fds[0] = (struct pollfd) {
 		.fd = wl_display_get_fd(app.wl_display),
