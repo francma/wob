@@ -238,9 +238,8 @@ percentage bgColor borderColor barColor
 */
 static bool
 wob_parse_input(const char *input_buffer, uint16_t *percentage,
-	uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color, bool *redraw_statics)
+	uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
 {
-	*redraw_statics = false;
 	char *strtoul_end, *newline_position;
 
 	newline_position = strchr(input_buffer, '\n');
@@ -256,12 +255,10 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage,
 	if (strtoul_end != newline_position) {
 		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
 			*background_color = strtoul(strtoul_end+2, &strtoul_end, 16);
-			*redraw_statics = true;
 		}
 
 		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
 			*border_color = strtoul(strtoul_end+2, &strtoul_end, 16);
-			*redraw_statics = true;
 		}
 
 		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
@@ -408,7 +405,7 @@ main(int argc, char **argv)
 		.events = POLLIN,
 	};
 
-	bool redraw_statics = false;
+	uint32_t old_background_color, old_border_color;
 	bool hidden = true;
 	for (;;) {
 		uint16_t percentage = 0;
@@ -445,7 +442,9 @@ main(int argc, char **argv)
 					return EXIT_SUCCESS;
 				}
 
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &background_color, &border_color, &bar_color, &redraw_statics) || percentage > maximum) {
+				old_background_color = background_color;
+				old_border_color = border_color;
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &background_color, &border_color, &bar_color) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -465,7 +464,7 @@ main(int argc, char **argv)
 					assert(app.zwlr_layer_surface);
 				}
 
-				if (redraw_statics) {
+				if (old_background_color != background_color || old_border_color != border_color) {
 					wob_draw_background(argb, background_color);	
 					wob_draw_border(argb, border_color);
 				}
