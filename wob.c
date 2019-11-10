@@ -239,7 +239,7 @@ percentage bgColor borderColor barColor
 static bool
 wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
 {
-	char *strtoul_end, *newline_position;
+	char *input_ptr, *newline_position;
 
 	newline_position = strchr(input_buffer, '\n');
 	if (newline_position == NULL) {
@@ -250,20 +250,33 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 		return false;
 	}
 
-	*percentage = strtoul(input_buffer, &strtoul_end, 10);
-	if (strtoul_end != newline_position) {
-		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
-			*background_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
-		}
-
-		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
-			*border_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
-		}
-
-		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
-			*bar_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
-		}
+	*percentage = strtoul(input_buffer, &input_ptr, 10);
+	if (input_ptr == newline_position) {
+		return true;
 	}
+
+	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+		return false;
+	}
+	input_ptr += 2;
+	*background_color = strtoul(input_ptr, &input_ptr, 16);
+
+	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+		return false;
+	}
+	input_ptr += 2;
+	*border_color = strtoul(input_ptr, &input_ptr, 16);
+
+	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+		return false;
+	}
+	input_ptr += 2;
+	*bar_color = strtoul(input_ptr, &input_ptr, 16);
+
+	if(*input_ptr != '\n') {
+		return false;
+	}
+
 	return true;
 }
 
@@ -328,6 +341,7 @@ wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_colo
 	}
 }
 
+#ifndef WOB_TEST
 int
 main(int argc, char **argv)
 {
@@ -475,3 +489,4 @@ main(int argc, char **argv)
 		}
 	}
 }
+#endif

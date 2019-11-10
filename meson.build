@@ -58,3 +58,11 @@ executable(
 	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
 	install: true
 )
+
+e = executable(
+	'wob-test', 
+	'test.c',
+	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+	c_args: ['-Wno-unused-function']
+)
+test('wob-test', e)
