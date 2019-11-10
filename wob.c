@@ -2,6 +2,7 @@
 #define HEIGHT 50
 #define BORDER_OFFSET 4
 #define BORDER_SIZE 4
+#define BAR_PADDING 4
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
@@ -230,11 +231,16 @@ wob_destroy(struct wob *app)
 	wl_display_disconnect(app->wl_display);
 }
 
+/*
+Input format:
+percentage bgColor borderColor barColor
+25 #FF000000 #FFFFFFFF #FFFFFFFF
+*/
 static bool
-wob_parse_input(const char *input_buffer, uint16_t *percentage)
+wob_parse_input(const char *input_buffer, uint16_t *percentage,
+	uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
 {
 	char *strtoul_end, *newline_position;
-	unsigned long parsed_percentage;
 
 	newline_position = strchr(input_buffer, '\n');
 	if (newline_position == NULL) {
@@ -245,14 +251,81 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage)
 		return false;
 	}
 
-	parsed_percentage = strtoul(input_buffer, &strtoul_end, 10);
+	*percentage = strtoul(input_buffer, &strtoul_end, 10);
 	if (strtoul_end != newline_position) {
-		return false;
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*background_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		}
+
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*border_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		}
+
+		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
+			*bar_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		}
+	}
+	return true;
+}
+
+void
+wob_draw_background(uint32_t *argb, uint32_t color)
+{
+	for (uint32_t i = 0; i < WIDTH * HEIGHT; ++i) {
+		argb[i] = color;
+	}
+}
+
+void
+wob_draw_border(uint32_t *argb, uint32_t color)
+{
+	// create top and bottom line
+	uint32_t i = WIDTH * BORDER_OFFSET;
+	uint32_t k = WIDTH * (HEIGHT - BORDER_OFFSET - BORDER_SIZE);
+	for (int line = 0; line < BORDER_SIZE; ++line) {
+		i += BORDER_OFFSET;
+		k += BORDER_OFFSET;
+		for (int pixel = 0; pixel < WIDTH - 2 * BORDER_OFFSET; ++pixel) {
+			argb[i++] = color;
+			argb[k++] = color;
+		}
+		i += BORDER_OFFSET;
+		k += BORDER_OFFSET;
 	}
 
-	*percentage = parsed_percentage;
+	// create left and right horizontal line
+	i = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
+	k = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
+	for (int line = 0; line < HEIGHT - 2 * (BORDER_SIZE + BORDER_OFFSET); ++line) {
+		i += BORDER_OFFSET;
+		k += WIDTH - BORDER_OFFSET - BORDER_SIZE;
+		for (int pixel = 0; pixel < BORDER_SIZE; ++pixel) {
+			argb[i++] = color;
+			argb[k++] = color;
+		}
+		i += WIDTH - BORDER_OFFSET - BORDER_SIZE;
+		k += BORDER_OFFSET;
+	}
+}
 
-	return true;
+void
+wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
+{
+	int bar_length = (WIDTH - (2*BORDER_OFFSET + 2*BORDER_SIZE + 2*BAR_PADDING));
+	int bar_colored_length = (bar_length * percentage) / maximum;
+	int y = BORDER_OFFSET + BORDER_SIZE + BAR_PADDING;
+	int y_stop = HEIGHT - y;
+	for (; y < y_stop; ++y) {
+		int x = y * WIDTH + (BORDER_OFFSET + BORDER_SIZE + BAR_PADDING);
+
+		for (int i = 0; i < bar_length; ++i) {
+			if (i <= bar_colored_length) {
+				argb[x+i] = bar_color;
+			} else {
+				argb[x+i] = background_color;
+			}
+		}
+	}
 }
 
 int
@@ -309,42 +382,18 @@ main(int argc, char **argv)
 		}
 	}
 
-	uint32_t *argb = wob_create_argb_buffer(&app), i, k;
+	uint32_t *argb = wob_create_argb_buffer(&app);
 	assert(argb);
 	assert(app.shmid);
 
-	// start with all black
-	for (i = 0; i < WIDTH * HEIGHT; ++i) {
-		argb[i] = BLACK;
-	}
 
-	// create top and bottom line
-	i = WIDTH * BORDER_OFFSET;
-	k = WIDTH * (HEIGHT - BORDER_OFFSET - BORDER_SIZE);
-	for (int line = 0; line < BORDER_SIZE; ++line) {
-		i += BORDER_OFFSET;
-		k += BORDER_OFFSET;
-		for (int pixel = 0; pixel < WIDTH - 2 * BORDER_OFFSET; ++pixel) {
-			argb[i++] = WHITE;
-			argb[k++] = WHITE;
-		}
-		i += BORDER_OFFSET;
-		k += BORDER_OFFSET;
-	}
+	uint32_t background_color = BLACK;
+	uint32_t bar_color = WHITE;
+	uint32_t border_color = WHITE;
 
-	// create left and right horizontal line
-	i = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
-	k = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
-	for (int line = 0; line < HEIGHT - 2 * (BORDER_SIZE + BORDER_OFFSET); ++line) {
-		i += BORDER_OFFSET;
-		k += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-		for (int pixel = 0; pixel < BORDER_SIZE; ++pixel) {
-			argb[i++] = WHITE;
-			argb[k++] = WHITE;
-		}
-		i += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-		k += BORDER_OFFSET;
-	}
+    // Draw these at least once
+	wob_draw_background(argb, background_color);	
+	wob_draw_border(argb, border_color);
 
 	struct pollfd fds[2];
 	fds[0] = (struct pollfd) {
@@ -356,10 +405,11 @@ main(int argc, char **argv)
 		.events = POLLIN,
 	};
 
+	uint32_t old_background_color, old_border_color;
 	bool hidden = true;
 	for (;;) {
 		uint16_t percentage = 0;
-		char input_buffer[6] = {0};
+		char input_buffer[36] = {0};
 		char *fgets_rv;
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
@@ -386,13 +436,15 @@ main(int argc, char **argv)
 					break;
 				}
 
-				fgets_rv = fgets(input_buffer, 7, stdin);
+				fgets_rv = fgets(input_buffer, 37, stdin);
 				if (feof(stdin)) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
 
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage) || percentage > maximum) {
+				old_background_color = background_color;
+				old_border_color = border_color;
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &background_color, &border_color, &bar_color) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -412,26 +464,11 @@ main(int argc, char **argv)
 					assert(app.zwlr_layer_surface);
 				}
 
-				// clear percentage
-				i = WIDTH * (2 * BORDER_OFFSET + BORDER_SIZE);
-				for (int line = 0; line < HEIGHT - 2 * BORDER_SIZE - 4 * BORDER_OFFSET; ++line) {
-					i += 2 * BORDER_OFFSET + BORDER_SIZE;
-					for (int pixel = 0; pixel < (WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET); ++pixel) {
-						argb[i++] = BLACK;
-					}
-					i += 2 * BORDER_OFFSET + BORDER_SIZE;
+				if (old_background_color != background_color || old_border_color != border_color) {
+					wob_draw_background(argb, background_color);	
+					wob_draw_border(argb, border_color);
 				}
-
-				// render percentage bar
-				uint32_t bar_length = ((WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET) * percentage) / maximum;
-				i = WIDTH * (2 * BORDER_OFFSET + BORDER_SIZE);
-				for (int line = 0; line < HEIGHT - 2 * BORDER_SIZE - 4 * BORDER_OFFSET; ++line) {
-					i += 2 * BORDER_OFFSET + BORDER_SIZE;
-					for (int pixel = 0; pixel < bar_length; ++pixel) {
-						argb[i++] = WHITE;
-					}
-					i += 2 * BORDER_OFFSET + BORDER_SIZE + ((WIDTH - 2 * BORDER_SIZE - 4 * BORDER_OFFSET) - bar_length);
-				}
+				wob_draw_percentage(argb, bar_color, background_color, percentage, maximum);
 
 				wob_flush(&app);
 				hidden = false;
