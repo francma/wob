@@ -22,7 +22,6 @@
 #include <stdlib.h>   // EXIT_FAILURE
 #include <string.h>   // strcmp
 #include <sys/mman.h> // shm
-#include <time.h>     // nanosleep
 #include <unistd.h>   // shm, ftruncate
 
 #include "wlr-layer-shell-unstable-v1.h"
