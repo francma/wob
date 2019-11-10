@@ -15,15 +15,15 @@
 #define NDEBUG
 #endif
 #include <assert.h>
-#include <fcntl.h>    // shm
+#include <fcntl.h> // shm
+#include <poll.h>
 #include <stdbool.h>  // true, false
 #include <stdio.h>    // NULL
 #include <stdlib.h>   // EXIT_FAILURE
 #include <string.h>   // strcmp
 #include <sys/mman.h> // shm
-#include <time.h>   // nanosleep
-#include <unistd.h> // shm, ftruncate
-#include <poll.h>
+#include <time.h>     // nanosleep
+#include <unistd.h>   // shm, ftruncate
 
 #include "wlr-layer-shell-unstable-v1.h"
 #include "xdg-shell-client-protocol.h"
@@ -237,8 +237,7 @@ percentage bgColor borderColor barColor
 25 #FF000000 #FFFFFFFF #FFFFFFFF
 */
 static bool
-wob_parse_input(const char *input_buffer, uint16_t *percentage,
-	uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
+wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
 {
 	char *strtoul_end, *newline_position;
 
@@ -253,16 +252,16 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage,
 
 	*percentage = strtoul(input_buffer, &strtoul_end, 10);
 	if (strtoul_end != newline_position) {
-		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
-			*background_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
+			*background_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
 		}
 
-		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
-			*border_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
+			*border_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
 		}
 
-		if (*strtoul_end == ' ' && strtoul_end+10 <= newline_position) {
-			*bar_color = strtoul(strtoul_end+2, &strtoul_end, 16);
+		if (*strtoul_end == ' ' && strtoul_end + 10 <= newline_position) {
+			*bar_color = strtoul(strtoul_end + 2, &strtoul_end, 16);
 		}
 	}
 	return true;
@@ -311,7 +310,7 @@ wob_draw_border(uint32_t *argb, uint32_t color)
 void
 wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
 {
-	int bar_length = (WIDTH - (2*BORDER_OFFSET + 2*BORDER_SIZE + 2*BAR_PADDING));
+	int bar_length = (WIDTH - (2 * BORDER_OFFSET + 2 * BORDER_SIZE + 2 * BAR_PADDING));
 	int bar_colored_length = (bar_length * percentage) / maximum;
 	int y = BORDER_OFFSET + BORDER_SIZE + BAR_PADDING;
 	int y_stop = HEIGHT - y;
@@ -320,9 +319,10 @@ wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_colo
 
 		for (int i = 0; i < bar_length; ++i) {
 			if (i <= bar_colored_length) {
-				argb[x+i] = bar_color;
-			} else {
-				argb[x+i] = background_color;
+				argb[x + i] = bar_color;
+			}
+			else {
+				argb[x + i] = background_color;
 			}
 		}
 	}
@@ -331,15 +331,14 @@ wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_colo
 int
 main(int argc, char **argv)
 {
-	const char *usage = 
+	const char *usage =
 		"Usage: wob [options]\n"
 		"\n"
 		"  -h      Show help message and quit.\n"
 		"  -v      Show the version number and quit.\n"
 		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
 		"  -m <%>  Define the maximum percentage, must be a value between 1 and 65535 \n"
-		"\n"
-	;
+		"\n";
 
 	struct wob app = {0};
 
@@ -355,10 +354,10 @@ main(int argc, char **argv)
 	uint16_t maximum = 100;
 	int timeout_msec = 1000;
 	while ((c = getopt(argc, argv, "t:m:vh")) != -1) {
-		switch (c){
+		switch (c) {
 			case 't':
 				timeout_msec = atoi(optarg);
-				if (timeout_msec < 0){
+				if (timeout_msec < 0) {
 					fprintf(stderr, "Timeout must be a positive value.");
 					return EXIT_FAILURE;
 				}
@@ -386,13 +385,12 @@ main(int argc, char **argv)
 	assert(argb);
 	assert(app.shmid);
 
-
 	uint32_t background_color = BLACK;
 	uint32_t bar_color = WHITE;
 	uint32_t border_color = WHITE;
 
-    // Draw these at least once
-	wob_draw_background(argb, background_color);	
+	// Draw these at least once
+	wob_draw_background(argb, background_color);
 	wob_draw_border(argb, border_color);
 
 	struct pollfd fds[2];
@@ -465,7 +463,7 @@ main(int argc, char **argv)
 				}
 
 				if (old_background_color != background_color || old_border_color != border_color) {
-					wob_draw_background(argb, background_color);	
+					wob_draw_background(argb, background_color);
 					wob_draw_border(argb, border_color);
 				}
 				wob_draw_percentage(argb, bar_color, background_color, percentage, maximum);
