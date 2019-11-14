@@ -9,7 +9,7 @@ project(
 cc = meson.get_compiler('c')
 
 wlr_protocol_dir = meson.source_root() + '/wlr-protocols'
-wayland_protos = dependency('wayland-protocols', version: '>=1.14')
+wayland_protos = dependency('wayland-protocols', version: '>=1.13')
 wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')

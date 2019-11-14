@@ -1,14 +1,17 @@
-dist: xenial
+os: linux 
+arch: arm64 
+dist: bionic
 language: minimal
 
-env:
-  DOCKER_IMAGE: francma/wob-travis-ci
-  DOCKER_CWD: /wob
-  BUILD_DIR: build
-
-services:
-  - docker
+addons:
+  apt:
+    packages:
+      - meson
+      - wayland-protocols
+      - ninja-build
+      - libwayland-dev
 
 script:
-  - docker run -v "$PWD":"$DOCKER_CWD" -w "$DOCKER_CWD" "$DOCKER_IMAGE" /usr/bin/meson "$BUILD_DIR" --buildtype release
-  - docker run -v "$PWD":"$DOCKER_CWD" -w "$DOCKER_CWD" "$DOCKER_IMAGE" /usr/bin/ninja -C "$BUILD_DIR"
+  - meson build
+  - ninja -C build
+  - meson test -C build
