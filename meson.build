@@ -46,10 +46,10 @@ wlr_layer_shell_unstable_v1_c = custom_target(
 	command: [wayland_scanner, 'private-code', wlr_protocol_dir + '/unstable/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
 )
 
-xdg_shell_lib = static_library('xdg_shell_lib', [xdg_shell_c, xdg_shell_h])
+xdg_shell_lib = static_library('xdg_shell_lib', [xdg_shell_c, xdg_shell_h], dependencies: [wayland_client])
 xdg_shell = declare_dependency(link_with: xdg_shell_lib)
 
-wlr_layer_shell_unstable_v1_lib = static_library('wlr_layer_shell_unstable_v1_lib', [wlr_layer_shell_unstable_v1_c, wlr_layer_shell_unstable_v1_h])
+wlr_layer_shell_unstable_v1_lib = static_library('wlr_layer_shell_unstable_v1_lib', [wlr_layer_shell_unstable_v1_c, wlr_layer_shell_unstable_v1_h], dependencies: [wayland_client])
 wlr_layer_shell_unstable_v1 = declare_dependency(link_with: wlr_layer_shell_unstable_v1_lib)
 
 executable(
