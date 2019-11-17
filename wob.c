@@ -10,6 +10,8 @@
 #define STRIDE WIDTH * 4
 #define SIZE STRIDE * HEIGHT
 
+#define INPUT_BUFFER_LENGTH 36
+
 #define _POSIX_C_SOURCE 200809L
 #ifndef DEBUG
 #define NDEBUG
@@ -420,7 +422,7 @@ main(int argc, char **argv)
 	bool hidden = true;
 	for (;;) {
 		uint16_t percentage = 0;
-		char input_buffer[36] = {0};
+		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
 		char *fgets_rv;
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
@@ -447,7 +449,7 @@ main(int argc, char **argv)
 					break;
 				}
 
-				fgets_rv = fgets(input_buffer, 37, stdin);
+				fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
 				if (feof(stdin)) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
