@@ -10,7 +10,8 @@
 #define STRIDE WIDTH * 4
 #define SIZE STRIDE * HEIGHT
 
-#define INPUT_BUFFER_LENGTH 36
+// sizeof already includes NULL byte
+#define INPUT_BUFFER_LENGTH sizeof("+100 #FF000000 #FFFFFFFF #FFFFFFFF\n")
 
 #define _POSIX_C_SOURCE 200809L
 #ifndef DEBUG
