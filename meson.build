@@ -55,6 +55,7 @@ wlr_layer_shell_unstable_v1 = declare_dependency(link_with: wlr_layer_shell_unst
 executable(
 	'wob',
 	'wob.c',
+	wlr_layer_shell_unstable_v1_h,
 	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
 	install: true
 )
@@ -62,6 +63,7 @@ executable(
 e = executable(
 	'wob-test', 
 	'test.c',
+	wlr_layer_shell_unstable_v1_h,
 	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
 	c_args: ['-Wno-unused-function']
 )
