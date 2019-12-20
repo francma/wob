@@ -27,7 +27,7 @@
 #include <sys/mman.h> // shm
 #include <unistd.h>   // shm, ftruncate
 
-#include "wlr-layer-shell-unstable-v1.h"
+#include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
 struct wob {

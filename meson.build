@@ -18,50 +18,59 @@ wob_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
 
 if get_option('buildtype').startswith('debug')
-	add_project_arguments('-DDEBUG', language: 'c')
+  add_project_arguments('-DDEBUG', language: 'c')
 endif
 
-xdg_shell_h = custom_target(
-	'xdg-shell-client-protocol.h',
-	output: 'xdg-shell-client-protocol.h',
-	command: [wayland_scanner, 'client-header', wl_protocol_dir + '/stable/xdg-shell/xdg-shell.xml', '@OUTPUT@'],
+wayland_scanner_code = generator(
+  wayland_scanner,
+  output: '@BASENAME@-protocol.c',
+  arguments: ['private-code', '@INPUT@', '@OUTPUT@'],
 )
 
-xdg_shell_c = custom_target(
-	'xdg-shell-client-protocol.c',
-	output: 'xdg-shell-client-protocol.c',
-	command: [wayland_scanner, 'private-code', wl_protocol_dir + '/stable/xdg-shell/xdg-shell.xml', '@OUTPUT@'],
+wayland_scanner_client = generator(
+  wayland_scanner,
+  output: '@BASENAME@-client-protocol.h',
+  arguments: ['client-header', '@INPUT@', '@OUTPUT@'],
 )
 
-wlr_layer_shell_unstable_v1_h = custom_target(
-	'wlr-layer-shell-unstable-v1.h',
-	output: 'wlr-layer-shell-unstable-v1.h',
-	command: [wayland_scanner, 'client-header', meson.source_root() + '/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
-)
+client_protocols = [
+  [wl_protocol_dir + '/stable/xdg-shell', 'xdg-shell.xml'],
+  [meson.source_root(), 'wlr-layer-shell-unstable-v1.xml'],
+]
 
-wlr_layer_shell_unstable_v1_c = custom_target(
-	'wlr-layer-shell-unstable-v1.c',
-	output: 'wlr-layer-shell-unstable-v1.c',
-	command: [wayland_scanner, 'private-code', meson.source_root() + '/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
-)
+foreach p : client_protocols
+  xml = join_paths(p)
+  src = wayland_scanner_code.process(xml)
+  header = wayland_scanner_client.process(xml)
 
-xdg_shell_lib = static_library('xdg_shell_lib', [xdg_shell_c, xdg_shell_h], dependencies: [wayland_client])
-xdg_shell = declare_dependency(link_with: xdg_shell_lib)
+  name = p[1].split('.')[0].underscorify()
 
-wlr_layer_shell_unstable_v1_lib = static_library('wlr_layer_shell_unstable_v1_lib', [wlr_layer_shell_unstable_v1_c, wlr_layer_shell_unstable_v1_h], dependencies: [wayland_client])
-wlr_layer_shell_unstable_v1 = declare_dependency(link_with: wlr_layer_shell_unstable_v1_lib)
+  lib = static_library(
+    name,
+    [src, header],
+    dependencies: [wayland_client],
+  )
+
+  dep = declare_dependency(
+    link_with: lib,
+    sources: header,
+  )
+
+  
+  set_variable(name, dep)
+endforeach
 
 executable(
-	'wob',
-	'wob.c',
-	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
-	install: true
+  'wob',
+  'wob.c',
+  dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  install: true
 )
 
 e = executable(
-	'wob-test', 
-	'test.c',
-	dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
-	c_args: ['-Wno-unused-function']
+  'wob-test', 
+  'test.c',
+  dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  c_args: ['-Wno-unused-function']
 )
 test('wob-test', e)
