@@ -8,7 +8,6 @@ project(
 
 cc = meson.get_compiler('c')
 
-wlr_protocol_dir = meson.source_root() + '/wlr-protocols'
 wayland_protos = dependency('wayland-protocols', version: '>=1.13')
 wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
@@ -37,13 +36,13 @@ xdg_shell_c = custom_target(
 wlr_layer_shell_unstable_v1_h = custom_target(
 	'wlr-layer-shell-unstable-v1.h',
 	output: 'wlr-layer-shell-unstable-v1.h',
-	command: [wayland_scanner, 'client-header', wlr_protocol_dir + '/unstable/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
+	command: [wayland_scanner, 'client-header', meson.source_root() + '/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
 )
 
 wlr_layer_shell_unstable_v1_c = custom_target(
 	'wlr-layer-shell-unstable-v1.c',
 	output: 'wlr-layer-shell-unstable-v1.c',
-	command: [wayland_scanner, 'private-code', wlr_protocol_dir + '/unstable/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
+	command: [wayland_scanner, 'private-code', meson.source_root() + '/wlr-layer-shell-unstable-v1.xml', '@OUTPUT@'],
 )
 
 xdg_shell_lib = static_library('xdg_shell_lib', [xdg_shell_c, xdg_shell_h], dependencies: [wayland_client])
