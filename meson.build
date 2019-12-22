@@ -56,7 +56,6 @@ foreach p : client_protocols
     sources: header,
   )
 
-  
   set_variable(name, dep)
 endforeach
 
@@ -74,3 +73,23 @@ e = executable(
   c_args: ['-Wno-unused-function']
 )
 test('wob-test', e)
+
+scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-page'))
+if scdoc.found()
+  scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
+  sh = find_program('sh', native: true)
+  mandir = get_option('mandir')
+  scdfile = 'wob.1.scd'
+  manfile = scdfile.split('.scd')[0]
+
+  custom_target(
+    manfile,
+    input: scdfile,
+    output: manfile,
+    command: [
+      sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc.path(), manfile)
+    ],
+    install: true,
+    install_dir: join_paths(mandir, 'man.1')
+  )
+endif
