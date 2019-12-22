@@ -1,15 +1,17 @@
 os: linux 
 arch: arm64 
 dist: bionic
-language: minimal
+language: python
 
 addons:
   apt:
     packages:
-      - meson
       - wayland-protocols
       - ninja-build
       - libwayland-dev
+
+install:
+  - pip install meson
 
 script:
   - meson build
