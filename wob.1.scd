@@ -1,4 +1,4 @@
-wob(1) ["Version 0.4"]
+wob(1)
 
 # NAME
 
