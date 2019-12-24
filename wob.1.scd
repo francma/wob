@@ -45,7 +45,3 @@ bindsym XF86AudioLowerVolume exec pamixer -ud 2 && pamixer --get-volume > $SWAYS
 Brightness using [haikarainen/light](https://github.com/haikarainen/light):
 	bindsym XF86MonBrightnessUp exec light -A 5 && light -G | cut -d'.' -f1 > $SWAYSOCK.wob++
 bindsym XF86MonBrightnessDown exec light -U 5 && light -G | cut -d'.' -f1 > $SWAYSOCK.wob
-
-# LICENSE
-
-ISC.
