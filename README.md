@@ -8,6 +8,17 @@ A lightweight overlay volume/backlight/progress/anything bar for Wayland. This p
 
 ## Installation
 
+### Compiling from source
+
+Install dependencies:
+
+- wayland
+- wayland-protocols
+- meson
+- [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page)
+
+Run these commands:
+
 ```
 git clone git@github.com:francma/wob.git
 cd wob
@@ -15,6 +26,8 @@ meson build-release --buildtype release
 ninja -C build-release
 sudo ninja -C build-release install
 ```
+
+### From packages
 
 There are packages for the following Linux distributions:
 
