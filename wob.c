@@ -353,7 +353,7 @@ main(int argc, char **argv)
 		"  -h      Show help message and quit.\n"
 		"  -v      Show the version number and quit.\n"
 		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
-		"  -m <%>  Define the maximum percentage, must be a value between 1 and 65535 \n"
+		"  -m <%>  Define the maximum percentage, defaults to 100. \n"
 		"\n";
 
 	struct wob app = {0};

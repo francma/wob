@@ -69,6 +69,8 @@ Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled
 
 ### Sway WM example
 
+Add these lines to your Sway config file:
+
 ```
 exec mkfifo $SWAYSOCK.wob && tail -f $SWAYSOCK.wob | wob
 ```
