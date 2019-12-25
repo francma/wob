@@ -17,9 +17,11 @@ Releases are signed with [5C6DA024DDE27178073EA103F4B432D5D67990E3](https://keys
 Install dependencies:
 
 - wayland
-- wayland-protocols
-- meson
-- [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page)
+- wayland-protocols \*
+- meson \*
+- [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*
+
+\* _compile-time dependecy_
 
 Run these commands:
 
