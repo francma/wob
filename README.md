@@ -28,9 +28,9 @@ Run these commands:
 ```
 git clone git@github.com:francma/wob.git
 cd wob
-meson build-release --buildtype release
-ninja -C build-release
-sudo ninja -C build-release install
+meson build
+ninja -C build
+sudo ninja -C build install
 ```
 
 ### From packages

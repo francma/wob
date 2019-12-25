@@ -14,9 +14,6 @@
 #define INPUT_BUFFER_LENGTH sizeof("+65535 #FF000000 #FFFFFFFF #FFFFFFFF\n")
 
 #define _POSIX_C_SOURCE 200809L
-#ifndef DEBUG
-#define NDEBUG
-#endif
 #include <assert.h>
 #include <fcntl.h> // shm
 #include <poll.h>
