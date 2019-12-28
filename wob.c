@@ -1,14 +1,13 @@
-#define WIDTH 400
-#define HEIGHT 50
-#define BORDER_OFFSET 4
-#define BORDER_SIZE 4
-#define BAR_PADDING 4
+#define DEFAULT_WIDTH 400
+#define DEFAULT_HEIGHT 50
+#define DEFAULT_BORDER_OFFSET 4
+#define DEFAULT_BORDER_SIZE 4
+#define DEFAULT_BAR_PADDING 4
+#define DEFAULT_ANCHOR 0
+#define DEFAULT_MARGIN 0
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
-
-#define STRIDE WIDTH * 4
-#define SIZE STRIDE * HEIGHT
 
 // sizeof already includes NULL byte
 #define INPUT_BUFFER_LENGTH sizeof("+65535 #FF000000 #FFFFFFFF #FFFFFFFF\n")
@@ -27,6 +26,18 @@
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
+struct wob_geom {
+	int width;
+	int height;
+	int border_offset;
+	int border_size;
+	int bar_padding;
+	int stride;
+	int size;
+	int anchor;
+	int margin;
+};
+
 struct wob {
 	struct wl_buffer *wl_buffer;
 	struct wl_compositor *wl_compositor;
@@ -38,6 +49,7 @@ struct wob {
 	struct xdg_wm_base *xdg_wm_base;
 	struct zwlr_layer_shell_v1 *zwlr_layer_shell;
 	struct zwlr_layer_surface_v1 *zwlr_layer_surface;
+	struct wob_geom* wob_geom;
 	int shmid;
 };
 
@@ -100,13 +112,13 @@ wob_create_argb_buffer(struct wob *app)
 	}
 
 	shm_unlink(shm_name);
-	if (ftruncate(shmid, SIZE) < 0) {
+	if (ftruncate(shmid, app->wob_geom->size) < 0) {
 		close(shmid);
 		fprintf(stderr, "ftruncate failed\n");
 		exit(EXIT_FAILURE);
 	}
 
-	void *shm_data = mmap(NULL, SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
+	void *shm_data = mmap(NULL, app->wob_geom->size, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
 	if (shm_data == MAP_FAILED) {
 		fprintf(stderr, "mmap failed\n");
 		exit(EXIT_FAILURE);
@@ -143,13 +155,13 @@ wob_create_surface(struct wob *app)
 		exit(EXIT_FAILURE);
 	}
 
-	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, SIZE);
+	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->wob_geom->size);
 	if (pool == NULL) {
 		fprintf(stderr, "wl_shm_create_pool failed\n");
 		exit(EXIT_FAILURE);
 	}
 
-	app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, WIDTH, HEIGHT, STRIDE, WL_SHM_FORMAT_ARGB8888);
+	app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->wob_geom->width, app->wob_geom->height, app->wob_geom->stride, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 	if (app->wl_buffer == NULL) {
 		fprintf(stderr, "wl_shm_pool_create_buffer failed\n");
@@ -167,8 +179,9 @@ wob_create_surface(struct wob *app)
 		exit(EXIT_FAILURE);
 	}
 
-	zwlr_layer_surface_v1_set_size(app->zwlr_layer_surface, WIDTH, HEIGHT);
-	zwlr_layer_surface_v1_set_anchor(app->zwlr_layer_surface, 0);
+	zwlr_layer_surface_v1_set_size(app->zwlr_layer_surface, app->wob_geom->width, app->wob_geom->height);
+	zwlr_layer_surface_v1_set_anchor(app->zwlr_layer_surface, app->wob_geom->anchor);
+	zwlr_layer_surface_v1_set_margin(app->zwlr_layer_surface, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin);
 	zwlr_layer_surface_v1_add_listener(app->zwlr_layer_surface, &zwlr_layer_surface_listener, app->zwlr_layer_surface);
 
 	wl_surface_commit(app->wl_surface);
@@ -182,7 +195,7 @@ static void
 wob_flush(struct wob *app)
 {
 	wl_surface_attach(app->wl_surface, app->wl_buffer, 0, 0);
-	wl_surface_damage(app->wl_surface, 0, 0, WIDTH, HEIGHT);
+	wl_surface_damage(app->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
 	wl_surface_commit(app->wl_surface);
 	if (wl_display_dispatch(app->wl_display) == -1) {
 		fprintf(stderr, "wl_display_dispatch failed\n");
@@ -280,54 +293,54 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 }
 
 void
-wob_draw_background(uint32_t *argb, uint32_t color)
+wob_draw_background(struct wob_geom *geom, uint32_t *argb, uint32_t color)
 {
-	for (uint32_t i = 0; i < WIDTH * HEIGHT; ++i) {
+	for (uint32_t i = 0; i < geom->width * geom->height; ++i) {
 		argb[i] = color;
 	}
 }
 
 void
-wob_draw_border(uint32_t *argb, uint32_t color)
+wob_draw_border(struct wob_geom* geom, uint32_t *argb, uint32_t color)
 {
 	// create top and bottom line
-	uint32_t i = WIDTH * BORDER_OFFSET;
-	uint32_t k = WIDTH * (HEIGHT - BORDER_OFFSET - BORDER_SIZE);
-	for (int line = 0; line < BORDER_SIZE; ++line) {
-		i += BORDER_OFFSET;
-		k += BORDER_OFFSET;
-		for (int pixel = 0; pixel < WIDTH - 2 * BORDER_OFFSET; ++pixel) {
+	uint32_t i = geom->width * geom->border_offset;
+	uint32_t k = geom->width * (geom->height - geom->border_offset - geom->border_size);
+	for (int line = 0; line < geom->border_size; ++line) {
+		i += geom->border_offset;
+		k += geom->border_offset;
+		for (int pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) {
 			argb[i++] = color;
 			argb[k++] = color;
 		}
-		i += BORDER_OFFSET;
-		k += BORDER_OFFSET;
+		i += geom->border_offset;
+		k += geom->border_offset;
 	}
 
 	// create left and right horizontal line
-	i = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
-	k = WIDTH * (BORDER_OFFSET + BORDER_SIZE);
-	for (int line = 0; line < HEIGHT - 2 * (BORDER_SIZE + BORDER_OFFSET); ++line) {
-		i += BORDER_OFFSET;
-		k += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-		for (int pixel = 0; pixel < BORDER_SIZE; ++pixel) {
+	i = geom->width * (geom->border_offset + geom->border_size);
+	k = geom->width * (geom->border_offset + geom->border_size);
+	for (int line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line) {
+		i += geom->border_offset;
+		k += geom->width - geom->border_offset - geom->border_size;
+		for (int pixel = 0; pixel < geom->border_size; ++pixel) {
 			argb[i++] = color;
 			argb[k++] = color;
 		}
-		i += WIDTH - BORDER_OFFSET - BORDER_SIZE;
-		k += BORDER_OFFSET;
+		i += geom->width - geom->border_offset - geom->border_size;
+		k += geom->border_offset;
 	}
 }
 
 void
-wob_draw_percentage(uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
+wob_draw_percentage(struct wob_geom* geom, uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
 {
-	int bar_length = (WIDTH - (2 * BORDER_OFFSET + 2 * BORDER_SIZE + 2 * BAR_PADDING));
+	int bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
 	int bar_colored_length = (bar_length * percentage) / maximum;
-	int y = BORDER_OFFSET + BORDER_SIZE + BAR_PADDING;
-	int y_stop = HEIGHT - y;
+	int y = geom->border_offset + geom->border_size + geom->bar_padding;
+	int y_stop = geom->height - y;
 	for (; y < y_stop; ++y) {
-		int x = y * WIDTH + (BORDER_OFFSET + BORDER_SIZE + BAR_PADDING);
+		int x = y * geom->width + (geom->border_offset + geom->border_size + geom->bar_padding);
 
 		for (int i = 0; i < bar_length; ++i) {
 			if (i <= bar_colored_length) {
@@ -351,6 +364,14 @@ main(int argc, char **argv)
 		"  -v      Show the version number and quit.\n"
 		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
 		"  -m <%>  Define the maximum percentage, defaults to 100. \n"
+		"  -W <px> Define display width in pixels, defaults to 400. \n"
+		"  -H <px> Define display height in pixels, defaults to 50. \n"
+		"  -o <px> Define border offset in pixels, defaults to 4. \n"
+		"  -b <px> Define border size in pixels, defaults to 4. \n"
+		"  -p <px> Define bar padding in pixels, defaults to 4. \n"
+		"  -a <s>  Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
+		"          May be specified multiple times. \n"
+		"  -M <px> Define anchor margin in pixels, defaults to 0. \n"
 		"\n";
 
 	struct wob app = {0};
@@ -366,7 +387,17 @@ main(int argc, char **argv)
 	int c;
 	uint16_t maximum = 100;
 	int timeout_msec = 1000;
-	while ((c = getopt(argc, argv, "t:m:vh")) != -1) {
+	struct wob_geom geom = {
+		DEFAULT_WIDTH,
+		DEFAULT_HEIGHT,
+		DEFAULT_BORDER_OFFSET,
+		DEFAULT_BORDER_SIZE,
+		DEFAULT_BAR_PADDING,
+		DEFAULT_ANCHOR,
+		DEFAULT_MARGIN
+	};
+
+	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:vh")) != -1) {
 		switch (c) {
 			case 't':
 				timeout_msec = atoi(optarg);
@@ -382,6 +413,62 @@ main(int argc, char **argv)
 					return EXIT_FAILURE;
 				}
 				break;
+			case 'W':
+				geom.width = atoi(optarg);
+				if (geom.width < 0) {
+					fprintf(stderr, "Width must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'H':
+				geom.height = atoi(optarg);
+				if (geom.height < 0) {
+					fprintf(stderr, "Height must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'o':
+				geom.border_offset = atoi(optarg);
+				if (geom.border_offset < 0) {
+					fprintf(stderr, "Border offset must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'b':
+				geom.border_size = atoi(optarg);
+				if (geom.border_size < 0) {
+					fprintf(stderr, "Border size must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'p':
+				geom.bar_padding = atoi(optarg);
+				if (geom.bar_padding < 0) {
+					fprintf(stderr, "Bar padding must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'a':
+				if (strcmp(optarg, "left") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+				} else if (strcmp(optarg, "right") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+				} else if (strcmp(optarg, "top") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+				} else if (strcmp(optarg, "bottom") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+				} else if (strcmp(optarg, "center") != 0) {
+					fprintf(stderr, "Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'M':
+				geom.margin = atoi(optarg);
+				if (geom.margin < 0) {
+					fprintf(stderr, "Anchor margin must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
 			case 'v':
 				fprintf(stdout, "wob version: " WOB_VERSION "\n");
 				return EXIT_SUCCESS;
@@ -394,6 +481,20 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (geom.width / 2 < 1 + geom.border_offset + geom.border_size + geom.bar_padding) {
+		fprintf(stderr, "Invalid geometry: width is too small for given parameters\n");
+		return EXIT_FAILURE;
+	}
+
+	if (geom.height / 2 < 1 + geom.border_offset + geom.border_size + geom.bar_padding) {
+		fprintf(stderr, "Invalid geometry: height is too small for given parameters\n");
+		return EXIT_FAILURE;
+	}
+
+	geom.stride = geom.width * 4;
+	geom.size = geom.stride * geom.height;
+	app.wob_geom = &geom;
+
 	uint32_t *argb = wob_create_argb_buffer(&app);
 	assert(argb);
 	assert(app.shmid);
@@ -403,8 +504,8 @@ main(int argc, char **argv)
 	uint32_t border_color = WHITE;
 
 	// Draw these at least once
-	wob_draw_background(argb, background_color);
-	wob_draw_border(argb, border_color);
+	wob_draw_background(app.wob_geom, argb, background_color);
+	wob_draw_border(app.wob_geom, argb, border_color);
 
 	struct pollfd fds[2];
 	fds[0] = (struct pollfd) {
@@ -476,10 +577,10 @@ main(int argc, char **argv)
 				}
 
 				if (old_background_color != background_color || old_border_color != border_color) {
-					wob_draw_background(argb, background_color);
-					wob_draw_border(argb, border_color);
+					wob_draw_background(app.wob_geom, argb, background_color);
+					wob_draw_border(app.wob_geom, argb, border_color);
 				}
-				wob_draw_percentage(argb, bar_color, background_color, percentage, maximum);
+				wob_draw_percentage(app.wob_geom, argb, bar_color, background_color, percentage, maximum);
 
 				wob_flush(&app);
 				hidden = false;
