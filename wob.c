@@ -49,7 +49,7 @@ struct wob {
 	struct xdg_wm_base *xdg_wm_base;
 	struct zwlr_layer_shell_v1 *zwlr_layer_shell;
 	struct zwlr_layer_surface_v1 *zwlr_layer_surface;
-	struct wob_geom* wob_geom;
+	struct wob_geom *wob_geom;
 	int shmid;
 };
 
@@ -267,25 +267,25 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 		return true;
 	}
 
-	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
 	*background_color = strtoul(input_ptr, &input_ptr, 16);
 
-	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
 	*border_color = strtoul(input_ptr, &input_ptr, 16);
 
-	if(input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
+	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
 	*bar_color = strtoul(input_ptr, &input_ptr, 16);
 
-	if(*input_ptr != '\n') {
+	if (*input_ptr != '\n') {
 		return false;
 	}
 
@@ -301,7 +301,7 @@ wob_draw_background(struct wob_geom *geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_border(struct wob_geom* geom, uint32_t *argb, uint32_t color)
+wob_draw_border(struct wob_geom *geom, uint32_t *argb, uint32_t color)
 {
 	// create top and bottom line
 	uint32_t i = geom->width * geom->border_offset;
@@ -333,7 +333,7 @@ wob_draw_border(struct wob_geom* geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_percentage(struct wob_geom* geom, uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
+wob_draw_percentage(struct wob_geom *geom, uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
 {
 	int bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
 	int bar_colored_length = (bar_length * percentage) / maximum;
@@ -451,13 +451,17 @@ main(int argc, char **argv)
 			case 'a':
 				if (strcmp(optarg, "left") == 0) {
 					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-				} else if (strcmp(optarg, "right") == 0) {
+				}
+				else if (strcmp(optarg, "right") == 0) {
 					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-				} else if (strcmp(optarg, "top") == 0) {
+				}
+				else if (strcmp(optarg, "top") == 0) {
 					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-				} else if (strcmp(optarg, "bottom") == 0) {
+				}
+				else if (strcmp(optarg, "bottom") == 0) {
 					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-				} else if (strcmp(optarg, "center") != 0) {
+				}
+				else if (strcmp(optarg, "center") != 0) {
 					fprintf(stderr, "Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
 					return EXIT_FAILURE;
 				}
