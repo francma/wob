@@ -4,10 +4,10 @@
 int
 main(int argc, char **argv)
 {
-	uint16_t percentage;
-	uint32_t background_color;
-	uint32_t border_color;
-	uint32_t bar_color;
+	unsigned long percentage;
+	argb_color background_color;
+	argb_color border_color;
+	argb_color bar_color;
 	char *input;
 	bool result;
 

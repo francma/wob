@@ -10,7 +10,7 @@
 #define WHITE 0xFFFFFFFF
 
 // sizeof already includes NULL byte
-#define INPUT_BUFFER_LENGTH sizeof("+65535 #FF000000 #FFFFFFFF #FFFFFFFF\n")
+#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #FF000000 #FFFFFFFF #FFFFFFFF\n"))
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
@@ -22,20 +22,24 @@
 #include <string.h>   // strcmp
 #include <sys/mman.h> // shm
 #include <unistd.h>   // shm, ftruncate
+#include <limits.h>
+#include <errno.h>
 
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
+typedef uint32_t argb_color;
+
 struct wob_geom {
-	int width;
-	int height;
-	int border_offset;
-	int border_size;
-	int bar_padding;
-	int stride;
-	int size;
-	int anchor;
-	int margin;
+	unsigned long width;
+	unsigned long height;
+	unsigned long border_offset;
+	unsigned long border_size;
+	unsigned long bar_padding;
+	unsigned long stride;
+	unsigned long size;
+	unsigned long anchor;
+	unsigned long margin;
 };
 
 struct wob {
@@ -52,6 +56,16 @@ struct wob {
 	struct wob_geom *wob_geom;
 	int shmid;
 };
+
+unsigned long
+pedantic_strtoul(const char *restrict str, char **restrict str_end, int base) {
+	if (*str == '-' || *str == '+') {
+		*str_end = (char *) str;
+		return 0;
+	}
+
+	return strtoul(str, str_end, base);
+}
 
 static void
 layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
@@ -93,13 +107,13 @@ handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
 }
 
-static uint32_t *
+static argb_color *
 wob_create_argb_buffer(struct wob *app)
 {
 	int shmid = -1;
-	char shm_name[8] = {0};
-	for (uint8_t i = 0; i < UINT8_MAX; ++i) {
-		sprintf(shm_name, "wob-%d", i);
+	char shm_name[3 * sizeof(unsigned int) + sizeof("wob-")] = {0};
+	for (unsigned int i = 0; i < UINT_MAX; ++i) {
+		sprintf(shm_name, "wob-%u", i);
 		shmid = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);
 		if (shmid > 0) {
 			break;
@@ -126,7 +140,7 @@ wob_create_argb_buffer(struct wob *app)
 
 	app->shmid = shmid;
 
-	return (uint32_t *) shm_data;
+	return (argb_color *) shm_data;
 }
 
 static void
@@ -249,7 +263,7 @@ percentage bgColor borderColor barColor
 25 #FF000000 #FFFFFFFF #FFFFFFFF
 */
 static bool
-wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
+wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color *background_color, argb_color *border_color, argb_color *bar_color)
 {
 	char *input_ptr, *newline_position;
 
@@ -262,7 +276,7 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 		return false;
 	}
 
-	*percentage = strtoul(input_buffer, &input_ptr, 10);
+	*percentage = pedantic_strtoul(input_buffer, &input_ptr, 10);
 	if (input_ptr == newline_position) {
 		return true;
 	}
@@ -271,19 +285,19 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 		return false;
 	}
 	input_ptr += 2;
-	*background_color = strtoul(input_ptr, &input_ptr, 16);
+	*background_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*border_color = strtoul(input_ptr, &input_ptr, 16);
+	*border_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*bar_color = strtoul(input_ptr, &input_ptr, 16);
+	*bar_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
 
 	if (*input_ptr != '\n') {
 		return false;
@@ -293,23 +307,23 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 }
 
 void
-wob_draw_background(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_background(const struct wob_geom *geom, argb_color *argb, argb_color color)
 {
-	for (uint32_t i = 0; i < geom->width * geom->height; ++i) {
+	for (size_t i = 0; i < geom->width * geom->height; ++i) {
 		argb[i] = color;
 	}
 }
 
 void
-wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_border(const struct wob_geom *geom, argb_color *argb, argb_color color)
 {
 	// create top and bottom line
-	uint32_t i = geom->width * geom->border_offset;
-	uint32_t k = geom->width * (geom->height - geom->border_offset - geom->border_size);
-	for (int line = 0; line < geom->border_size; ++line) {
+	size_t i = geom->width * geom->border_offset;
+	size_t k = geom->width * (geom->height - geom->border_offset - geom->border_size);
+	for (size_t line = 0; line < geom->border_size; ++line) {
 		i += geom->border_offset;
 		k += geom->border_offset;
-		for (int pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) {
+		for (size_t pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) {
 			argb[i++] = color;
 			argb[k++] = color;
 		}
@@ -320,10 +334,10 @@ wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 	// create left and right horizontal line
 	i = geom->width * (geom->border_offset + geom->border_size);
 	k = geom->width * (geom->border_offset + geom->border_size);
-	for (int line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line) {
+	for (size_t line = 0; line < geom->height - 2 * (geom->border_size + geom->border_offset); ++line) {
 		i += geom->border_offset;
 		k += geom->width - geom->border_offset - geom->border_size;
-		for (int pixel = 0; pixel < geom->border_size; ++pixel) {
+		for (size_t pixel = 0; pixel < geom->border_size; ++pixel) {
 			argb[i++] = color;
 			argb[k++] = color;
 		}
@@ -333,16 +347,16 @@ wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_percentage(const struct wob_geom *geom, uint32_t * argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
+wob_draw_percentage(const struct wob_geom *geom, argb_color *argb, argb_color bar_color, argb_color background_color, unsigned long percentage, unsigned long maximum)
 {
-	int bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
-	int bar_colored_length = (bar_length * percentage) / maximum;
-	int y = geom->border_offset + geom->border_size + geom->bar_padding;
-	int y_stop = geom->height - y;
+	size_t bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
+	size_t bar_colored_length = (bar_length * percentage) / maximum;
+	size_t y = geom->border_offset + geom->border_size + geom->bar_padding;
+	size_t y_stop = geom->height - y;
 	for (; y < y_stop; ++y) {
-		int x = y * geom->width + (geom->border_offset + geom->border_size + geom->bar_padding);
+		size_t x = y * geom->width + (geom->border_offset + geom->border_size + geom->bar_padding);
 
-		for (int i = 0; i < bar_length; ++i) {
+		for (size_t i = 0; i < bar_length; ++i) {
 			if (i <= bar_colored_length) {
 				argb[x + i] = bar_color;
 			}
@@ -385,8 +399,8 @@ main(int argc, char **argv)
 
 	// Parse arguments
 	int c;
-	uint16_t maximum = 100;
-	int timeout_msec = 1000;
+	unsigned long maximum = 100;
+	unsigned long timeout_msec = 1000;
 	struct wob_geom geom = {
 		.width = DEFAULT_WIDTH,
 		.height = DEFAULT_HEIGHT,
@@ -396,54 +410,55 @@ main(int argc, char **argv)
 		.anchor = DEFAULT_ANCHOR,
 		.margin = DEFAULT_MARGIN,
 	};
+	char *strtoul_end;
 
 	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:vh")) != -1) {
 		switch (c) {
 			case 't':
-				timeout_msec = atoi(optarg);
-				if (timeout_msec < 0) {
-					fprintf(stderr, "Timeout must be a positive value.");
+				timeout_msec = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0) {
+					fprintf(stderr, "Timeout must be a value between 1 and %lu.\n", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'm':
-				maximum = (uint16_t) atoi(optarg);
-				if (maximum < 1) {
-					fprintf(stderr, "Maximum must be a value between 1 and %d \n", UINT16_MAX);
+				maximum = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0) {
+					fprintf(stderr, "Maximum must be a value between 1 and %lu.\n", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'W':
-				geom.width = atoi(optarg);
-				if (geom.width < 0) {
+				geom.width = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Width must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'H':
-				geom.height = atoi(optarg);
-				if (geom.height < 0) {
+				geom.height = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Height must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'o':
-				geom.border_offset = atoi(optarg);
-				if (geom.border_offset < 0) {
+				geom.border_offset = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Border offset must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'b':
-				geom.border_size = atoi(optarg);
-				if (geom.border_size < 0) {
+				geom.border_size = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Border size must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'p':
-				geom.bar_padding = atoi(optarg);
-				if (geom.bar_padding < 0) {
+				geom.bar_padding = pedantic_strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Bar padding must be a positive value.");
 					return EXIT_FAILURE;
 				}
@@ -467,7 +482,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'M':
-				geom.margin = atoi(optarg);
+				geom.margin = pedantic_strtoul(optarg, &strtoul_end, 10);;
 				if (geom.margin < 0) {
 					fprintf(stderr, "Anchor margin must be a positive value.");
 					return EXIT_FAILURE;
@@ -499,13 +514,13 @@ main(int argc, char **argv)
 	geom.size = geom.stride * geom.height;
 	app.wob_geom = &geom;
 
-	uint32_t *argb = wob_create_argb_buffer(&app);
+	argb_color *argb = wob_create_argb_buffer(&app);
 	assert(argb);
 	assert(app.shmid);
 
-	uint32_t background_color = BLACK;
-	uint32_t bar_color = WHITE;
-	uint32_t border_color = WHITE;
+	argb_color background_color = BLACK;
+	argb_color bar_color = WHITE;
+	argb_color border_color = WHITE;
 
 	// Draw these at least once
 	wob_draw_background(app.wob_geom, argb, background_color);
@@ -521,10 +536,10 @@ main(int argc, char **argv)
 		.events = POLLIN,
 	};
 
-	uint32_t old_background_color, old_border_color;
+	argb_color old_background_color, old_border_color;
 	bool hidden = true;
 	for (;;) {
-		uint16_t percentage = 0;
+		unsigned long percentage = 0;
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
 		char *fgets_rv;
 
