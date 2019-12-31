@@ -481,7 +481,7 @@ main(int argc, char **argv)
 				return EXIT_SUCCESS;
 			default:
 				fprintf(stderr, "%s", usage);
-				exit(EXIT_FAILURE);
+				return EXIT_FAILURE;
 		}
 	}
 
