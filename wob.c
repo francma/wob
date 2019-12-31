@@ -293,7 +293,7 @@ wob_parse_input(const char *input_buffer, uint16_t *percentage, uint32_t *backgr
 }
 
 void
-wob_draw_background(struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_background(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 {
 	for (uint32_t i = 0; i < geom->width * geom->height; ++i) {
 		argb[i] = color;
@@ -301,7 +301,7 @@ wob_draw_background(struct wob_geom *geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_border(struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 {
 	// create top and bottom line
 	uint32_t i = geom->width * geom->border_offset;
@@ -333,7 +333,7 @@ wob_draw_border(struct wob_geom *geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_percentage(struct wob_geom *geom, uint32_t *argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
+wob_draw_percentage(const struct wob_geom *geom, uint32_t * argb, uint32_t bar_color, uint32_t background_color, uint16_t percentage, uint16_t maximum)
 {
 	int bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
 	int bar_colored_length = (bar_length * percentage) / maximum;
