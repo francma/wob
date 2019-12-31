@@ -388,13 +388,13 @@ main(int argc, char **argv)
 	uint16_t maximum = 100;
 	int timeout_msec = 1000;
 	struct wob_geom geom = {
-		DEFAULT_WIDTH,
-		DEFAULT_HEIGHT,
-		DEFAULT_BORDER_OFFSET,
-		DEFAULT_BORDER_SIZE,
-		DEFAULT_BAR_PADDING,
-		DEFAULT_ANCHOR,
-		DEFAULT_MARGIN
+		.width = DEFAULT_WIDTH,
+		.height = DEFAULT_HEIGHT,
+		.border_offset = DEFAULT_BORDER_OFFSET,
+		.border_size = DEFAULT_BORDER_SIZE,
+		.bar_padding = DEFAULT_BAR_PADDING,
+		.anchor = DEFAULT_ANCHOR,
+		.margin = DEFAULT_MARGIN,
 	};
 
 	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:vh")) != -1) {
