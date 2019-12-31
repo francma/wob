@@ -67,18 +67,18 @@ pedantic_strtoul(const char *restrict str, char **restrict str_end, int base) {
 	return strtoul(str, str_end, base);
 }
 
-static void
+void
 layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
 {
 	zwlr_layer_surface_v1_ack_configure(surface, serial);
 }
 
-static void
+void
 layer_surface_closed(void *data, struct zwlr_layer_surface_v1 *surface)
 {
 }
 
-static void
+void
 handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
 {
 	struct wob *app = (struct wob *) data;
@@ -102,12 +102,12 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 	}
 }
 
-static void
+void
 handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
 }
 
-static argb_color *
+argb_color *
 wob_create_argb_buffer(struct wob *app)
 {
 	int shmid = -1;
@@ -143,7 +143,7 @@ wob_create_argb_buffer(struct wob *app)
 	return (argb_color *) shm_data;
 }
 
-static void
+void
 wob_create_surface(struct wob *app)
 {
 	const static struct wl_registry_listener wl_registry_listener = {
@@ -205,7 +205,7 @@ wob_create_surface(struct wob *app)
 	}
 }
 
-static void
+void
 wob_flush(struct wob *app)
 {
 	wl_surface_attach(app->wl_surface, app->wl_buffer, 0, 0);
@@ -217,7 +217,7 @@ wob_flush(struct wob *app)
 	}
 }
 
-static void
+void
 wob_destroy_surface(struct wob *app)
 {
 	if (app->wl_registry == NULL) {
@@ -250,7 +250,7 @@ wob_destroy_surface(struct wob *app)
 	}
 }
 
-static void
+void
 wob_destroy(struct wob *app)
 {
 	wob_destroy_surface(app);
@@ -262,7 +262,7 @@ Input format:
 percentage bgColor borderColor barColor
 25 #FF000000 #FFFFFFFF #FFFFFFFF
 */
-static bool
+bool
 wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color *background_color, argb_color *border_color, argb_color *bar_color)
 {
 	char *input_ptr, *newline_position;
