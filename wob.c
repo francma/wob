@@ -12,6 +12,8 @@
 // sizeof already includes NULL byte
 #define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #FF000000 #FFFFFFFF #FFFFFFFF\n"))
 
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
 #include <errno.h>
@@ -350,21 +352,29 @@ wob_draw_border(const struct wob_geom *geom, argb_color *argb, argb_color color)
 void
 wob_draw_percentage(const struct wob_geom *geom, argb_color *argb, argb_color bar_color, argb_color background_color, unsigned long percentage, unsigned long maximum)
 {
-	size_t bar_length = (geom->width - (2 * geom->border_offset + 2 * geom->border_size + 2 * geom->bar_padding));
-	size_t bar_colored_length = (bar_length * percentage) / maximum;
-	size_t y = geom->border_offset + geom->border_size + geom->bar_padding;
-	size_t y_stop = geom->height - y;
-	for (; y < y_stop; ++y) {
-		size_t x = y * geom->width + (geom->border_offset + geom->border_size + geom->bar_padding);
+	size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding;
+	size_t bar_width = geom->width - 2 * offset_border_padding;
+	size_t bar_height = geom->height - 2 * offset_border_padding;
+	size_t bar_colored_width = (bar_width * percentage) / maximum;
 
-		for (size_t i = 0; i < bar_length; ++i) {
-			if (i <= bar_colored_length) {
-				argb[x + i] = bar_color;
-			}
-			else {
-				argb[x + i] = background_color;
-			}
-		}
+	// draw 1px horizontal line
+	argb_color *start, *end, *pixel;
+	start = &argb[offset_border_padding * (geom->width + 1)];
+	end = start + bar_colored_width;
+	for (pixel = start; pixel < end; ++pixel) {
+		*pixel = bar_color;
+	}
+	for (end = start + bar_width; pixel < end; ++pixel) {
+		*pixel = background_color;
+	}
+
+	// copy it to make full percentage bar
+	argb_color *source = &argb[offset_border_padding * geom->width];
+	argb_color *destination = source + geom->width;
+	end = &argb[geom->width * (bar_height + offset_border_padding)];
+	while (destination != end) {
+		memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(argb_color));
+		destination += MIN(destination - source, end - destination);
 	}
 }
 
