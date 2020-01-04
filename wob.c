@@ -537,14 +537,15 @@ main(int argc, char **argv)
 	wob_draw_background(app.wob_geom, argb, background_color);
 	wob_draw_border(app.wob_geom, argb, border_color);
 
-	struct pollfd fds[2];
-	fds[0] = (struct pollfd) {
-		.fd = wl_display_get_fd(app.wl_display),
-		.events = POLLIN,
-	};
-	fds[1] = (struct pollfd) {
-		.fd = STDIN_FILENO,
-		.events = POLLIN,
+	struct pollfd fds[2] = {
+		{
+			.fd = wl_display_get_fd(app.wl_display),
+			.events = POLLIN,
+		},
+		{
+			.fd = STDIN_FILENO,
+			.events = POLLIN,
+		},
 	};
 
 	argb_color old_background_color, old_border_color;
