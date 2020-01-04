@@ -14,7 +14,9 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <assert.h>
+#include <errno.h>
 #include <fcntl.h> // shm
+#include <limits.h>
 #include <poll.h>
 #include <stdbool.h>  // true, false
 #include <stdio.h>    // NULL
@@ -22,8 +24,6 @@
 #include <string.h>   // strcmp
 #include <sys/mman.h> // shm
 #include <unistd.h>   // shm, ftruncate
-#include <limits.h>
-#include <errno.h>
 
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
@@ -58,7 +58,8 @@ struct wob {
 };
 
 unsigned long
-pedantic_strtoul(const char *restrict str, char **restrict str_end, int base) {
+pedantic_strtoul(const char *restrict str, char **restrict str_end, int base)
+{
 	if (*str == '-' || *str == '+') {
 		*str_end = (char *) str;
 		return 0;
@@ -482,7 +483,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'M':
-				geom.margin = pedantic_strtoul(optarg, &strtoul_end, 10);;
+				geom.margin = pedantic_strtoul(optarg, &strtoul_end, 10);
 				if (geom.margin < 0) {
 					fprintf(stderr, "Anchor margin must be a positive value.");
 					return EXIT_FAILURE;
