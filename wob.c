@@ -54,6 +54,12 @@ struct wob
 
 
 
+
+
+
+
+
+
 {
 	struct wl_buffer *wl_buffer;
 	struct wl_compositor *wl_compositor;
