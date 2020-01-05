@@ -1,19 +1,30 @@
 os: linux 
-arch: arm64 
+arch: ppc64le 
 dist: bionic
-language: python
+sudo: required
 
-addons:
-  apt:
-    packages:
-      - wayland-protocols
-      - ninja-build
-      - libwayland-dev
+env:
+  global:
+    - APK_TOOLS_URI="https://github.com/alpinelinux/apk-tools/releases/download/v2.10.3/apk-tools-2.10.3-ppc64le-linux.tar.gz"
+    - APK_TOOLS_SHA256=75311787324dd56106b36d57cc33bcdacb8d089dbcd270669dab8d7eb76175d8
 
-install:
-  - pip install meson
+before_install:
+  - wget https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.11.0/alpine-chroot-install
+  - sudo sh ./alpine-chroot-install
 
-script:
-  - meson build
-  - ninja -C build
-  - meson test -C build
+jobs:
+  include:
+    - name: Coding style check
+      language: minimal
+      install:
+        - /alpine/enter-chroot apk add clang
+      script:
+        - /alpine/enter-chroot clang-format wob.c test.c --output-replacements-xml | (! grep '</replacement>' 1>/dev/null)
+    - name: Tests
+      language: minimal
+      install:
+        - /alpine/enter-chroot apk add wayland-protocols wayland-dev meson gcc
+      script:
+        - /alpine/enter-chroot meson build
+        - /alpine/enter-chroot ninja -C build
+        - /alpine/enter-chroot meson test -C build
