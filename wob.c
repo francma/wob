@@ -5,6 +5,8 @@
 #define DEFAULT_BAR_PADDING 4
 #define DEFAULT_ANCHOR 0
 #define DEFAULT_MARGIN 0
+#define MIN_PERCENTAGE_BAR_WIDTH 1
+#define MIN_PERCENTAGE_BAR_HEIGHT 1
 
 #define BLACK 0xFF000000
 #define WHITE 0xFFFFFFFF
@@ -511,12 +513,12 @@ main(int argc, char **argv)
 		}
 	}
 
-	if (geom.width / 2 < 1 + geom.border_offset + geom.border_size + geom.bar_padding) {
+	if (geom.width < MIN_PERCENTAGE_BAR_WIDTH + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
 		fprintf(stderr, "Invalid geometry: width is too small for given parameters\n");
 		return EXIT_FAILURE;
 	}
 
-	if (geom.height / 2 < 1 + geom.border_offset + geom.border_size + geom.bar_padding) {
+	if (geom.height < MIN_PERCENTAGE_BAR_HEIGHT + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
 		fprintf(stderr, "Invalid geometry: height is too small for given parameters\n");
 		return EXIT_FAILURE;
 	}
