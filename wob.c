@@ -494,7 +494,7 @@ main(int argc, char **argv)
 				break;
 			case 'M':
 				geom.margin = pedantic_strtoul(optarg, &strtoul_end, 10);
-				if (geom.margin < 0) {
+				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Anchor margin must be a positive value.");
 					return EXIT_FAILURE;
 				}
