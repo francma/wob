@@ -10,6 +10,7 @@ env:
 
 before_install:
   - wget https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.11.0/alpine-chroot-install
+  - echo 'df472cbd2dc93eb0b3126d06209363c4fc328ea3' alpine-chroot-install | sha1sum -c
   - sudo sh ./alpine-chroot-install
 
 jobs:
