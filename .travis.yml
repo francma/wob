@@ -11,7 +11,7 @@ env:
 before_install:
   - wget https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.11.0/alpine-chroot-install
   - echo 'df472cbd2dc93eb0b3126d06209363c4fc328ea3' alpine-chroot-install | sha1sum -c
-  - sudo sh ./alpine-chroot-install
+  - sudo sh ./alpine-chroot-install -k 'ARCH CI QEMU_EMULATOR TRAVIS_.* CC'
 
 jobs:
   include:
@@ -21,11 +21,18 @@ jobs:
         - /alpine/enter-chroot apk add clang
       script:
         - /alpine/enter-chroot clang-format wob.c test.c --output-replacements-xml | (! grep '</replacement>' 1>/dev/null)
-    - name: Tests
+    - &test
+      name: Test GCC
       language: minimal
+      env:
+        - CC=gcc
       install:
-        - /alpine/enter-chroot apk add wayland-protocols wayland-dev meson gcc
+        - /alpine/enter-chroot apk add wayland-protocols wayland-dev meson $CC
       script:
         - /alpine/enter-chroot meson build
         - /alpine/enter-chroot ninja -C build
         - /alpine/enter-chroot meson test -C build
+    - <<: *test
+      name: Test Clang
+      env:
+        - CC=clang
