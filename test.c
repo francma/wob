@@ -5,9 +5,9 @@ int
 main(int argc, char **argv)
 {
 	unsigned long percentage;
-	argb_color background_color;
-	argb_color border_color;
-	argb_color bar_color;
+	argb_color background_color = 0;
+	argb_color border_color = 0;
+	argb_color bar_color = 0;
 	char *input;
 	bool result;
 
