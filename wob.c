@@ -29,6 +29,15 @@
 #include <sys/mman.h> // shm
 #include <unistd.h>   // shm, ftruncate
 
+#ifdef WOB_USE_SECCOMP
+#include <linux/audit.h>
+#include <linux/filter.h>
+#include <linux/seccomp.h>
+#include <linux/signal.h>
+#include <seccomp.h>
+#include <sys/ptrace.h>
+#endif
+
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-shell-client-protocol.h"
 
@@ -385,6 +394,51 @@ wob_draw_percentage(const struct wob_geom *geom, argb_color *argb, argb_color ba
 	}
 }
 
+void
+wob_pledge(void)
+{
+#ifdef WOB_USE_SECCOMP
+	const int scmp_sc[] = {
+		SCMP_SYS(close),
+		SCMP_SYS(exit),
+		SCMP_SYS(exit_group),
+		SCMP_SYS(fcntl),
+		SCMP_SYS(fstat),
+		SCMP_SYS(poll),
+		SCMP_SYS(read),
+		SCMP_SYS(readv),
+		SCMP_SYS(recvmsg),
+		SCMP_SYS(restart_syscall),
+		SCMP_SYS(sendmsg),
+		SCMP_SYS(write),
+		SCMP_SYS(writev),
+	};
+
+	int ret;
+	scmp_filter_ctx scmp_ctx = seccomp_init(SCMP_ACT_KILL);
+	if (scmp_ctx == NULL) {
+		fprintf(stderr, "seccomp_init(SCMP_ACT_KILL) failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+	for (size_t i = 0; i < sizeof(scmp_sc) / sizeof(int); ++i) {
+		if ((ret = seccomp_rule_add(scmp_ctx, SCMP_ACT_ALLOW, scmp_sc[i], 0)) < 0) {
+			fprintf(stderr, "seccomp_rule_add(scmp_ctxm, SCMP_ACT_ALLOW, %d) failed with return value %d\n", scmp_sc[i], ret);
+			seccomp_release(scmp_ctx);
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	if ((ret = seccomp_load(scmp_ctx)) < 0) {
+		fprintf(stderr, "seccomp_load(scmp_ctx) failed with return value %d\n", ret);
+		seccomp_release(scmp_ctx);
+		exit(EXIT_FAILURE);
+	}
+
+	seccomp_release(scmp_ctx);
+#endif
+}
+
 #ifndef WOB_TEST
 int
 main(int argc, char **argv)
@@ -535,6 +589,8 @@ main(int argc, char **argv)
 	argb_color *argb = wob_create_argb_buffer(&app);
 	assert(argb);
 	assert(app.shmid);
+
+	wob_pledge();
 
 	argb_color background_color = BLACK;
 	argb_color bar_color = WHITE;

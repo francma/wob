@@ -14,6 +14,11 @@ wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
 
+seccomp = dependency('libseccomp', required: get_option('seccomp'))
+if seccomp.found()
+  add_project_arguments('-DWOB_USE_SECCOMP', language: 'c')
+endif
+
 wob_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
 
@@ -58,14 +63,14 @@ endforeach
 executable(
   'wob',
   'wob.c',
-  dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  dependencies: [seccomp, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
   install: true
 )
 
 e = executable(
   'wob-test', 
   'test.c',
-  dependencies: [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  dependencies: [seccomp, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
   c_args: ['-Wno-unused-function']
 )
 test('wob-test', e)
