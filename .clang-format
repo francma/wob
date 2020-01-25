@@ -16,3 +16,4 @@ IndentWidth: 4
 UseTab: ForContinuationAndIndentation
 AlwaysBreakBeforeMultilineStrings: 'true'
 BinPackArguments: 'false'
+ForEachMacros: ['wl_list_for_each_safe', 'wl_list_for_each']
