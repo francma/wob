@@ -75,17 +75,6 @@ struct wob {
 	struct zwlr_layer_shell_v1 *zwlr_layer_shell;
 };
 
-unsigned long
-pedantic_strtoul(const char *restrict str, char **restrict str_end, int base)
-{
-	if (*str == '-' || *str == '+') {
-		*str_end = (char *) str;
-		return 0;
-	}
-
-	return strtoul(str, str_end, base);
-}
-
 void
 layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
 {
@@ -312,7 +301,7 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color 
 		return false;
 	}
 
-	*percentage = pedantic_strtoul(input_buffer, &input_ptr, 10);
+	*percentage = strtoul(input_buffer, &input_ptr, 10);
 	if (input_ptr == newline_position) {
 		return true;
 	}
@@ -321,19 +310,19 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color 
 		return false;
 	}
 	input_ptr += 2;
-	*background_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
+	*background_color = strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*border_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
+	*border_color = strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*bar_color = pedantic_strtoul(input_ptr, &input_ptr, 16);
+	*bar_color = strtoul(input_ptr, &input_ptr, 16);
 
 	if (*input_ptr != '\n') {
 		return false;
@@ -504,49 +493,49 @@ main(int argc, char **argv)
 	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:vh")) != -1) {
 		switch (c) {
 			case 't':
-				timeout_msec = pedantic_strtoul(optarg, &strtoul_end, 10);
+				timeout_msec = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0) {
 					fprintf(stderr, "Timeout must be a value between 1 and %lu.\n", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'm':
-				maximum = pedantic_strtoul(optarg, &strtoul_end, 10);
+				maximum = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0) {
 					fprintf(stderr, "Maximum must be a value between 1 and %lu.\n", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'W':
-				geom.width = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.width = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Width must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'H':
-				geom.height = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.height = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Height must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'o':
-				geom.border_offset = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.border_offset = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Border offset must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'b':
-				geom.border_size = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.border_size = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Border size must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'p':
-				geom.bar_padding = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.bar_padding = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Bar padding must be a positive value.");
 					return EXIT_FAILURE;
@@ -571,7 +560,7 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'M':
-				geom.margin = pedantic_strtoul(optarg, &strtoul_end, 10);
+				geom.margin = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
 					fprintf(stderr, "Anchor margin must be a positive value.");
 					return EXIT_FAILURE;
