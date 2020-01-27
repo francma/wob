@@ -39,7 +39,6 @@
 #endif
 
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "xdg-shell-client-protocol.h"
 
 typedef uint32_t argb_color;
 
@@ -77,7 +76,6 @@ struct wob {
 	struct wl_registry *wl_registry;
 	struct wl_shm *wl_shm;
 	struct wob_geom *wob_geom;
-	struct xdg_wm_base *xdg_wm_base;
 	struct zwlr_layer_shell_v1 *zwlr_layer_shell;
 };
 
@@ -102,9 +100,6 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 	}
 	else if (strcmp(interface, wl_compositor_interface.name) == 0) {
 		app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
-	}
-	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-		app->xdg_wm_base = wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
 	}
 	else if (strcmp(interface, "wl_output") == 0) {
 		struct wob_output *output = calloc(1, sizeof(struct wob_output));
@@ -254,14 +249,12 @@ wob_destroy_surface(struct wob *app)
 
 	zwlr_layer_shell_v1_destroy(app->zwlr_layer_shell);
 	wl_registry_destroy(app->wl_registry);
-	xdg_wm_base_destroy(app->xdg_wm_base);
 	wl_buffer_destroy(app->wl_buffer);
 	wl_compositor_destroy(app->wl_compositor);
 	wl_shm_destroy(app->wl_shm);
 
 	app->zwlr_layer_shell = NULL;
 	app->wl_registry = NULL;
-	app->xdg_wm_base = NULL;
 	app->wl_buffer = NULL;
 	app->wl_compositor = NULL;
 	app->wl_shm = NULL;
@@ -677,7 +670,6 @@ main(int argc, char **argv)
 					assert(app.wl_compositor);
 					assert(app.wl_registry);
 					assert(app.wl_shm);
-					assert(app.xdg_wm_base);
 					assert(app.zwlr_layer_shell);
 					assert(&app.wob_outputs);
 				}
