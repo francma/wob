@@ -36,6 +36,7 @@ wayland_scanner_client = generator(
 
 client_protocols = [
   [wl_protocol_dir + '/stable/xdg-shell', 'xdg-shell.xml'],
+  [wl_protocol_dir + '/unstable/xdg-output', 'xdg-output-unstable-v1.xml'],
   [meson.source_root(), 'wlr-layer-shell-unstable-v1.xml'],
 ]
 
@@ -63,14 +64,14 @@ endforeach
 executable(
   'wob',
   'wob.c',
-  dependencies: [seccomp, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  dependencies: [seccomp, xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
   install: true
 )
 
 e = executable(
   'wob-test', 
   'test.c',
-  dependencies: [seccomp, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
+  dependencies: [seccomp, xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt],
   c_args: ['-Wno-unused-function']
 )
 test('wob-test', e)
