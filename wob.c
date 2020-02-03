@@ -58,9 +58,7 @@ struct wob_geom {
 struct wob_colors {
 	argb_color bar;
 	argb_color background;
-	argb_color background_old;
 	argb_color border;
-	argb_color border_old;
 };
 
 struct wob_output {
@@ -610,9 +608,9 @@ main(int argc, char **argv)
 		.background = BLACK,
 		.bar = WHITE,
 		.border = WHITE,
-		.background_old = 0,
-		.border_old = 0,
 	};
+
+	struct wob_colors old_colors = {0};
 
 	// Draw these at least once
 	wob_draw_background(app.wob_geom, argb, colors.background);
@@ -665,8 +663,7 @@ main(int argc, char **argv)
 					return EXIT_SUCCESS;
 				}
 
-				colors.background_old = colors.background;
-				colors.border_old = colors.border;
+				old_colors = colors;
 				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &colors) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
@@ -685,7 +682,7 @@ main(int argc, char **argv)
 					assert(&app.wob_outputs);
 				}
 
-				if (colors.background_old != colors.background || colors.border_old != colors.border) {
+				if (old_colors.background != colors.background || old_colors.border != colors.border) {
 					wob_draw_background(app.wob_geom, argb, colors.background);
 					wob_draw_border(app.wob_geom, argb, colors.border);
 				}
