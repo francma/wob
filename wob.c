@@ -55,6 +55,12 @@ struct wob_geom {
 	unsigned long margin;
 };
 
+struct wob_colors {
+	argb_color bar;
+	argb_color background;
+	argb_color border;
+};
+
 struct wob_output {
 	struct wl_list link;
 	struct wl_output *wl_output;
@@ -288,7 +294,7 @@ percentage bgColor borderColor barColor
 25 #FF000000 #FFFFFFFF #FFFFFFFF
 */
 bool
-wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color *background_color, argb_color *border_color, argb_color *bar_color)
+wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_colors *colors)
 {
 	char *input_ptr, *newline_position;
 
@@ -310,19 +316,19 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, argb_color 
 		return false;
 	}
 	input_ptr += 2;
-	*background_color = strtoul(input_ptr, &input_ptr, 16);
+	colors->background = strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*border_color = strtoul(input_ptr, &input_ptr, 16);
+	colors->border = strtoul(input_ptr, &input_ptr, 16);
 
 	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
 		return false;
 	}
 	input_ptr += 2;
-	*bar_color = strtoul(input_ptr, &input_ptr, 16);
+	colors->bar = strtoul(input_ptr, &input_ptr, 16);
 
 	if (*input_ptr != '\n') {
 		return false;
@@ -598,13 +604,17 @@ main(int argc, char **argv)
 
 	wob_pledge();
 
-	argb_color background_color = BLACK;
-	argb_color bar_color = WHITE;
-	argb_color border_color = WHITE;
+	struct wob_colors colors = {
+		.background = BLACK,
+		.bar = WHITE,
+		.border = WHITE,
+	};
+
+	struct wob_colors old_colors = {0};
 
 	// Draw these at least once
-	wob_draw_background(app.wob_geom, argb, background_color);
-	wob_draw_border(app.wob_geom, argb, border_color);
+	wob_draw_background(app.wob_geom, argb, colors.background);
+	wob_draw_border(app.wob_geom, argb, colors.border);
 
 	struct pollfd fds[2] = {
 		{
@@ -617,7 +627,6 @@ main(int argc, char **argv)
 		},
 	};
 
-	argb_color old_background_color, old_border_color;
 	bool hidden = true;
 	for (;;) {
 		unsigned long percentage = 0;
@@ -654,9 +663,8 @@ main(int argc, char **argv)
 					return EXIT_SUCCESS;
 				}
 
-				old_background_color = background_color;
-				old_border_color = border_color;
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &background_color, &border_color, &bar_color) || percentage > maximum) {
+				old_colors = colors;
+				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &colors) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
 					wob_destroy(&app);
 					return EXIT_FAILURE;
@@ -674,11 +682,11 @@ main(int argc, char **argv)
 					assert(&app.wob_outputs);
 				}
 
-				if (old_background_color != background_color || old_border_color != border_color) {
-					wob_draw_background(app.wob_geom, argb, background_color);
-					wob_draw_border(app.wob_geom, argb, border_color);
+				if (old_colors.background != colors.background || old_colors.border != colors.border) {
+					wob_draw_background(app.wob_geom, argb, colors.background);
+					wob_draw_border(app.wob_geom, argb, colors.border);
 				}
-				wob_draw_percentage(app.wob_geom, argb, bar_color, background_color, percentage, maximum);
+				wob_draw_percentage(app.wob_geom, argb, colors.bar, colors.background, percentage, maximum);
 
 				wob_flush(&app);
 				hidden = false;
