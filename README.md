@@ -43,6 +43,7 @@ There are packages for the following Linux distributions:
 - [Alpine Linux package](https://pkgs.alpinelinux.org/packages?name=wob&branch=edge) [![Alpine Linux Edge package](https://repology.org/badge/version-for-repo/alpine_edge/wob.svg?header=)](https://repology.org/project/wob/versions)
 - [NixOS package](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/wob/default.nix) [![nixpkgs unstable package](https://repology.org/badge/version-for-repo/nix_unstable/wob.svg?header=)](https://repology.org/project/wob/versions)
 - [Void Linux package](https://github.com/void-linux/void-packages/blob/master/srcpkgs/wob/template) [![Void Linux x86_64 package](https://repology.org/badge/version-for-repo/void_x86_64/wob.svg?header=)](https://repology.org/project/wob/versions)
+- [Fedora package on the Copr](https://copr.fedorainfracloud.org/coprs/wef/wob/)
 
 ## Usage
 
