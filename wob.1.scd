@@ -48,6 +48,10 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *-M* <px>
 	Define anchor margin in pixels, defaults to 0.
 
+*-O* <name>
+	Define output to show bar on or '\*' for all. If ommited, focused output is chosen.
+	May be specified multiple times.
+
 # USAGE
 
 Launch wob in a terminal, enter a value (positive integer), press return.

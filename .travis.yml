@@ -20,7 +20,9 @@ jobs:
       install:
         - /alpine/enter-chroot apk add clang
       script:
-        - /alpine/enter-chroot clang-format wob.c test.c --output-replacements-xml | (! grep '</replacement>' 1>/dev/null)
+        - /alpine/enter-chroot clang-format wob.c test.c --output-replacements-xml > replacements.xml
+        - cat replacements.xml
+        - cat replacements.xml | (! grep '</replacement>' 1>/dev/null)
     - &test
       name: Test GCC
       language: minimal

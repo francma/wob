@@ -17,7 +17,6 @@
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
 #define _POSIX_C_SOURCE 200809L
-#include <assert.h>
 #include <errno.h>
 #include <fcntl.h> // shm
 #include <limits.h>
@@ -39,7 +38,7 @@
 #endif
 
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
-#include "xdg-shell-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 
 typedef uint32_t argb_color;
 
@@ -61,11 +60,24 @@ struct wob_colors {
 	argb_color border;
 };
 
+struct wob_output_config {
+	char *name;
+	struct wl_list link;
+};
+
+struct wob_surface {
+	struct zwlr_layer_surface_v1 *wlr_layer_surface;
+	struct wl_surface *wl_surface;
+};
+
 struct wob_output {
+	char *name;
 	struct wl_list link;
 	struct wl_output *wl_output;
-	struct wl_surface *wl_surface;
-	struct zwlr_layer_surface_v1 *zwlr_layer_surface;
+	struct wob *app;
+	struct wob_surface *wob_surface;
+	struct zxdg_output_v1 *xdg_output;
+	uint32_t wl_name;
 };
 
 struct wob {
@@ -74,12 +86,20 @@ struct wob {
 	struct wl_compositor *wl_compositor;
 	struct wl_display *wl_display;
 	struct wl_list wob_outputs;
+	struct wl_list output_configs;
 	struct wl_registry *wl_registry;
 	struct wl_shm *wl_shm;
 	struct wob_geom *wob_geom;
-	struct xdg_wm_base *xdg_wm_base;
-	struct zwlr_layer_shell_v1 *zwlr_layer_shell;
+	struct zwlr_layer_shell_v1 *wlr_layer_shell;
+	struct zxdg_output_manager_v1 *xdg_output_manager;
+	struct wob_surface *fallback_wob_surface;
 };
+
+void
+noop()
+{
+	/* intentionally left blank */
+}
 
 void
 layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint32_t serial, uint32_t w, uint32_t h)
@@ -88,13 +108,108 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint3
 }
 
 void
-layer_surface_closed(void *data, struct zwlr_layer_surface_v1 *surface)
+xdg_output_handle_name(void *data, struct zxdg_output_v1 *xdg_output, const char *name)
 {
+	struct wob_output *output = (struct wob_output *) data;
+	output->name = strdup(name);
+	if (output->name == NULL) {
+		fprintf(stderr, "strdup failed\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+struct wob_surface *
+wob_surface_create(struct wob *app, struct wl_output *wl_output)
+{
+	const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
+		.configure = layer_surface_configure,
+		.closed = noop,
+	};
+
+	struct wob_surface *wob_surface = calloc(1, sizeof(struct wob_surface));
+	if (wob_surface == NULL) {
+		fprintf(stderr, "calloc failed\n");
+		exit(EXIT_FAILURE);
+	}
+
+	wob_surface->wl_surface = wl_compositor_create_surface(app->wl_compositor);
+	if (wob_surface->wl_surface == NULL) {
+		fprintf(stderr, "wl_compositor_create_surface failed\n");
+		exit(EXIT_FAILURE);
+	}
+	wob_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, wob_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
+	if (wob_surface->wlr_layer_surface == NULL) {
+		fprintf(stderr, "wlr_layer_shell_v1_get_layer_surface failed\n");
+		exit(EXIT_FAILURE);
+	}
+	zwlr_layer_surface_v1_set_size(wob_surface->wlr_layer_surface, app->wob_geom->width, app->wob_geom->height);
+	zwlr_layer_surface_v1_set_anchor(wob_surface->wlr_layer_surface, app->wob_geom->anchor);
+	zwlr_layer_surface_v1_set_margin(wob_surface->wlr_layer_surface, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin);
+	zwlr_layer_surface_v1_add_listener(wob_surface->wlr_layer_surface, &zwlr_layer_surface_listener, app);
+	wl_surface_commit(wob_surface->wl_surface);
+
+	return wob_surface;
+}
+
+void
+wob_surface_destroy(struct wob_surface *wob_surface)
+{
+	if (wob_surface == NULL) {
+		return;
+	}
+
+	zwlr_layer_surface_v1_destroy(wob_surface->wlr_layer_surface);
+	wl_surface_destroy(wob_surface->wl_surface);
+
+	wob_surface->wl_surface = NULL;
+	wob_surface->wlr_layer_surface = NULL;
+}
+
+void
+wob_output_destroy(struct wob_output *output)
+{
+	wob_surface_destroy(output->wob_surface);
+	zxdg_output_v1_destroy(output->xdg_output);
+	wl_output_destroy(output->wl_output);
+
+	free(output->name);
+	free(output->wob_surface);
+
+	output->wob_surface = NULL;
+	output->wl_output = NULL;
+	output->xdg_output = NULL;
+	output->name = NULL;
+}
+
+void
+xdg_output_handle_done(void *data, struct zxdg_output_v1 *xdg_output)
+{
+	struct wob_output *output = (struct wob_output *) data;
+	struct wob *app = output->app;
+
+	struct wob_output_config *output_config, *tmp;
+	wl_list_for_each_safe (output_config, tmp, &app->output_configs, link) {
+		if (strcmp(output->name, output_config->name) == 0 || strcmp("*", output_config->name) == 0) {
+			wl_list_insert(&output->app->wob_outputs, &output->link);
+			return;
+		}
+	}
+
+	wob_output_destroy(output);
+	free(output);
 }
 
 void
 handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
 {
+	const static struct zxdg_output_v1_listener xdg_output_listener = {
+		.logical_position = noop,
+		.logical_size = noop,
+		.name = xdg_output_handle_name,
+		.description = noop,
+		.done = xdg_output_handle_done,
+	};
+
 	struct wob *app = (struct wob *) data;
 
 	if (strcmp(interface, wl_shm_interface.name) == 0) {
@@ -103,22 +218,41 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 	else if (strcmp(interface, wl_compositor_interface.name) == 0) {
 		app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
 	}
-	else if (strcmp(interface, xdg_wm_base_interface.name) == 0) {
-		app->xdg_wm_base = wl_registry_bind(registry, name, &xdg_wm_base_interface, 1);
-	}
 	else if (strcmp(interface, "wl_output") == 0) {
-		struct wob_output *output = calloc(1, sizeof(struct wob_output));
-		output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 1);
-		wl_list_insert(&app->wob_outputs, &output->link);
+		if (!wl_list_empty(&(app->output_configs))) {
+			struct wob_output *output = calloc(1, sizeof(struct wob_output));
+			output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 1);
+			output->app = app;
+			output->wl_name = name;
+
+			output->xdg_output = zxdg_output_manager_v1_get_xdg_output(app->xdg_output_manager, output->wl_output);
+			zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
+
+			if (wl_display_roundtrip(app->wl_display) == -1) {
+				fprintf(stderr, "wl_display_roundtrip failed\n");
+				exit(EXIT_FAILURE);
+			}
+		}
 	}
 	else if (strcmp(interface, zwlr_layer_shell_v1_interface.name) == 0) {
-		app->zwlr_layer_shell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 1);
+		app->wlr_layer_shell = wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, 1);
+	}
+	else if (strcmp(interface, zxdg_output_manager_v1_interface.name) == 0) {
+		app->xdg_output_manager = wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, 2);
 	}
 }
 
 void
 handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
+	struct wob *app = (struct wob *) data;
+	struct wob_output *output, *tmp;
+	wl_list_for_each_safe (output, tmp, &(app->wob_outputs), link) {
+		if (output->wl_name == name) {
+			wob_output_destroy(output);
+			break;
+		}
+	}
 }
 
 argb_color *
@@ -163,19 +297,109 @@ wob_create_argb_buffer(struct wob *app)
 }
 
 void
-wob_create_surface(struct wob *app)
+wob_flush(struct wob *app)
+{
+
+	if (wl_list_empty(&(app->wob_outputs))) {
+		wl_surface_attach(app->fallback_wob_surface->wl_surface, app->wl_buffer, 0, 0);
+		wl_surface_damage(app->fallback_wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
+		wl_surface_commit(app->fallback_wob_surface->wl_surface);
+	}
+	else {
+		struct wob_output *output, *tmp;
+		wl_list_for_each_safe (output, tmp, &(app->wob_outputs), link) {
+			wl_surface_attach(output->wob_surface->wl_surface, app->wl_buffer, 0, 0);
+			wl_surface_damage(output->wob_surface->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
+			wl_surface_commit(output->wob_surface->wl_surface);
+		}
+	}
+
+	if (wl_display_dispatch(app->wl_display) == -1) {
+		fprintf(stderr, "wl_display_dispatch failed\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+void
+wob_hide(struct wob *app)
+{
+	if (wl_list_empty(&(app->wob_outputs))) {
+		wob_surface_destroy(app->fallback_wob_surface);
+		free(app->fallback_wob_surface);
+		app->fallback_wob_surface = NULL;
+	}
+	else {
+		struct wob_output *output, *tmp;
+		wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
+			wob_surface_destroy(output->wob_surface);
+			free(output->wob_surface);
+			output->wob_surface = NULL;
+		}
+	}
+
+	if (wl_display_roundtrip(app->wl_display) == -1) {
+		fprintf(stderr, "wl_display_roundtrip failed\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+void
+wob_show(struct wob *app)
+{
+	if (wl_list_empty(&(app->wob_outputs))) {
+		app->fallback_wob_surface = wob_surface_create(app, NULL);
+	}
+	else {
+		struct wob_output *output, *tmp;
+		wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
+			output->wob_surface = wob_surface_create(app, output->wl_output);
+		}
+	}
+
+	if (wl_display_roundtrip(app->wl_display) == -1) {
+		fprintf(stderr, "wl_display_roundtrip failed\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+void
+wob_destroy(struct wob *app)
+{
+	struct wob_output *output, *output_tmp;
+	wl_list_for_each_safe (output, output_tmp, &app->wob_outputs, link) {
+		wob_output_destroy(output);
+		free(output);
+	}
+
+	struct wob_output_config *config, *config_tmp;
+	wl_list_for_each_safe (config, config_tmp, &app->output_configs, link) {
+		free(config->name);
+		free(config);
+	}
+
+	zwlr_layer_shell_v1_destroy(app->wlr_layer_shell);
+	wl_registry_destroy(app->wl_registry);
+	wl_buffer_destroy(app->wl_buffer);
+	wl_compositor_destroy(app->wl_compositor);
+	wl_shm_destroy(app->wl_shm);
+	zxdg_output_manager_v1_destroy(app->xdg_output_manager);
+
+	wl_display_disconnect(app->wl_display);
+}
+
+void
+wob_connect(struct wob *app)
 {
 	const static struct wl_registry_listener wl_registry_listener = {
 		.global = handle_global,
-		.global_remove = handle_global_remove,
+		.global_remove = noop,
 	};
 
-	const static struct zwlr_layer_surface_v1_listener zwlr_layer_surface_listener = {
-		.configure = layer_surface_configure,
-		.closed = layer_surface_closed,
-	};
-
-	wl_list_init(&app->wob_outputs);
+	app->wl_display = wl_display_connect(NULL);
+	if (app->wl_display == NULL) {
+		fprintf(stderr, "wl_display_connect failed\n");
+		exit(EXIT_FAILURE);
+	}
 
 	app->wl_registry = wl_display_get_registry(app->wl_display);
 	if (app->wl_registry == NULL) {
@@ -185,6 +409,7 @@ wob_create_surface(struct wob *app)
 
 	wl_registry_add_listener(app->wl_registry, &wl_registry_listener, app);
 
+	wl_list_init(&app->wob_outputs);
 	if (wl_display_roundtrip(app->wl_display) == -1) {
 		fprintf(stderr, "wl_display_roundtrip failed\n");
 		exit(EXIT_FAILURE);
@@ -202,90 +427,6 @@ wob_create_surface(struct wob *app)
 		fprintf(stderr, "wl_shm_pool_create_buffer failed\n");
 		exit(EXIT_FAILURE);
 	}
-
-	struct wob_output *output, *tmp;
-	wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
-		output->wl_surface = wl_compositor_create_surface(app->wl_compositor);
-		if (output->wl_surface == NULL) {
-			fprintf(stderr, "wl_compositor_create_surface failed\n");
-			exit(EXIT_FAILURE);
-		}
-
-		output->zwlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->zwlr_layer_shell, output->wl_surface, output->wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
-		if (output->zwlr_layer_surface == NULL) {
-			fprintf(stderr, "wl_compositor_create_surface failed\n");
-			exit(EXIT_FAILURE);
-		}
-		zwlr_layer_surface_v1_set_size(output->zwlr_layer_surface, app->wob_geom->width, app->wob_geom->height);
-		zwlr_layer_surface_v1_set_anchor(output->zwlr_layer_surface, app->wob_geom->anchor);
-		zwlr_layer_surface_v1_set_margin(output->zwlr_layer_surface, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin, app->wob_geom->margin);
-		zwlr_layer_surface_v1_add_listener(output->zwlr_layer_surface, &zwlr_layer_surface_listener, output);
-		wl_surface_commit(output->wl_surface);
-	}
-
-	if (wl_display_roundtrip(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_roundtrip failed\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
-void
-wob_flush(struct wob *app)
-{
-	struct wob_output *output, *tmp;
-	wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
-		wl_surface_attach(output->wl_surface, app->wl_buffer, 0, 0);
-		wl_surface_damage(output->wl_surface, 0, 0, app->wob_geom->width, app->wob_geom->height);
-		wl_surface_commit(output->wl_surface);
-	}
-
-	if (wl_display_dispatch(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_dispatch failed\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
-void
-wob_destroy_surface(struct wob *app)
-{
-	if (app->wl_registry == NULL) {
-		return;
-	}
-
-	zwlr_layer_shell_v1_destroy(app->zwlr_layer_shell);
-	wl_registry_destroy(app->wl_registry);
-	xdg_wm_base_destroy(app->xdg_wm_base);
-	wl_buffer_destroy(app->wl_buffer);
-	wl_compositor_destroy(app->wl_compositor);
-	wl_shm_destroy(app->wl_shm);
-
-	app->zwlr_layer_shell = NULL;
-	app->wl_registry = NULL;
-	app->xdg_wm_base = NULL;
-	app->wl_buffer = NULL;
-	app->wl_compositor = NULL;
-	app->wl_shm = NULL;
-
-	struct wob_output *output, *tmp;
-	wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
-		zwlr_layer_surface_v1_destroy(output->zwlr_layer_surface);
-		wl_output_destroy(output->wl_output);
-		wl_surface_destroy(output->wl_surface);
-
-		free(output);
-	}
-
-	if (wl_display_roundtrip(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_roundtrip failed\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
-void
-wob_destroy(struct wob *app)
-{
-	wob_destroy_surface(app);
-	wl_display_disconnect(app->wl_display);
 }
 
 /*
@@ -458,28 +599,24 @@ main(int argc, char **argv)
 	const char *usage =
 		"Usage: wob [options]\n"
 		"\n"
-		"  -h      Show help message and quit.\n"
-		"  -v      Show the version number and quit.\n"
-		"  -t <ms> Hide wob after <ms> milliseconds, defaults to 1000.\n"
-		"  -m <%>  Define the maximum percentage, defaults to 100. \n"
-		"  -W <px> Define display width in pixels, defaults to 400. \n"
-		"  -H <px> Define display height in pixels, defaults to 50. \n"
-		"  -o <px> Define border offset in pixels, defaults to 4. \n"
-		"  -b <px> Define border size in pixels, defaults to 4. \n"
-		"  -p <px> Define bar padding in pixels, defaults to 4. \n"
-		"  -a <s>  Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
-		"          May be specified multiple times. \n"
-		"  -M <px> Define anchor margin in pixels, defaults to 0. \n"
+		"  -h        Show help message and quit.\n"
+		"  -v        Show the version number and quit.\n"
+		"  -t <ms>   Hide wob after <ms> milliseconds, defaults to 1000.\n"
+		"  -m <%>    Define the maximum percentage, defaults to 100. \n"
+		"  -W <px>   Define display width in pixels, defaults to 400. \n"
+		"  -H <px>   Define display height in pixels, defaults to 50. \n"
+		"  -o <px>   Define border offset in pixels, defaults to 4. \n"
+		"  -b <px>   Define border size in pixels, defaults to 4. \n"
+		"  -p <px>   Define bar padding in pixels, defaults to 4. \n"
+		"  -a <s>    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
+		"            May be specified multiple times. \n"
+		"  -M <px>   Define anchor margin in pixels, defaults to 0. \n"
+		"  -O <name> Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+		"            May be specified multiple times.\n"
 		"\n";
 
 	struct wob app = {0};
-
-	app.wl_display = wl_display_connect(NULL);
-	assert(app.wl_display);
-	if (app.wl_display == NULL) {
-		fprintf(stderr, "wl_display_connect failed\n");
-		return EXIT_FAILURE;
-	}
+	wl_list_init(&(app.output_configs));
 
 	// Parse arguments
 	int c;
@@ -495,8 +632,9 @@ main(int argc, char **argv)
 		.margin = DEFAULT_MARGIN,
 	};
 	char *strtoul_end;
+	struct wob_output_config *output_config;
 
-	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:vh")) != -1) {
+	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh")) != -1) {
 		switch (c) {
 			case 't':
 				timeout_msec = strtoul(optarg, &strtoul_end, 10);
@@ -572,6 +710,21 @@ main(int argc, char **argv)
 					return EXIT_FAILURE;
 				}
 				break;
+			case 'O':
+				output_config = calloc(1, sizeof(struct wob_output_config));
+				if (output_config == NULL) {
+					fprintf(stderr, "calloc failed\n");
+					return EXIT_FAILURE;
+				}
+
+				output_config->name = strdup(optarg);
+				if (output_config->name == NULL) {
+					fprintf(stderr, "strdup failed\n");
+					return EXIT_FAILURE;
+				}
+
+				wl_list_insert(&(app.output_configs), &(output_config->link));
+				break;
 			case 'v':
 				fprintf(stdout, "wob version: " WOB_VERSION "\n");
 				return EXIT_SUCCESS;
@@ -599,8 +752,8 @@ main(int argc, char **argv)
 	app.wob_geom = &geom;
 
 	argb_color *argb = wob_create_argb_buffer(&app);
-	assert(argb);
-	assert(app.shmid);
+
+	wob_connect(&app);
 
 	wob_pledge();
 
@@ -640,7 +793,7 @@ main(int argc, char **argv)
 				return EXIT_FAILURE;
 			case 0:
 				if (!hidden) {
-					wob_destroy_surface(&app);
+					wob_hide(&app);
 				}
 
 				hidden = true;
@@ -671,15 +824,7 @@ main(int argc, char **argv)
 				}
 
 				if (hidden) {
-					wob_create_surface(&app);
-
-					assert(app.wl_buffer);
-					assert(app.wl_compositor);
-					assert(app.wl_registry);
-					assert(app.wl_shm);
-					assert(app.xdg_wm_base);
-					assert(app.zwlr_layer_shell);
-					assert(&app.wob_outputs);
+					wob_show(&app);
 				}
 
 				if (old_colors.background != colors.background || old_colors.border != colors.border) {
