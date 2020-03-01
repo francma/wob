@@ -1,7 +1,7 @@
 project(
   'wob',
   'c',
-  version: '0.6',
+  version: '0.8',
   license: 'ISC',
   default_options: ['c_std=c99']
   )
