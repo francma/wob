@@ -56,8 +56,6 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 
 Launch wob in a terminal, enter a value (positive integer), press return.
 
-## General case
-
 You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. /tmp/wobpipe, on your filesystem using.
 
 ```
@@ -78,32 +76,9 @@ echo 43 > /tmp/wobpipe
 
 Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled by the window manager).
 
-## Sway WM example
+# ENVIRONMENT
 
-Add these lines to your Sway config file:
+The following environment variables have an effect on wob:
 
-```
-exec mkfifo $SWAYSOCK.wob && tail -f $SWAYSOCK.wob | wob
-```
-
-Volume using alsa:
-
-```
-bindsym XF86AudioRaiseVolume exec amixer -q set Master 2%+ unmute && amixer sget Master | grep 'Right:' | awk -F'[][]' '{ print substr($2, 0, length($2)-1) }' > $SWAYSOCK.wob++
-bindsym XF86AudioLowerVolume exec amixer -q set Master 2%- unmute && amixer sget Master | grep 'Right:' | awk -F'[][]' '{ print substr($2, 0, length($2)-1) }' > $SWAYSOCK.wob++
-bindsym XF86AudioMute exec (amixer get Master | grep off > /dev/null && amixer -q set Master unmute && amixer sget Master | grep 'Right:' | awk -F'[][]' '{ print substr($2, 0, length($2)-1) }' > $SWAYSOCK.wob) || (amixer -q set Master mute && echo 0 > $SWAYSOCK.wob)
-```
-
-Volume using pulse audio:
-
-```
-bindsym XF86AudioRaiseVolume exec pamixer -ui 2 && pamixer --get-volume > $SWAYSOCK.wob
-bindsym XF86AudioLowerVolume exec pamixer -ud 2 && pamixer --get-volume > $SWAYSOCK.wob
-```
-
-Brightness using haikarainen/light:
-
-```
-bindsym XF86MonBrightnessUp exec light -A 5 && light -G | cut -d'.' -f1 > $SWAYSOCK.wob
-bindsym XF86MonBrightnessDown exec light -U 5 && light -G | cut -d'.' -f1 > $SWAYSOCK.wob
-```
+*WOB_DISABLE_PLEDGE*
+	Disable seccomp call on Linux. Set this if you are havind trouble running wob with tools like valgrind or strace.
