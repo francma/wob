@@ -792,7 +792,6 @@ main(int argc, char **argv)
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
 				perror("poll");
-				wob_destroy(&app);
 				return EXIT_FAILURE;
 			case 0:
 				if (!hidden) {
@@ -804,7 +803,6 @@ main(int argc, char **argv)
 			default:
 				if (fds[0].revents & POLLIN) {
 					if (wl_display_dispatch(app.wl_display) == -1) {
-						wob_destroy(&app);
 						return EXIT_FAILURE;
 					}
 				}
