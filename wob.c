@@ -813,6 +813,9 @@ main(int argc, char **argv)
 
 				fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
 				if (feof(stdin)) {
+					if (!hidden) {
+						wob_hide(&app);
+					}
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
@@ -820,6 +823,9 @@ main(int argc, char **argv)
 				old_colors = colors;
 				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &colors) || percentage > maximum) {
 					fprintf(stderr, "Received invalid input\n");
+					if (!hidden) {
+						wob_hide(&app);
+					}
 					wob_destroy(&app);
 					return EXIT_FAILURE;
 				}
