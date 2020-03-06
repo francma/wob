@@ -755,7 +755,10 @@ main(int argc, char **argv)
 
 	wob_connect(&app);
 
-	wob_pledge();
+	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
+	if (disable_pledge_env == NULL || strcmp(disable_pledge_env, "0") == 0) {
+		wob_pledge();
+	}
 
 	struct wob_colors colors = {
 		.background = BLACK,
