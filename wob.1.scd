@@ -14,43 +14,52 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 
 # OPTIONS
 
-*-h*
+*-h, --help*
 	Show help message and quit.
 
-*-v*
+*-v, --version*
 	Show the version number and quit.
 
-*-t* <ms> 
+*-t --timeout* <ms> 
 	Hide wob after <ms> milliseconds, defaults to 1000.
 
-*-m* <%>
+*-m --max* <%>
 	Define the maximum percentage, defaults to 100.
 
-*-W* <px>
+*-W --width* <px>
 	Define bar width in pixels, defaults to 400.
 
-*-H* <px>
+*-H --height* <px>
 	Define bar height in pixels, defaults to 50.
 
-*-o* <px>
+*-o --output* <px>
 	Define border offset in pixels, defaults to 4.
 
-*-b* <px>
+*-b --border* <px>
 	Define border size in pixels, defaults to 4.
 
-*-p* <px>
+*-p --padding* <px>
 	Define bar padding in pixels, defaults to 4.
 
-*-a* <side>
+*-a --anchor* <side>
 	Define anchor point, one of 'top', 'left', 'right', 'bottom', 'center' (default).
 	May be specified multiple times.
 
-*-M* <px>
+*-M --margin* <px>
 	Define anchor margin in pixels, defaults to 0.
 
-*-O* <name>
+*-O --output* <name>
 	Define output to show bar on or '\*' for all. If ommited, focused output is chosen.
 	May be specified multiple times.
+
+*--border-color* <#argb>
+	Define border color
+
+*--background-color* <#argb>
+	Define background color
+
+*--bar-color* <#argb>
+	Define bar color
 
 # USAGE
 

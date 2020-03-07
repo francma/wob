@@ -18,15 +18,16 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
-#include <fcntl.h> // shm
+#include <fcntl.h>
+#include <getopt.h>
 #include <limits.h>
 #include <poll.h>
-#include <stdbool.h>  // true, false
-#include <stdio.h>    // NULL
-#include <stdlib.h>   // EXIT_FAILURE
-#include <string.h>   // strcmp
-#include <sys/mman.h> // shm
-#include <unistd.h>   // shm, ftruncate
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/mman.h>
+#include <unistd.h>
 
 #ifdef WOB_USE_SECCOMP
 #include <linux/audit.h>
@@ -429,15 +430,33 @@ wob_connect(struct wob *app)
 	}
 }
 
-/*
-Input format:
-percentage bgColor borderColor barColor
-25 #FF000000 #FFFFFFFF #FFFFFFFF
-*/
+bool 
+wob_parse_color(const char *restrict str, char **restrict str_end, argb_color *color)
+{
+	char *strtoul_end;
+
+	if(str[0] != '#') {
+		return false;
+	}
+	str += 1;
+
+	unsigned long ul = strtoul(str, &strtoul_end, 16);
+	if (ul > 0xFFFFFFFF || errno == ERANGE || (str + sizeof("FFFFFFFF") - 1) != strtoul_end) {
+		return false;
+	}
+
+	*color = ul;
+	if (str_end) {
+		*str_end = strtoul_end;
+	}
+
+	return true;
+}
+
 bool
 wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_colors *colors)
 {
-	char *input_ptr, *newline_position;
+	char *input_ptr, *newline_position, *str_end;
 
 	newline_position = strchr(input_buffer, '\n');
 	if (newline_position == NULL) {
@@ -453,29 +472,26 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_
 		return true;
 	}
 
-	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
-		return false;
-	}
-	input_ptr += 2;
-	colors->background = strtoul(input_ptr, &input_ptr, 16);
+	argb_color *colors_to_parse[3] = {
+		&(colors->background),
+		&(colors->border),
+		&(colors->bar),
+	};
 
-	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
-		return false;
-	}
-	input_ptr += 2;
-	colors->border = strtoul(input_ptr, &input_ptr, 16);
+	for (size_t i = 0; i < sizeof(colors_to_parse) / sizeof(argb_color *); ++i) {
+		if (input_ptr[0] != ' ') {
+			return false;
+		}
+		input_ptr += 1;
 
-	if (input_ptr + 10 > newline_position || input_ptr[0] != ' ' || input_ptr[1] != '#') {
-		return false;
-	}
-	input_ptr += 2;
-	colors->bar = strtoul(input_ptr, &input_ptr, 16);
+		if (!wob_parse_color(input_ptr, &str_end, colors_to_parse[i])) {
+			return false;
+		}
 
-	if (*input_ptr != '\n') {
-		return false;
+		input_ptr = str_end;
 	}
 
-	return true;
+	return input_ptr == newline_position;
 }
 
 void
@@ -599,20 +615,23 @@ main(int argc, char **argv)
 	const char *usage =
 		"Usage: wob [options]\n"
 		"\n"
-		"  -h        Show help message and quit.\n"
-		"  -v        Show the version number and quit.\n"
-		"  -t <ms>   Hide wob after <ms> milliseconds, defaults to 1000.\n"
-		"  -m <%>    Define the maximum percentage, defaults to 100. \n"
-		"  -W <px>   Define display width in pixels, defaults to 400. \n"
-		"  -H <px>   Define display height in pixels, defaults to 50. \n"
-		"  -o <px>   Define border offset in pixels, defaults to 4. \n"
-		"  -b <px>   Define border size in pixels, defaults to 4. \n"
-		"  -p <px>   Define bar padding in pixels, defaults to 4. \n"
-		"  -a <s>    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
-		"            May be specified multiple times. \n"
-		"  -M <px>   Define anchor margin in pixels, defaults to 0. \n"
-		"  -O <name> Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
-		"            May be specified multiple times.\n"
+		"  -h, --help                 Show help message and quit.\n"
+		"  -v, --version              Show the version number and quit.\n"
+		"  -t, --timeout <ms>         Hide wob after <ms> milliseconds, defaults to 1000.\n"
+		"  -m, --max <%>              Define the maximum percentage, defaults to 100. \n"
+		"  -W, --width <px>           Define bar width in pixels, defaults to 400. \n"
+		"  -H, --height <px>          Define bar height in pixels, defaults to 50. \n"
+		"  -o, --offset <px>          Define border offset in pixels, defaults to 4. \n"
+		"  -b, --border <px>          Define border size in pixels, defaults to 4. \n"
+		"  -p, --padding <px>         Define bar padding in pixels, defaults to 4. \n"
+		"  -a, --anchor <s>           Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
+		"                             May be specified multiple times. \n"
+		"  -M, --margin <px>          Define anchor margin in pixels, defaults to 0. \n"
+		"  -O, --output <name>        Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+		"                             May be specified multiple times.\n"
+		"  --border-color <#argb>     Define border color\n"
+		"  --background-color <#argb> Define background color\n"
+		"  --bar-color <#argb>        Define bar color\n"
 		"\n";
 
 	struct wob app = {0};
@@ -633,9 +652,52 @@ main(int argc, char **argv)
 	};
 	char *strtoul_end;
 	struct wob_output_config *output_config;
+	struct wob_colors colors = {
+		.background = BLACK,
+		.bar = WHITE,
+		.border = WHITE,
+	};
 
-	while ((c = getopt(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh")) != -1) {
+	static struct option long_options[] = {
+		{"help", no_argument, NULL, 'h'},
+		{"version", no_argument, NULL, 'v'},
+		{"timeout", required_argument, NULL, 't'},
+		{"max", required_argument, NULL, 'm'},
+		{"width", required_argument, NULL, 'W'},
+		{"height", required_argument, NULL, 'H'},
+		{"offset", required_argument, NULL, 'o'},
+		{"border", required_argument, NULL, 'b'},
+		{"padding", required_argument, NULL, 'p'},
+		{"anchor", required_argument, NULL, 'a'},
+		{"margin", required_argument, NULL, 'M'},
+		{"output", required_argument, NULL, 'O'},
+		{"border-color", required_argument, NULL, 1},
+		{"background-color", required_argument, NULL, 2},
+		{"bar-color", required_argument, NULL, 3},
+	};
+
+	int option_index = 0;
+
+	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh", long_options, &option_index)) != -1) {
 		switch (c) {
+			case 1:
+				if (!wob_parse_color(optarg, &strtoul_end, &colors.border)) {
+					fprintf(stderr, "Border color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 2:
+				if (!wob_parse_color(optarg, &strtoul_end, &colors.background)) {
+					fprintf(stderr, "Background color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 3:
+				if (!wob_parse_color(optarg, &strtoul_end, &colors.bar)) {
+					fprintf(stderr, "Bar color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
 			case 't':
 				timeout_msec = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0) {
@@ -759,12 +821,6 @@ main(int argc, char **argv)
 	if (disable_pledge_env == NULL || strcmp(disable_pledge_env, "0") == 0) {
 		wob_pledge();
 	}
-
-	struct wob_colors colors = {
-		.background = BLACK,
-		.bar = WHITE,
-		.border = WHITE,
-	};
 
 	struct wob_colors old_colors = {0};
 
