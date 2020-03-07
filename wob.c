@@ -430,12 +430,12 @@ wob_connect(struct wob *app)
 	}
 }
 
-bool 
+bool
 wob_parse_color(const char *restrict str, char **restrict str_end, argb_color *color)
 {
 	char *strtoul_end;
 
-	if(str[0] != '#') {
+	if (str[0] != '#') {
 		return false;
 	}
 	str += 1;
