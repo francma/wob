@@ -1,3 +1,21 @@
+#define WOB_DEFAULT_WIDTH 400
+#define WOB_DEFAULT_HEIGHT 50
+#define WOB_DEFAULT_BORDER_OFFSET 4
+#define WOB_DEFAULT_BORDER_SIZE 4
+#define WOB_DEFAULT_BAR_PADDING 4
+#define WOB_DEFAULT_ANCHOR 0
+#define WOB_DEFAULT_MARGIN 0
+#define WOB_DEFAULT_MAXIMUM 100
+#define WOB_DEFAULT_TIMEOUT 1000
+#define WOB_DEFAULT_BAR_COLOR 0xFFFFFFFF
+#define WOB_DEFAULT_BACKGROUND_COLOR 0xFF000000
+#define WOB_DEFAULT_BORDER_COLOR 0xFFFFFFFF
+
+#define MIN_PERCENTAGE_BAR_WIDTH 1
+#define MIN_PERCENTAGE_BAR_HEIGHT 1
+
+#define STR(x) #x
+
 // sizeof already includes NULL byte
 #define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #FF000000 #FFFFFFFF #FFFFFFFF\n"))
 
@@ -5,6 +23,8 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
+#include <getopt.h>
+#include <limits.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -13,7 +33,6 @@
 #include <unistd.h>
 
 #include "buffer.h"
-#include "options.h"
 #include "parse.h"
 #include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -437,51 +456,205 @@ wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, uint32_t bar_co
 int
 main(int argc, char **argv)
 {
-	struct wob_options options;
-	if (!wob_getopt(argc, argv, &options)) {
-		return EXIT_FAILURE;
-	}
+	const char *usage =
+		"Usage: wob [options]\n"
+		"\n"
+		"  -h, --help                 Show help message and quit.\n"
+		"  -v, --version              Show the version number and quit.\n"
+		"  -t, --timeout <ms>         Hide wob after <ms> milliseconds, defaults to " STR(WOB_DEFAULT_TIMEOUT) ".\n"
+		"  -m, --max <%>              Define the maximum percentage, defaults to " STR(WOB_DEFAULT_MAXIMUM) ". \n"
+		"  -W, --width <px>           Define bar width in pixels, defaults to " STR(WOB_DEFAULT_WIDTH) ". \n"
+		"  -H, --height <px>          Define bar height in pixels, defaults to " STR(WOB_DEFAULT_HEIGHT) ". \n"
+		"  -o, --offset <px>          Define border offset in pixels, defaults to " STR(WOB_DEFAULT_BORDER_OFFSET) ". \n"
+		"  -b, --border <px>          Define border size in pixels, defaults to " STR(WOB_DEFAULT_BORDER_SIZE) ". \n"
+		"  -p, --padding <px>         Define bar padding in pixels, defaults to " STR(WOB_DEFAULT_BAR_PADDING) ". \n"
+		"  -a, --anchor <s>           Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
+		"                             May be specified multiple times. \n"
+		"  -M, --margin <px>          Define anchor margin in pixels, defaults to " STR(WOB_DEFAULT_MARGIN) ". \n"
+		"  -O, --output <name>        Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+		"                             May be specified multiple times.\n"
+		"  --border-color <#argb>     Define border color\n"
+		"  --background-color <#argb> Define background color\n"
+		"  --bar-color <#argb>        Define bar color\n"
+		"\n";
 
 	struct wob app = {0};
 	wl_list_init(&(app.output_configs));
 
-	unsigned long maximum = options.maximum;
-	unsigned long timeout_msec = options.timeout_msec;
+	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
+	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
 	struct wob_geom geom = {
-		.width = options.bar_width,
-		.height = options.bar_height,
-		.border_offset = options.border_offset,
-		.border_size = options.border_size,
-		.bar_padding = options.bar_padding,
-		.anchor = options.bar_anchor,
-		.margin = options.bar_margin,
+		.width = WOB_DEFAULT_WIDTH,
+		.height = WOB_DEFAULT_HEIGHT,
+		.border_offset = WOB_DEFAULT_BORDER_OFFSET,
+		.border_size = WOB_DEFAULT_BORDER_SIZE,
+		.bar_padding = WOB_DEFAULT_BAR_PADDING,
+		.anchor = WOB_DEFAULT_ANCHOR,
+		.margin = WOB_DEFAULT_MARGIN,
 	};
 	struct wob_colors colors = {
-		.background = options.background_color,
-		.bar = options.bar_color,
-		.border = options.border_color,
+		.background = WOB_DEFAULT_BACKGROUND_COLOR,
+		.bar = WOB_DEFAULT_BAR_COLOR,
+		.border = WOB_DEFAULT_BORDER_COLOR,
 	};
-	bool pledge = options.pledge;
+	bool pledge = true;
 
-	struct wob_output_name *output_name, *output_name_tmp;
-	struct wob_output_config *output_config;
-	wl_list_for_each_safe (output_name, output_name_tmp, &options.outputs, link) {
-		output_config = calloc(1, sizeof(struct wob_output_config));
-		if (output_config == NULL) {
-			fprintf(stderr, "calloc failed\n");
-			return EXIT_FAILURE;
-		}
-
-		output_config->name = strdup(output_name->name);
-		if (output_config->name == NULL) {
-			fprintf(stderr, "strdup failed\n");
-			return EXIT_FAILURE;
-		}
-
-		wl_list_insert(&(app.output_configs), &(output_config->link));
+	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
+	if (disable_pledge_env != NULL && strcmp(disable_pledge_env, "0") != 0) {
+		pledge = false;
 	}
 
-	wob_options_destroy(&options);
+	struct wob_output_config *output_config;
+	int option_index = 0;
+	int c;
+	char *strtoul_end;
+	static struct option long_options[] = {
+		{"help", no_argument, NULL, 'h'},
+		{"version", no_argument, NULL, 'v'},
+		{"timeout", required_argument, NULL, 't'},
+		{"max", required_argument, NULL, 'm'},
+		{"width", required_argument, NULL, 'W'},
+		{"height", required_argument, NULL, 'H'},
+		{"offset", required_argument, NULL, 'o'},
+		{"border", required_argument, NULL, 'b'},
+		{"padding", required_argument, NULL, 'p'},
+		{"anchor", required_argument, NULL, 'a'},
+		{"margin", required_argument, NULL, 'M'},
+		{"output", required_argument, NULL, 'O'},
+		{"border-color", required_argument, NULL, 1},
+		{"background-color", required_argument, NULL, 2},
+		{"bar-color", required_argument, NULL, 3},
+	};
+	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh", long_options, &option_index)) != -1) {
+		switch (c) {
+			case 1:
+				if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) {
+					fprintf(stderr, "Border color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 2:
+				if (!wob_parse_color(optarg, &strtoul_end, &(colors.background))) {
+					fprintf(stderr, "Background color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 3:
+				if (!wob_parse_color(optarg, &strtoul_end, &(colors.bar))) {
+					fprintf(stderr, "Bar color must be a value between #00000000 and #FFFFFFFF.\n");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 't':
+				timeout_msec = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0) {
+					fprintf(stderr, "Timeout must be a value between 1 and %lu.\n", ULONG_MAX);
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'm':
+				maximum = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0) {
+					fprintf(stderr, "Maximum must be a value between 1 and %lu.\n", ULONG_MAX);
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'W':
+				geom.width = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Width must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'H':
+				geom.height = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Height must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'o':
+				geom.border_offset = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Border offset must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'b':
+				geom.border_size = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Border size must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'p':
+				geom.bar_padding = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Bar padding must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'a':
+				if (strcmp(optarg, "left") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+				}
+				else if (strcmp(optarg, "right") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+				}
+				else if (strcmp(optarg, "top") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+				}
+				else if (strcmp(optarg, "bottom") == 0) {
+					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+				}
+				else if (strcmp(optarg, "center") != 0) {
+					fprintf(stderr, "Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'M':
+				geom.margin = strtoul(optarg, &strtoul_end, 10);
+				if (*strtoul_end != '\0' || errno == ERANGE) {
+					fprintf(stderr, "Anchor margin must be a positive value.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 'O':
+				output_config = calloc(1, sizeof(struct wob_output_config));
+				if (output_config == NULL) {
+					fprintf(stderr, "calloc failed\n");
+					return EXIT_FAILURE;
+				}
+
+				output_config->name = strdup(optarg);
+				if (output_config->name == NULL) {
+					fprintf(stderr, "strdup failed\n");
+					return EXIT_FAILURE;
+				}
+
+				wl_list_insert(&(app.output_configs), &(output_config->link));
+				break;
+			case 'v':
+				fprintf(stdout, "wob version: " WOB_VERSION "\n");
+				return EXIT_SUCCESS;
+			case 'h':
+				fprintf(stdout, "%s", usage);
+				return EXIT_SUCCESS;
+			default:
+				fprintf(stderr, "%s", usage);
+				return EXIT_FAILURE;
+		}
+	}
+
+	if (geom.width < MIN_PERCENTAGE_BAR_WIDTH + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
+		fprintf(stderr, "Invalid geometry: width is too small for given parameters\n");
+		return EXIT_FAILURE;
+	}
+
+	if (geom.height < MIN_PERCENTAGE_BAR_HEIGHT + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
+		fprintf(stderr, "Invalid geometry: height is too small for given parameters\n");
+		return EXIT_FAILURE;
+	}
 
 	geom.stride = geom.width * 4;
 	geom.size = geom.stride * geom.height;
