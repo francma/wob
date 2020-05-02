@@ -487,8 +487,14 @@ main(int argc, char **argv)
 	geom.size = geom.stride * geom.height;
 	app.wob_geom = &geom;
 
-	uint32_t *argb = NULL;
-	if (!wob_create_argb_buffer(app.wob_geom->size, &(app.shmid), &argb)) {
+	int shmid = wob_shm_create();
+	if (shmid < 0) {
+		return EXIT_FAILURE;
+	}
+	app.shmid = shmid;
+
+	uint32_t *argb = wob_shm_alloc(shmid, app.wob_geom->size);
+	if (argb == NULL) {
 		return EXIT_FAILURE;
 	}
 

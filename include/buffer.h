@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-bool wob_create_argb_buffer(const size_t size, int *shmid, uint32_t **buffer);
+int wob_shm_create();
+
+void *wob_shm_alloc(int shmid, size_t size);
 
 #endif
