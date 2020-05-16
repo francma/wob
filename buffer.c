@@ -1,13 +1,17 @@
+#define WOB_FILE "buffer.c"
+
 #define _POSIX_C_SOURCE 200112L
 
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <unistd.h>
 
 #include "buffer.h"
+#include "log.h"
 
 int
 wob_shm_create()
@@ -25,12 +29,12 @@ wob_shm_create()
 	}
 
 	if (shmid < 0) {
-		perror("shm_open");
+		wob_log_error("shm_open() failed: %s", strerror(errno));
 		return -1;
 	}
 
 	if (shm_unlink(shm_name) != 0) {
-		perror("shm_unlink");
+		wob_log_error("shm_unlink() failed: %s", strerror(errno));
 		return -1;
 	}
 
@@ -41,13 +45,13 @@ void *
 wob_shm_alloc(const int shmid, const size_t size)
 {
 	if (ftruncate(shmid, size) != 0) {
-		perror("ftruncate");
+		wob_log_error("ftruncate() failed: %s", strerror(errno));
 		return NULL;
 	}
 
 	void *buffer = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shmid, 0);
 	if (buffer == MAP_FAILED) {
-		perror("mmap");
+		wob_log_error("mmap() failed: %s", strerror(errno));
 		return NULL;
 	}
 

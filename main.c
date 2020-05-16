@@ -1,3 +1,5 @@
+#define WOB_FILE "main.c"
+
 #define WOB_DEFAULT_WIDTH 400
 #define WOB_DEFAULT_HEIGHT 50
 #define WOB_DEFAULT_BORDER_OFFSET 4
@@ -33,6 +35,7 @@
 #include <unistd.h>
 
 #include "buffer.h"
+#include "log.h"
 #include "parse.h"
 #include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
@@ -109,7 +112,7 @@ xdg_output_handle_name(void *data, struct zxdg_output_v1 *xdg_output, const char
 	struct wob_output *output = (struct wob_output *) data;
 	output->name = strdup(name);
 	if (output->name == NULL) {
-		fprintf(stderr, "strdup failed\n");
+		wob_log_error("strdup failed\n");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -124,18 +127,18 @@ wob_surface_create(struct wob *app, struct wl_output *wl_output)
 
 	struct wob_surface *wob_surface = calloc(1, sizeof(struct wob_surface));
 	if (wob_surface == NULL) {
-		fprintf(stderr, "calloc failed\n");
+		wob_log_error("calloc failed");
 		exit(EXIT_FAILURE);
 	}
 
 	wob_surface->wl_surface = wl_compositor_create_surface(app->wl_compositor);
 	if (wob_surface->wl_surface == NULL) {
-		fprintf(stderr, "wl_compositor_create_surface failed\n");
+		wob_log_error("wl_compositor_create_surface failed");
 		exit(EXIT_FAILURE);
 	}
 	wob_surface->wlr_layer_surface = zwlr_layer_shell_v1_get_layer_surface(app->wlr_layer_shell, wob_surface->wl_surface, wl_output, ZWLR_LAYER_SHELL_V1_LAYER_OVERLAY, "wob");
 	if (wob_surface->wlr_layer_surface == NULL) {
-		fprintf(stderr, "wlr_layer_shell_v1_get_layer_surface failed\n");
+		wob_log_error("wlr_layer_shell_v1_get_layer_surface failed");
 		exit(EXIT_FAILURE);
 	}
 	zwlr_layer_surface_v1_set_size(wob_surface->wlr_layer_surface, app->wob_geom->width, app->wob_geom->height);
@@ -225,7 +228,7 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 			zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
 
 			if (wl_display_roundtrip(app->wl_display) == -1) {
-				fprintf(stderr, "wl_display_roundtrip failed\n");
+				wob_log_error("wl_display_roundtrip failed");
 				exit(EXIT_FAILURE);
 			}
 		}
@@ -270,7 +273,7 @@ wob_flush(struct wob *app)
 	}
 
 	if (wl_display_dispatch(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_dispatch failed\n");
+		wob_log_error("wl_display_dispatch failed");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -293,7 +296,7 @@ wob_hide(struct wob *app)
 	}
 
 	if (wl_display_roundtrip(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_roundtrip failed\n");
+		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -312,7 +315,7 @@ wob_show(struct wob *app)
 	}
 
 	if (wl_display_roundtrip(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_roundtrip failed\n");
+		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -352,13 +355,13 @@ wob_connect(struct wob *app)
 
 	app->wl_display = wl_display_connect(NULL);
 	if (app->wl_display == NULL) {
-		fprintf(stderr, "wl_display_connect failed\n");
+		wob_log_error("wl_display_connect failed");
 		exit(EXIT_FAILURE);
 	}
 
 	app->wl_registry = wl_display_get_registry(app->wl_display);
 	if (app->wl_registry == NULL) {
-		fprintf(stderr, "wl_display_get_registry failed\n");
+		wob_log_error("wl_display_get_registry failed");
 		exit(EXIT_FAILURE);
 	}
 
@@ -366,20 +369,20 @@ wob_connect(struct wob *app)
 
 	wl_list_init(&app->wob_outputs);
 	if (wl_display_roundtrip(app->wl_display) == -1) {
-		fprintf(stderr, "wl_display_roundtrip failed\n");
+		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
 
 	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, app->wob_geom->size);
 	if (pool == NULL) {
-		fprintf(stderr, "wl_shm_create_pool failed\n");
+		wob_log_error("wl_shm_create_pool failed");
 		exit(EXIT_FAILURE);
 	}
 
 	app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->wob_geom->width, app->wob_geom->height, app->wob_geom->stride, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 	if (app->wl_buffer == NULL) {
-		fprintf(stderr, "wl_shm_pool_create_buffer failed\n");
+		wob_log_error("wl_shm_pool_create_buffer failed");
 		exit(EXIT_FAILURE);
 	}
 }
@@ -456,11 +459,15 @@ wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, uint32_t bar_co
 int
 main(int argc, char **argv)
 {
+	wob_log_use_colors(isatty(STDERR_FILENO));
+	wob_log_level_warn();
+
 	const char *usage =
 		"Usage: wob [options]\n"
 		"\n"
 		"  -h, --help                 Show help message and quit.\n"
-		"  -v, --version              Show the version number and quit.\n"
+		"  --version                  Show the version number and quit.\n"
+		"  -v                         Increase verbosity of messages, defaults to errors and warnings only\n"
 		"  -t, --timeout <ms>         Hide wob after <ms> milliseconds, defaults to " STR(WOB_DEFAULT_TIMEOUT) ".\n"
 		"  -m, --max <%>              Define the maximum percentage, defaults to " STR(WOB_DEFAULT_MAXIMUM) ". \n"
 		"  -W, --width <px>           Define bar width in pixels, defaults to " STR(WOB_DEFAULT_WIDTH) ". \n"
@@ -510,7 +517,7 @@ main(int argc, char **argv)
 	char *strtoul_end;
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
-		{"version", no_argument, NULL, 'v'},
+		{"version", no_argument, NULL, 4},
 		{"timeout", required_argument, NULL, 't'},
 		{"max", required_argument, NULL, 'm'},
 		{"width", required_argument, NULL, 'W'},
@@ -524,73 +531,74 @@ main(int argc, char **argv)
 		{"border-color", required_argument, NULL, 1},
 		{"background-color", required_argument, NULL, 2},
 		{"bar-color", required_argument, NULL, 3},
+		{"verbose", no_argument, NULL, 'v'},
 	};
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) {
-					fprintf(stderr, "Border color must be a value between #00000000 and #FFFFFFFF.\n");
+					wob_log_error("Border color must be a value between #00000000 and #FFFFFFFF.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 2:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.background))) {
-					fprintf(stderr, "Background color must be a value between #00000000 and #FFFFFFFF.\n");
+					wob_log_error("Background color must be a value between #00000000 and #FFFFFFFF.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 3:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.bar))) {
-					fprintf(stderr, "Bar color must be a value between #00000000 and #FFFFFFFF.\n");
+					wob_log_error("Bar color must be a value between #00000000 and #FFFFFFFF.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 't':
 				timeout_msec = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE || timeout_msec == 0) {
-					fprintf(stderr, "Timeout must be a value between 1 and %lu.\n", ULONG_MAX);
+					wob_log_error("Timeout must be a value between 1 and %lu.", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'm':
 				maximum = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE || maximum == 0) {
-					fprintf(stderr, "Maximum must be a value between 1 and %lu.\n", ULONG_MAX);
+					wob_log_error("Maximum must be a value between 1 and %lu.", ULONG_MAX);
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'W':
 				geom.width = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Width must be a positive value.");
+					wob_log_error("Width must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'H':
 				geom.height = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Height must be a positive value.");
+					wob_log_error("Height must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'o':
 				geom.border_offset = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Border offset must be a positive value.");
+					wob_log_error("Border offset must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'b':
 				geom.border_size = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Border size must be a positive value.");
+					wob_log_error("Border size must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'p':
 				geom.bar_padding = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Bar padding must be a positive value.");
+					wob_log_error("Bar padding must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
@@ -608,38 +616,41 @@ main(int argc, char **argv)
 					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
 				}
 				else if (strcmp(optarg, "center") != 0) {
-					fprintf(stderr, "Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
+					wob_log_error("Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'M':
 				geom.margin = strtoul(optarg, &strtoul_end, 10);
 				if (*strtoul_end != '\0' || errno == ERANGE) {
-					fprintf(stderr, "Anchor margin must be a positive value.");
+					wob_log_error("Anchor margin must be a positive value.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 'O':
 				output_config = calloc(1, sizeof(struct wob_output_config));
 				if (output_config == NULL) {
-					fprintf(stderr, "calloc failed\n");
+					wob_log_error("calloc failed");
 					return EXIT_FAILURE;
 				}
 
 				output_config->name = strdup(optarg);
 				if (output_config->name == NULL) {
-					fprintf(stderr, "strdup failed\n");
+					wob_log_error("strdup failed");
 					return EXIT_FAILURE;
 				}
 
 				wl_list_insert(&(app.output_configs), &(output_config->link));
 				break;
-			case 'v':
-				fprintf(stdout, "wob version: " WOB_VERSION "\n");
+			case 4:
+				printf("wob version: " WOB_VERSION "\n");
 				return EXIT_SUCCESS;
 			case 'h':
-				fprintf(stdout, "%s", usage);
+				printf("%s", usage);
 				return EXIT_SUCCESS;
+			case 'v':
+				wob_log_inc_verbosity();
+				break;
 			default:
 				fprintf(stderr, "%s", usage);
 				return EXIT_FAILURE;
@@ -647,12 +658,12 @@ main(int argc, char **argv)
 	}
 
 	if (geom.width < MIN_PERCENTAGE_BAR_WIDTH + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
-		fprintf(stderr, "Invalid geometry: width is too small for given parameters\n");
+		wob_log_error("Invalid geometry: width is too small for given parameters");
 		return EXIT_FAILURE;
 	}
 
 	if (geom.height < MIN_PERCENTAGE_BAR_HEIGHT + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
-		fprintf(stderr, "Invalid geometry: height is too small for given parameters\n");
+		wob_log_error("Invalid geometry: height is too small for given parameters");
 		return EXIT_FAILURE;
 	}
 
@@ -704,10 +715,11 @@ main(int argc, char **argv)
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
-				perror("poll");
+				wob_log_error("poll() failed: %s", strerror(errno));
 				return EXIT_FAILURE;
 			case 0:
 				if (!hidden) {
+					wob_log_debug("Hide");
 					wob_hide(&app);
 				}
 
@@ -729,13 +741,14 @@ main(int argc, char **argv)
 					if (!hidden) {
 						wob_hide(&app);
 					}
+					wob_log_info("Received EOF");
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
 				}
 
 				old_colors = colors;
 				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar) || percentage > maximum) {
-					fprintf(stderr, "Received invalid input\n");
+					wob_log_error("Received invalid input");
 					if (!hidden) {
 						wob_hide(&app);
 					}
@@ -743,7 +756,10 @@ main(int argc, char **argv)
 					return EXIT_FAILURE;
 				}
 
+				wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
+
 				if (hidden) {
+					wob_log_debug("Show");
 					wob_show(&app);
 				}
 
@@ -751,6 +767,7 @@ main(int argc, char **argv)
 					wob_draw_background(app.wob_geom, argb, colors.background);
 					wob_draw_border(app.wob_geom, argb, colors.border);
 				}
+
 				wob_draw_percentage(app.wob_geom, argb, colors.bar, colors.background, percentage, maximum);
 
 				wob_flush(&app);
