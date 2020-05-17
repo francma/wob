@@ -109,6 +109,7 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *surface, uint3
 void
 xdg_output_handle_name(void *data, struct zxdg_output_v1 *xdg_output, const char *name)
 {
+	wob_log_info("Detected output %s", name);
 	struct wob_output *output = (struct wob_output *) data;
 	output->name = strdup(name);
 	if (output->name == NULL) {
@@ -190,9 +191,12 @@ xdg_output_handle_done(void *data, struct zxdg_output_v1 *xdg_output)
 	wl_list_for_each_safe (output_config, tmp, &app->output_configs, link) {
 		if (strcmp(output->name, output_config->name) == 0 || strcmp("*", output_config->name) == 0) {
 			wl_list_insert(&output->app->wob_outputs, &output->link);
+			wob_log_info("Bar will be displayed on output %s", output->name);
 			return;
 		}
 	}
+
+	wob_log_info("Bar will NOT be displayed on output %s", output->name);
 
 	wob_output_destroy(output);
 	free(output);
@@ -282,6 +286,7 @@ void
 wob_hide(struct wob *app)
 {
 	if (wl_list_empty(&(app->wob_outputs))) {
+		wob_log_info("Hiding bar on focused output");
 		wob_surface_destroy(app->fallback_wob_surface);
 		free(app->fallback_wob_surface);
 		app->fallback_wob_surface = NULL;
@@ -289,6 +294,7 @@ wob_hide(struct wob *app)
 	else {
 		struct wob_output *output, *tmp;
 		wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
+			wob_log_info("Hiding bar on output %s", output->name);
 			wob_surface_destroy(output->wob_surface);
 			free(output->wob_surface);
 			output->wob_surface = NULL;
@@ -305,11 +311,13 @@ void
 wob_show(struct wob *app)
 {
 	if (wl_list_empty(&(app->wob_outputs))) {
+		wob_log_info("No output matching configuration found, fallbacking to focused output");
 		app->fallback_wob_surface = wob_surface_create(app, NULL);
 	}
 	else {
 		struct wob_output *output, *tmp;
 		wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
+			wob_log_info("Showing bar on output %s", output->name);
 			output->wob_surface = wob_surface_create(app, output->wl_output);
 		}
 	}
@@ -719,7 +727,6 @@ main(int argc, char **argv)
 				return EXIT_FAILURE;
 			case 0:
 				if (!hidden) {
-					wob_log_debug("Hide");
 					wob_hide(&app);
 				}
 
@@ -759,7 +766,6 @@ main(int argc, char **argv)
 				wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
 
 				if (hidden) {
-					wob_log_debug("Show");
 					wob_show(&app);
 				}
 
