@@ -1,36 +1,48 @@
 #define WOB_FILE "parse.c"
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "parse.h"
 
 bool
-wob_parse_color(const char *restrict str, char **restrict str_end, uint32_t *color)
+wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_color *color)
 {
-	char *strtoul_end;
-
 	if (str[0] != '#') {
 		return false;
 	}
 	str += 1;
 
-	unsigned long ul = strtoul(str, &strtoul_end, 16);
-	if (ul > 0xFFFFFFFF || errno == ERANGE || (str + sizeof("FFFFFFFF") - 1) != strtoul_end) {
-		return false;
+	uint8_t parts[4];
+	for (size_t i = 0; i < (sizeof(parts) / sizeof(uint8_t)); ++i) {
+		char *strtoul_end;
+		char buffer[3];
+
+		strncpy(buffer, &str[i * 2], 2);
+		parts[i] = strtoul(buffer, &strtoul_end, 16);
+		if (strtoul_end != buffer + 2) {
+			return false;
+		}
 	}
 
-	*color = ul;
+	*color = (struct wob_color){
+		.alpha = parts[0] / ((float) UINT8_MAX),
+		.red = parts[1] / ((float) UINT8_MAX),
+		.green = parts[2] / ((float) UINT8_MAX),
+		.blue = parts[3] / ((float) UINT8_MAX),
+	};
+
 	if (str_end) {
-		*str_end = strtoul_end;
+		*str_end = ((char *) str) + sizeof("FFFFFFFF") - 1;
 	}
 
 	return true;
 }
 
 bool
-wob_parse_input(const char *input_buffer, unsigned long *percentage, uint32_t *background_color, uint32_t *border_color, uint32_t *bar_color)
+wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_color *background_color, struct wob_color *border_color, struct wob_color *bar_color)
 {
 	char *input_ptr, *newline_position, *str_end;
 
@@ -48,13 +60,13 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, uint32_t *b
 		return true;
 	}
 
-	uint32_t *colors_to_parse[3] = {
+	struct wob_color *colors_to_parse[3] = {
 		background_color,
 		border_color,
 		bar_color,
 	};
 
-	for (size_t i = 0; i < sizeof(colors_to_parse) / sizeof(uint32_t *); ++i) {
+	for (size_t i = 0; i < sizeof(colors_to_parse) / sizeof(struct wob_color *); ++i) {
 		if (input_ptr[0] != ' ') {
 			return false;
 		}

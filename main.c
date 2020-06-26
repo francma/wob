@@ -9,9 +9,6 @@
 #define WOB_DEFAULT_MARGIN 0
 #define WOB_DEFAULT_MAXIMUM 100
 #define WOB_DEFAULT_TIMEOUT 1000
-#define WOB_DEFAULT_BAR_COLOR 0xFFFFFFFF
-#define WOB_DEFAULT_BACKGROUND_COLOR 0xFF000000
-#define WOB_DEFAULT_BORDER_COLOR 0xFFFFFFFF
 
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
@@ -35,6 +32,7 @@
 #include <unistd.h>
 
 #include "buffer.h"
+#include "color.h"
 #include "log.h"
 #include "parse.h"
 #include "pledge.h"
@@ -54,9 +52,9 @@ struct wob_geom {
 };
 
 struct wob_colors {
-	uint32_t bar;
-	uint32_t background;
-	uint32_t border;
+	struct wob_color bar;
+	struct wob_color background;
+	struct wob_color border;
 };
 
 struct wob_output_config {
@@ -396,16 +394,20 @@ wob_connect(struct wob *app)
 }
 
 void
-wob_draw_background(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_background(const struct wob_geom *geom, uint32_t *argb, struct wob_color color)
 {
+	uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color));
+
 	for (size_t i = 0; i < geom->width * geom->height; ++i) {
-		argb[i] = color;
+		argb[i] = argb_color;
 	}
 }
 
 void
-wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
+wob_draw_border(const struct wob_geom *geom, uint32_t *argb, struct wob_color color)
 {
+	uint32_t argb_color = wob_color_to_argb(wob_color_premultiply_alpha(color));
+
 	// create top and bottom line
 	size_t i = geom->width * geom->border_offset;
 	size_t k = geom->width * (geom->height - geom->border_offset - geom->border_size);
@@ -413,8 +415,8 @@ wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 		i += geom->border_offset;
 		k += geom->border_offset;
 		for (size_t pixel = 0; pixel < geom->width - 2 * geom->border_offset; ++pixel) {
-			argb[i++] = color;
-			argb[k++] = color;
+			argb[i++] = argb_color;
+			argb[k++] = argb_color;
 		}
 		i += geom->border_offset;
 		k += geom->border_offset;
@@ -427,8 +429,8 @@ wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 		i += geom->border_offset;
 		k += geom->width - geom->border_offset - geom->border_size;
 		for (size_t pixel = 0; pixel < geom->border_size; ++pixel) {
-			argb[i++] = color;
-			argb[k++] = color;
+			argb[i++] = argb_color;
+			argb[k++] = argb_color;
 		}
 		i += geom->width - geom->border_offset - geom->border_size;
 		k += geom->border_offset;
@@ -436,8 +438,11 @@ wob_draw_border(const struct wob_geom *geom, uint32_t *argb, uint32_t color)
 }
 
 void
-wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, uint32_t bar_color, uint32_t background_color, unsigned long percentage, unsigned long maximum)
+wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, struct wob_color bar_color, struct wob_color background_color, unsigned long percentage, unsigned long maximum)
 {
+	uint32_t argb_bar_color = wob_color_to_argb(wob_color_premultiply_alpha(bar_color));
+	uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(background_color));
+
 	size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding;
 	size_t bar_width = geom->width - 2 * offset_border_padding;
 	size_t bar_height = geom->height - 2 * offset_border_padding;
@@ -448,10 +453,10 @@ wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, uint32_t bar_co
 	start = &argb[offset_border_padding * (geom->width + 1)];
 	end = start + bar_colored_width;
 	for (pixel = start; pixel < end; ++pixel) {
-		*pixel = bar_color;
+		*pixel = argb_bar_color;
 	}
 	for (end = start + bar_width; pixel < end; ++pixel) {
-		*pixel = background_color;
+		*pixel = argb_background_color;
 	}
 
 	// copy it to make full percentage bar
@@ -508,9 +513,27 @@ main(int argc, char **argv)
 		.margin = WOB_DEFAULT_MARGIN,
 	};
 	struct wob_colors colors = {
-		.background = WOB_DEFAULT_BACKGROUND_COLOR,
-		.bar = WOB_DEFAULT_BAR_COLOR,
-		.border = WOB_DEFAULT_BORDER_COLOR,
+		.background =
+			(struct wob_color){
+				.alpha = 1.0,
+				.red = 0.0,
+				.green = 0.0,
+				.blue = 0.0,
+			},
+		.bar =
+			(struct wob_color){
+				.alpha = 1.0,
+				.red = 1.0,
+				.green = 1.0,
+				.blue = 1.0,
+			},
+		.border =
+			(struct wob_color){
+				.alpha = 1.0,
+				.red = 1.0,
+				.green = 1.0,
+				.blue = 1.0,
+			},
 	};
 	bool pledge = true;
 
@@ -769,7 +792,15 @@ main(int argc, char **argv)
 					wob_show(&app);
 				}
 
-				if (old_colors.background != colors.background || old_colors.border != colors.border) {
+				bool redraw_background_and_border = false;
+				if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(colors.background)) {
+					redraw_background_and_border = true;
+				}
+				else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(colors.border)) {
+					redraw_background_and_border = true;
+				}
+
+				if (redraw_background_and_border) {
 					wob_draw_background(app.wob_geom, argb, colors.background);
 					wob_draw_border(app.wob_geom, argb, colors.border);
 				}
