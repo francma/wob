@@ -17,8 +17,11 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *-h, --help*
 	Show help message and quit.
 
-*-v, --version*
+*--version*
 	Show the version number and quit.
+
+*-v*
+	Increase verbosity of messages, defaults to errors and warnings only.
 
 *-t --timeout* <ms> 
 	Hide wob after <ms> milliseconds, defaults to 1000.
@@ -52,42 +55,30 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 	Define output to show bar on or '\*' for all. If ommited, focused output is chosen.
 	May be specified multiple times.
 
-*--border-color* <#argb>
-	Define border color
+*--border-color* <#AARRGGBB>
+	Define border color, defaults to #FFFFFFFF.
 
-*--background-color* <#argb>
-	Define background color
+*--background-color* <#AARRGGBB>
+	Define background color, defaults to #FF000000.
 
-*--bar-color* <#argb>
-	Define bar color
+*--bar-color* <#AARRGGBB>
+	Define bar color, defaults to #FFFFFFFF.
 
 # USAGE
 
-Launch wob in a terminal, enter a value (positive integer), press return.
+Wob reads values to display from standart input in the following formats:
 
-You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. /tmp/wobpipe, on your filesystem using.
+<value>
 
-```
-mkfifo /tmp/wobpipe
-```
+or
 
-Connect the named pipe to the standard input of an wob instance.
+<value> <#background_color> <#border_color> <#bar_color>
 
-```
-tail -f /tmp/wobpipe | wob
-```
-
-Set up your environment so that after updating audio volume, backlight intensity, or whatever, to a new value like 43, it writes that value into the pipe:
-
-```
-echo 43 > /tmp/wobpipe
-```
-
-Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled by the window manager).
+Where <value> is number in interval from 0 to *--max* and <#\*color> is color in #AARRGGBB format.
 
 # ENVIRONMENT
 
 The following environment variables have an effect on wob:
 
 *WOB_DISABLE_PLEDGE*
-	Disable seccomp call on Linux. Set this if you are havind trouble running wob with tools like valgrind or strace.
+	Disable seccomp syscall filtering on Linux. Set this if you are having trouble running wob with tools like valgrind or strace.

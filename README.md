@@ -68,6 +68,8 @@ echo 43 > /tmp/wobpipe
 
 Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled by the window manager).
 
+See [man page](https://github.com/francma/wob/blob/master/wob.1.scd) for styling and positioning options.
+
 ### Sway WM example
 
 Add these lines to your Sway config file:
