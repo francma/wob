@@ -20,6 +20,7 @@ Install dependencies:
 - wayland-protocols \*
 - meson \*
 - [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*
+- [libseccomp](https://github.com/seccomp/libseccomp) (optional: Linux kernel syscall filtering) \*
 
 \* _compile-time dependecy_
 
