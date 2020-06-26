@@ -38,14 +38,6 @@ sudo ninja -C build install
 
 [![Packaging status](https://repology.org/badge/tiny-repos/wob.svg)](https://repology.org/project/wob/versions)
 
-There are packages for the following Linux distributions:
-
-- [Arch Linux package on the AUR](https://aur.archlinux.org/packages/wob/) [![AUR package](https://repology.org/badge/version-for-repo/aur/wob.svg?header=)](https://repology.org/project/wob/versions)
-- [Alpine Linux package](https://pkgs.alpinelinux.org/packages?name=wob&branch=edge) [![Alpine Linux Edge package](https://repology.org/badge/version-for-repo/alpine_edge/wob.svg?header=)](https://repology.org/project/wob/versions)
-- [NixOS package](https://github.com/NixOS/nixpkgs/blob/master/pkgs/tools/misc/wob/default.nix) [![nixpkgs unstable package](https://repology.org/badge/version-for-repo/nix_unstable/wob.svg?header=)](https://repology.org/project/wob/versions)
-- [Void Linux package](https://github.com/void-linux/void-packages/blob/master/srcpkgs/wob/template) [![Void Linux x86_64 package](https://repology.org/badge/version-for-repo/void_x86_64/wob.svg?header=)](https://repology.org/project/wob/versions)
-- Fedora - try your normal installation method first. Otherwise: [Fedora package on the Copr](https://copr.fedorainfracloud.org/coprs/wef/wob/)
-
 ## Usage
 
 Launch wob in a terminal, enter a value (positive integer), press return.
