@@ -39,3 +39,24 @@ jobs:
       env:
         # replace gcc with compiler-rt once it is available for ppc64le
         - ALPINE_PACKAGES="clang wayland-protocols wayland-dev meson musl-dev lld gcc"
+    - &freebsd_common
+      name: Test non-Linux
+      os: freebsd
+      language: c
+      compiler: clang
+      env:
+      install:
+        - sudo pkg install -y meson pkgconf scdoc wayland wayland-protocols
+      script:
+        - $WRAPPER meson build
+        - $WRAPPER ninja -C build
+        - $WRAPPER meson test -C build
+      after_failure:
+        - cat build/meson-logs/meson-log.txt
+    - <<: *freebsd_common
+      name: Clang Static Analyzer
+      env: WRAPPER="scan-build10 --status-bugs"
+      before_install:
+        - sudo pkg install -y llvm10
+  allow_failures:
+    - name: Clang Static Analyzer
