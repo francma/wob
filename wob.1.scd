@@ -35,7 +35,7 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *-H --height* <px>
 	Define bar height in pixels, defaults to 50.
 
-*-o --output* <px>
+*-o --offset* <px>
 	Define border offset in pixels, defaults to 4.
 
 *-b --border* <px>
