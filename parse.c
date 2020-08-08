@@ -18,7 +18,7 @@ wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_co
 	uint8_t parts[4];
 	for (size_t i = 0; i < (sizeof(parts) / sizeof(uint8_t)); ++i) {
 		char *strtoul_end;
-		char buffer[3];
+		char buffer[3] = {0};
 
 		strncpy(buffer, &str[i * 2], 2);
 		parts[i] = strtoul(buffer, &strtoul_end, 16);
