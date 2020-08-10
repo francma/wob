@@ -66,7 +66,7 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 
 # USAGE
 
-Wob reads values to display from standart input in the following formats:
+Wob reads values to display from standard input in the following formats:
 
 <value>
 
