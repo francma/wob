@@ -1,4 +1,4 @@
-﻿AlwaysBreakAfterDefinitionReturnType: All
+AlwaysBreakAfterDefinitionReturnType: All
 BreakBeforeBraces: Stroustrup
 ColumnLimit: 180
 PointerAlignment: Right

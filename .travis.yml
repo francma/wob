@@ -1,5 +1,5 @@
-os: linux 
-arch: ppc64le 
+os: linux
+arch: ppc64le
 dist: bionic
 sudo: required
 
