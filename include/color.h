@@ -1,6 +1,8 @@
 #ifndef _WOB_COLOR_H
 #define _WOB_COLOR_H
 
+#include <stdint.h>
+
 struct wob_color {
 	float alpha;
 	float red;

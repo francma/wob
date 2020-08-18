@@ -2,7 +2,6 @@
 #define _WOB_PARSE_H
 
 #include <stdbool.h>
-#include <stdint.h>
 
 #include "color.h"
 

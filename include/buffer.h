@@ -1,8 +1,7 @@
 #ifndef _WOB_BUFFER_H
 #define _WOB_BUFFER_H
 
-#include <stdbool.h>
-#include <stdint.h>
+#include <stddef.h>
 
 int wob_shm_create();
 
