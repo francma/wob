@@ -24,6 +24,7 @@ wob_pledge(void)
 		SCMP_SYS(fstat),
 		SCMP_SYS(gettimeofday),
 		SCMP_SYS(poll),
+		SCMP_SYS(ppoll),
 		SCMP_SYS(read),
 		SCMP_SYS(readv),
 		SCMP_SYS(recvmsg),
