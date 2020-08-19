@@ -82,7 +82,7 @@ test('parse-input', executable(
   include_directories: [wob_inc]
 ))
 
-scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-page'))
+scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()
   scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
   sh = find_program('sh', native: true)
