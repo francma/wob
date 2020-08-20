@@ -15,6 +15,13 @@ install:
 
 jobs:
   include:
+    - name: Clang static analyzer
+      language: minimal
+      env:
+        - ALPINE_PACKAGES="clang-analyzer wayland-protocols wayland-dev meson musl-dev lld gcc"
+      script:
+        - /alpine/enter-chroot scan-build meson build
+        - /alpine/enter-chroot scan-build --status-bugs ninja -C build
     - name: Coding style check
       language: minimal
       env:

@@ -667,6 +667,7 @@ main(int argc, char **argv)
 
 				output_config->name = strdup(optarg);
 				if (output_config->name == NULL) {
+					free(output_config);
 					wob_log_error("strdup failed");
 					return EXIT_FAILURE;
 				}
@@ -721,7 +722,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	struct wob_colors old_colors = {0};
+	struct wob_colors old_colors;
 
 	// Draw these at least once
 	wob_draw_background(app.wob_geom, argb, colors.background);
