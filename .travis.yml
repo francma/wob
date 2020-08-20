@@ -11,7 +11,7 @@ env:
 install:
   - wget https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.12.1/alpine-chroot-install
   - echo '5571ad4d17d14bb09ad23a75060f05553786e564' alpine-chroot-install | sha1sum -c || travis_terminate
-  - sudo sh ./alpine-chroot-install -k 'ARCH CI QEMU_EMULATOR TRAVIS_.*' -p $ALPINE_PACKAGES
+  - sudo sh ./alpine-chroot-install -k 'ARCH CI QEMU_EMULATOR TRAVIS_.* CC' -p $ALPINE_PACKAGES
 
 jobs:
   include:
@@ -33,6 +33,7 @@ jobs:
       language: minimal
       env:
         - ALPINE_PACKAGES="gcc wayland-protocols wayland-dev meson musl-dev"
+        - CC=gcc
       script:
         - /alpine/enter-chroot meson build
         - /alpine/enter-chroot ninja -C build
@@ -46,3 +47,4 @@ jobs:
       env:
         # replace gcc with compiler-rt once it is available for ppc64le
         - ALPINE_PACKAGES="clang wayland-protocols wayland-dev meson musl-dev lld gcc"
+        - CC=clang
