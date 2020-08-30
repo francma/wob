@@ -757,7 +757,7 @@ main(int argc, char **argv)
 				}
 
 				hidden = true;
-				
+
 				if (should_exit_after_timeout) {
 					wob_destroy(&app);
 					return EXIT_SUCCESS;
@@ -824,7 +824,7 @@ main(int argc, char **argv)
 
 				wob_flush(&app);
 				hidden = false;
-				
+
 				// Handle the case where the event sent was POLLIN | POLLHUP.
 				if (fds[1].revents & POLLHUP) {
 					should_exit_after_timeout = true;
