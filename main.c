@@ -763,10 +763,35 @@ main(int argc, char **argv)
 					}
 				}
 
-				if (!(fds[1].revents & POLLIN)) {
-					break;
-				}
+				if (!(fds[1].revents & POLLIN || fds[1].revents & POLLRDNORM)) {
+					uint16_t event = fds[1].revents;
+					// Check if wob can continue
+					if (event & POLLPRI ||
+						event & POLLOUT ||
+						event & POLLRDBAND ||
+						event & POLLWRNORM ||
+						event & POLLWRBAND) {
+						break;
+					}
+					
+					// Quit
+					if (!hidden) {
+						wob_hide(&app);
+					}
+					wob_destroy(&app);
+					
+					// Check if quitting was expected or not and tell the user
+					if (event & 0x2000 || // POLLRDHUP
+						event & POLLHUP) {
+						wob_log_info("Pipe closed");
+						return EXIT_SUCCESS;
+					}
 
+					// We exit with errors if the event is POLLERR or an unhandled event
+					wob_log_info("Pipe error");
+					return EXIT_FAILURE;
+				}
+				
 				fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
 				if (feof(stdin)) {
 					if (!hidden) {
