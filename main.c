@@ -735,11 +735,13 @@ main(int argc, char **argv)
 		},
 		{
 			.fd = STDIN_FILENO,
-			.events = POLLIN,
+			.events = POLLIN | POLLERR,
 		},
 	};
 
 	bool hidden = true;
+	bool should_exit_after_timeout = false;
+
 	for (;;) {
 		unsigned long percentage = 0;
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
@@ -755,6 +757,11 @@ main(int argc, char **argv)
 				}
 
 				hidden = true;
+				
+				if (should_exit_after_timeout) {
+					wob_destroy(&app);
+					return EXIT_SUCCESS;
+				}
 				break;
 			default:
 				if (fds[0].revents & POLLIN) {
@@ -763,35 +770,17 @@ main(int argc, char **argv)
 					}
 				}
 
-				if (!(fds[1].revents & POLLIN || fds[1].revents & POLLRDNORM)) {
-					uint16_t event = fds[1].revents;
-					// Check if wob can continue
-					if (event & POLLPRI ||
-						event & POLLOUT ||
-						event & POLLRDBAND ||
-						event & POLLWRNORM ||
-						event & POLLWRBAND) {
-						break;
-					}
-					
-					// Quit
+				// Exit immediately and notify the user when we get an POLLERR
+				if (fds[1].revents & POLLERR) {
 					if (!hidden) {
 						wob_hide(&app);
 					}
 					wob_destroy(&app);
-					
-					// Check if quitting was expected or not and tell the user
-					if (event & 0x2000 || // POLLRDHUP
-						event & POLLHUP) {
-						wob_log_info("Pipe closed");
-						return EXIT_SUCCESS;
-					}
 
-					// We exit with errors if the event is POLLERR or an unhandled event
-					wob_log_info("Pipe error");
+					wob_log_error("Pipe error, exiting");
 					return EXIT_FAILURE;
 				}
-				
+
 				fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
 				if (feof(stdin)) {
 					if (!hidden) {
@@ -835,7 +824,12 @@ main(int argc, char **argv)
 
 				wob_flush(&app);
 				hidden = false;
-
+				
+				// Handle the case where the event sent was POLLIN | POLLHUP.
+				if (fds[1].revents & POLLHUP) {
+					should_exit_after_timeout = true;
+					wob_log_info("Pipe closed, exiting after timeout");
+				}
 				break;
 		}
 	}
