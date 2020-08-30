@@ -82,6 +82,11 @@ test('parse-input', executable(
   include_directories: [wob_inc]
 ))
 
+test('poll-pollhup', executable(
+  'test-poll-pollhup',
+  ['tests/wob_poll_pollhup.c'],
+))
+
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()
   scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
