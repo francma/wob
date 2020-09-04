@@ -1,50 +1,51 @@
-os: linux
-arch: ppc64le
-dist: bionic
-sudo: required
-
-env:
-  global:
-    - APK_TOOLS_URI="https://github.com/alpinelinux/apk-tools/releases/download/v2.10.3/apk-tools-2.10.3-ppc64le-linux.tar.gz"
-    - APK_TOOLS_SHA256=75311787324dd56106b36d57cc33bcdacb8d089dbcd270669dab8d7eb76175d8
-
-install:
-  - wget https://raw.githubusercontent.com/alpinelinux/alpine-chroot-install/v0.12.1/alpine-chroot-install
-  - echo '5571ad4d17d14bb09ad23a75060f05553786e564' alpine-chroot-install | sha1sum -c || travis_terminate
-  - sudo sh ./alpine-chroot-install -k 'ARCH CI QEMU_EMULATOR TRAVIS_.* CC' -p $ALPINE_PACKAGES
+dist: focal
+language: minimal
+services:
+  - docker
 
 jobs:
   include:
-    - name: Clang static analyzer
-      language: minimal
-      env:
-        - ALPINE_PACKAGES="clang-analyzer wayland-protocols wayland-dev meson musl-dev lld gcc"
+    - name: Test Alpine
       script:
-        - /alpine/enter-chroot scan-build meson build
-        - /alpine/enter-chroot scan-build --status-bugs ninja -C build
+        - |
+          printf 'set -eu
+          apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc
+          meson build && ninja -C build && meson test -C build
+          ' | docker run -i -v "$PWD":/wob -w /wob alpine:3.12
+    - name: Test Archlinux
+      script:
+        - |
+          printf 'set -eu
+          pacman -Sy --noconfirm gcc pkgconf meson wayland wayland-protocols
+          meson build && ninja -C build && meson test -C build
+          ' | docker run -i -v "$PWD":/wob -w /wob archlinux:latest
+    - name: Test FreeBSD
+      os: freebsd
+      language: c
+      compiler: clang
+      script:
+        - sudo pkg install -y meson pkgconf wayland wayland-protocols
+        # Fix for https://reviews.freebsd.org/D25554
+        - sed -i '' 's/_POSIX_C_SOURCE 199506L/_POSIX_C_SOURCE 200112L/' log.c
+        - meson build && ninja -C build && meson test -C build
     - name: Coding style check
-      language: minimal
-      env:
-        - ALPINE_PACKAGES=clang
       script:
-        - /alpine/enter-chroot clang-format *.c tests/*.c --output-replacements-xml | (! grep '</replacement>' 1>/dev/null)
-    - &test
-      name: Test GCC
-      language: minimal
-      env:
-        - ALPINE_PACKAGES="gcc wayland-protocols wayland-dev meson musl-dev"
-        - CC=gcc
+        - |
+          printf 'set -eu
+          apk update && apk add clang
+          clang-format *.c tests/*.c --output-replacements-xml | (! grep "</replacement>" 1>/dev/null)
+          ' | docker run -i -v "$PWD":/wob -w /wob alpine:3.12
+    - name: Clang static analyzer
       script:
-        - /alpine/enter-chroot meson build
-        - /alpine/enter-chroot ninja -C build
-        - /alpine/enter-chroot meson test -C build
-      after_failure:
-        - cat build/meson-logs/meson-log.txt
-    - <<: *test
-      name: Test Clang
-      before_script:
-        - /alpine/enter-chroot ln -sf /usr/bin/lld /usr/bin/ld
-      env:
-        # replace gcc with compiler-rt once it is available for ppc64le
-        - ALPINE_PACKAGES="clang wayland-protocols wayland-dev meson musl-dev lld gcc"
-        - CC=clang
+        - |
+          printf 'set -eu
+          apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer
+          scan-build meson build && scan-build --status-bugs ninja -C build
+          ' | docker run -i -v "$PWD":/wob -w /wob alpine:3.12
+    - name: Valgrind
+      script:
+        - |
+          printf 'set -eu
+          apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind
+          meson build && meson test -C build --wrap="valgrind --leak-check=full --error-exitcode=2"
+          ' | docker run -i -v "$PWD":/wob -w /wob alpine:3.12
