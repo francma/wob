@@ -715,6 +715,10 @@ main(int argc, char **argv)
 	}
 
 	wob_connect(&app);
+	if (app.wl_shm == NULL || app.wl_compositor == NULL || app.wlr_layer_shell == NULL) {
+		wob_log_error("Wayland compositor doesn't support all required protocols");
+		return EXIT_FAILURE;
+	}
 
 	if (pledge) {
 		if (!wob_pledge()) {
