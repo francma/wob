@@ -748,70 +748,93 @@ main(int argc, char **argv)
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
 				wob_log_error("poll() failed: %s", strerror(errno));
+
 				return EXIT_FAILURE;
 			case 0:
-				if (!hidden) {
-					wob_hide(&app);
-				}
+				if (!hidden) wob_hide(&app);
 
 				hidden = true;
 				break;
 			default:
-				if (fds[0].revents & POLLIN) {
+				if (fds[0].revents) {
+					if (!(fds[0].revents & POLLIN)) {
+						wob_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
+						return EXIT_FAILURE;
+					}
+
 					if (wl_display_dispatch(app.wl_display) == -1) {
 						return EXIT_FAILURE;
 					}
 				}
 
-				if (!(fds[1].revents & POLLIN)) {
-					break;
-				}
+				if (fds[1].revents) {
+					if (!(fds[1].revents & POLLIN)) {
+						wob_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
+						if (!hidden) wob_hide(&app);
+						wob_destroy(&app);
 
-				fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
-				if (feof(stdin)) {
-					if (!hidden) {
-						wob_hide(&app);
+						return EXIT_FAILURE;
 					}
-					wob_log_info("Received EOF");
-					wob_destroy(&app);
-					return EXIT_SUCCESS;
-				}
 
-				old_colors = colors;
-				if (fgets_rv == NULL || !wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar) || percentage > maximum) {
-					wob_log_error("Received invalid input");
-					if (!hidden) {
-						wob_hide(&app);
+					fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
+
+					if (feof(stdin)) {
+						wob_log_info("Received EOF");
+						if (!hidden) wob_hide(&app);
+						wob_destroy(&app);
+
+						return EXIT_SUCCESS;
 					}
-					wob_destroy(&app);
-					return EXIT_FAILURE;
+
+					if (fgets_rv == NULL) {
+						wob_log_error("fgets() failed: %s", strerror(errno));
+						if (!hidden) wob_hide(&app);
+						wob_destroy(&app);
+
+						return EXIT_FAILURE;
+					}
+
+					old_colors = colors;
+					if (!wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar)) {
+						wob_log_error("Received invalid input");
+						if (!hidden) wob_hide(&app);
+						wob_destroy(&app);
+
+						return EXIT_FAILURE;
+					}
+
+					if (percentage > maximum) {
+						wob_log_error("Received value %ld is above defined maximum %ld", percentage, maximum);
+						if (!hidden) wob_hide(&app);
+						wob_destroy(&app);
+
+						return EXIT_FAILURE;
+					}
+
+					wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
+
+					if (hidden) {
+						wob_show(&app);
+					}
+
+					bool redraw_background_and_border = false;
+					if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(colors.background)) {
+						redraw_background_and_border = true;
+					}
+					else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(colors.border)) {
+						redraw_background_and_border = true;
+					}
+
+					if (redraw_background_and_border) {
+						wob_draw_background(app.wob_geom, argb, colors.background);
+						wob_draw_border(app.wob_geom, argb, colors.border);
+					}
+
+					wob_draw_percentage(app.wob_geom, argb, colors.bar, colors.background, percentage, maximum);
+
+					wob_flush(&app);
+					hidden = false;
 				}
-
-				wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
-
-				if (hidden) {
-					wob_show(&app);
-				}
-
-				bool redraw_background_and_border = false;
-				if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(colors.background)) {
-					redraw_background_and_border = true;
-				}
-				else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(colors.border)) {
-					redraw_background_and_border = true;
-				}
-
-				if (redraw_background_and_border) {
-					wob_draw_background(app.wob_geom, argb, colors.background);
-					wob_draw_border(app.wob_geom, argb, colors.border);
-				}
-
-				wob_draw_percentage(app.wob_geom, argb, colors.bar, colors.background, percentage, maximum);
-
-				wob_flush(&app);
-				hidden = false;
-
-				break;
 		}
 	}
 }
