@@ -75,7 +75,7 @@ _wob_log(const _wob_log_importance importance, const char *file, const int line,
 			verbosity_colors[importance],
 			verbosity_names[importance],
 			COLOR_RESET,
-			COLOR_GRAY,
+			COLOR_LIGHT_GRAY,
 			file,
 			line,
 			COLOR_RESET);
