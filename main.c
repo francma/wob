@@ -443,29 +443,49 @@ wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, struct wob_colo
 	uint32_t argb_bar_color = wob_color_to_argb(wob_color_premultiply_alpha(bar_color));
 	uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(background_color));
 
+	bool horizontal = geom->width > geom->height;
+	unsigned long length = horizontal ? geom->width : geom->height;
+	unsigned long thickness = horizontal ? geom->height : geom->width;
+
 	size_t offset_border_padding = geom->border_offset + geom->border_size + geom->bar_padding;
-	size_t bar_width = geom->width - 2 * offset_border_padding;
-	size_t bar_height = geom->height - 2 * offset_border_padding;
-	size_t bar_colored_width = (bar_width * percentage) / maximum;
+	size_t bar_length = length - 2 * offset_border_padding;
+	size_t bar_thickness = thickness - 2 * offset_border_padding;
+	size_t bar_colored_length = (bar_length * percentage) / maximum;
 
-	// draw 1px horizontal line
-	uint32_t *start, *end, *pixel;
-	start = &argb[offset_border_padding * (geom->width + 1)];
-	end = start + bar_colored_width;
-	for (pixel = start; pixel < end; ++pixel) {
-		*pixel = argb_bar_color;
-	}
-	for (end = start + bar_width; pixel < end; ++pixel) {
-		*pixel = argb_background_color;
-	}
+	if (horizontal) {
+		// draw 1px horizontal line
+		uint32_t *start, *end, *pixel;
+		start = &argb[offset_border_padding * (length + 1)];
+		end = start + bar_colored_length;
+		for (pixel = start; pixel < end; ++pixel) {
+			*pixel = argb_bar_color;
+		}
+		for (end = start + bar_length; pixel < end; ++pixel) {
+			*pixel = argb_background_color;
+		}
 
-	// copy it to make full percentage bar
-	uint32_t *source = &argb[offset_border_padding * geom->width];
-	uint32_t *destination = source + geom->width;
-	end = &argb[geom->width * (bar_height + offset_border_padding)];
-	while (destination != end) {
-		memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
-		destination += MIN(destination - source, end - destination);
+		// copy it to make full percentage bar
+		uint32_t *source = &argb[offset_border_padding * length];
+		uint32_t *destination = source + length;
+		end = &argb[length * (bar_thickness + offset_border_padding)];
+		while (destination != end) {
+			memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
+			destination += MIN(destination - source, end - destination);
+		}
+	} else {
+		for (int i = 0; i < bar_length; i++) {
+			uint32_t color;
+			if (i < bar_length - bar_colored_length) {
+				color = argb_background_color;
+			} else {
+				color = argb_bar_color;
+			}
+
+			uint32_t *start = &argb[offset_border_padding * (thickness + 1) + i * thickness];
+			for (uint32_t *pixel = start; pixel < start + bar_thickness; ++pixel) {
+				*pixel = color;
+			}
+		}
 	}
 }
 
