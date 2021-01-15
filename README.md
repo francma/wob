@@ -72,11 +72,57 @@ See [man page](https://github.com/francma/wob/blob/master/wob.1.scd) for styling
 
 ### Sway WM example
 
-Add these lines to your Sway config file:
+First of all, we need to create a
+[fifo](https://man7.org/linux/man-pages/man7/fifo.7.html) and start
+`wob` with this fifo file as standard input.
+
+Either add this line to your Sway config file:
 
 ```
 exec mkfifo $SWAYSOCK.wob && tail -f $SWAYSOCK.wob | wob
 ```
+
+Or, in case you [manage your tools with
+systemd](https://github.com/swaywm/sway/issues/5160) you can add two
+units that will start the daemon:
+
+`~/.config/systemd/user/wob.socket`
+
+```
+[Socket]
+ListenFIFO=%t/wob.fifo
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target
+RequiredBy=wob.service
+```
+
+`~/.config/systemd/user/wob.service`
+
+```
+[Unit]
+Description=A lightweight overlay volume/backlight/progress/anything bar for Wayland
+Documentation=man:wob(1)
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+StandardInput=socket
+ExecStart=/usr/bin/wob
+
+[Install]
+WantedBy=sway-session.target
+```
+
+> **Note:** You need to start and enable the service (in terminal):
+>
+> ```
+> systemctl --user enable --now wob.service
+> ```
+
+> **Note:** You'll need to replace `$SWAYSOCK.wob` with
+> `/run/user/1000/wob.fifo` where `1000` is your user's ID.
 
 Volume using alsa:
 
