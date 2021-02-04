@@ -22,6 +22,9 @@ wob_pledge(void)
 		SCMP_SYS(exit_group),
 		SCMP_SYS(fcntl),
 		SCMP_SYS(fstat),
+#if (__GLIBC__ > 2 || (__GLIBC__ == 2 && __GLIBC_MINOR__ > 32)) && defined(__NR_newfstatat)
+		SCMP_SYS(newfstatat),
+#endif
 		SCMP_SYS(gettimeofday),
 		SCMP_SYS(poll),
 		SCMP_SYS(ppoll),
