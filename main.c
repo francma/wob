@@ -20,6 +20,8 @@
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+#define STDIN_BUFFER_LENGTH INPUT_BUFFER_LENGTH
+
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <getopt.h>
@@ -469,11 +471,21 @@ wob_draw_percentage(const struct wob_geom *geom, uint32_t *argb, struct wob_colo
 	}
 }
 
+static char stdin_buffer[STDIN_BUFFER_LENGTH];
+
 int
 main(int argc, char **argv)
 {
 	wob_log_use_colors(isatty(STDERR_FILENO));
 	wob_log_level_warn();
+
+	// libc is doing fstat syscall to determine the optimal buffer size and that can be problematic to wob_pledge()
+	// to solve this problem we can just pass the optimal buffer ourselves
+	if (setvbuf(stdin, stdin_buffer, _IOFBF, sizeof(stdin_buffer)) != 0) {
+		wob_log_error("Failed to set stdin buffer size to %zu", sizeof(stdin_buffer));
+
+		return EXIT_FAILURE;
+	}
 
 	const char *usage =
 		"Usage: wob [options]\n"

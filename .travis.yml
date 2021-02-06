@@ -25,7 +25,7 @@ jobs:
       script:
         - |
           printf 'set -eu
-          pacman -Sy --noconfirm gcc pkgconf meson wayland wayland-protocols
+          pacman -Syuu --noconfirm gcc pkgconf meson wayland wayland-protocols
           meson build && ninja -C build && meson test -C build
           ' | docker run -i -v "$PWD":/wob -w /wob archlinux:latest
     - name: Test FreeBSD
