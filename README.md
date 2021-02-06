@@ -1,6 +1,6 @@
 # wob — Wayland Overlay Bar
 
-[![Build Status](https://travis-ci.com/francma/wob.svg?branch=master)](https://travis-ci.com/francma/wob)
+[![Build Status](https://github.com/francma/wob/workflows/test/badge.svg)](https://github.com/francma/wob/actions)
 
 ![preview](https://martinfranc.eu/wob-preview.svg)
 

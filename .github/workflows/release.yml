@@ -1,0 +1,36 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "[0-9]+.[0-9]+"
+
+jobs:
+  release:
+    name: Upload Release Asset
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - shell: bash
+        run: echo "wob_tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_ENV
+      - uses: actions/create-release@v1
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ env.wob_tag }}
+          release_name: wob ${{ env.wob_tag }}
+          draft: false
+          prerelease: true
+      - run: |
+          mkdir "wob-${{ env.wob_tag }}"
+          mv include protocols tests *.c *.scd meson* LICENSE README.md "wob-${{ env.wob_tag }}"
+          tar -czf "wob-${{ env.wob_tag }}.tar.gz" "wob-${{ env.wob_tag }}"
+      - uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./wob-${{ env.wob_tag }}.tar.gz
+          asset_name: wob-${{ env.wob_tag }}.tar.gz
+          asset_content_type: application/tar+gz

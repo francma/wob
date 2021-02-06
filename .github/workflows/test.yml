@@ -1,0 +1,57 @@
+name: test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  alpine:
+    runs-on: ubuntu-latest
+    container: alpine:3.12
+    steps:
+      - uses: actions/checkout@v2
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc
+      - run: meson build && ninja -C build && meson test -C build
+
+  archlinux:
+    runs-on: ubuntu-latest
+    container: archlinux
+    steps:
+      - uses: actions/checkout@v2
+      - run: pacman -Syuu --noconfirm gcc pkgconf meson wayland wayland-protocols
+      - run: meson build && ninja -C build && meson test -C build
+
+  freebsd:
+    runs-on: macos-latest # until https://github.com/actions/runner/issues/385
+    steps:
+      - uses: actions/checkout@v2
+      - name: Test in FreeBSD VM
+        uses: vmactions/freebsd-vm@v0.1.2
+        with:
+          usesh: true
+          prepare: pkg install -y meson pkgconf wayland wayland-protocols
+          run: meson build && ninja -C build && meson test -C build
+
+  clang-format:
+    runs-on: ubuntu-latest
+    container: alpine:3.12
+    steps:
+      - uses: actions/checkout@v2
+      - run: apk update && apk add clang
+      - run: clang-format *.c tests/*.c --output-replacements-xml | (! grep "</replacement>" 1>/dev/null)
+
+  clang-analyzer:
+    runs-on: ubuntu-latest
+    container: alpine:3.12
+    steps:
+      - uses: actions/checkout@v2
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer
+      - run: scan-build meson build && scan-build --status-bugs ninja -C build
+
+  valgrind:
+    runs-on: ubuntu-latest
+    container: alpine:3.12
+    steps:
+      - uses: actions/checkout@v2
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind
+      - run: meson build && meson test -C build --wrap="valgrind --leak-check=full --error-exitcode=2"
