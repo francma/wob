@@ -552,7 +552,7 @@ main(int argc, char **argv)
 			},
 		.overflow =
 			(struct wob_color){
-				.alpha= 1.0,
+				.alpha = 1.0,
 				.red = 1.0,
 				.green = 0.0,
 				.blue = 0.0,
@@ -587,8 +587,7 @@ main(int argc, char **argv)
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
 		{"allow-overflow", no_argument, NULL, 'f'},
-		{"overflow-color", required_argument, NULL, 5}
-	};
+		{"overflow-color", required_argument, NULL, 5}};
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
@@ -709,7 +708,7 @@ main(int argc, char **argv)
 				wob_log_inc_verbosity();
 				break;
 			case 'f':
-				allow_overflow=true;
+				allow_overflow = true;
 				break;
 			case 5:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.overflow))) {
@@ -848,12 +847,19 @@ main(int argc, char **argv)
 						wob_destroy(&app);
 
 						return EXIT_FAILURE;
-					} else if (percentage > maximum && allow_overflow) {
-						percentage%=maximum;
+					}
+					else if (percentage > maximum && allow_overflow) {
+						percentage %= maximum;
 						effective_color = colors.overflow;
 					}
-					
-					wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %#x }", percentage, colors.background, colors.border, colors.bar, colors.overflow);
+
+					wob_log_info(
+						"Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %#x }",
+						percentage,
+						colors.background,
+						colors.border,
+						colors.bar,
+						colors.overflow);
 
 					if (hidden) {
 						wob_show(&app);
