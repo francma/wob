@@ -57,6 +57,7 @@ struct wob_colors {
 	struct wob_color bar;
 	struct wob_color background;
 	struct wob_color border;
+	struct wob_color overflow;
 };
 
 struct wob_output_config {
@@ -508,7 +509,8 @@ main(int argc, char **argv)
 		"  --border-color <#argb>     Define border color\n"
 		"  --background-color <#argb> Define background color\n"
 		"  --bar-color <#argb>        Define bar color\n"
-		"  --allow-overflow           Allow values over maximum\n"
+		"  -f, --allow-overflow       Allow values over maximum\n"
+		"  --overflow-color <#argb>   Define bar color when overflowed"
 		"\n";
 
 	struct wob app = {0};
@@ -548,6 +550,13 @@ main(int argc, char **argv)
 				.green = 1.0,
 				.blue = 1.0,
 			},
+		.overflow =
+			(struct wob_color){
+				.alpha= 1.0,
+				.red = 1.0,
+				.green = 0.0,
+				.blue = 0.0,
+			},
 	};
 	bool pledge = true;
 
@@ -577,7 +586,8 @@ main(int argc, char **argv)
 		{"background-color", required_argument, NULL, 2},
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
-		{"allow-overflow", no_argument, NULL, 'f'}
+		{"allow-overflow", no_argument, NULL, 'f'},
+		{"overflow-color", required_argument, NULL, 5}
 	};
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
 		switch (c) {
@@ -701,6 +711,12 @@ main(int argc, char **argv)
 			case 'f':
 				allow_overflow=true;
 				break;
+			case 5:
+				if (!wob_parse_color(optarg, &strtoul_end, &(colors.overflow))) {
+					wob_log_error("Overflow color must be a value between #00000000 and #FFFFFFFF.");
+					return EXIT_FAILURE;
+				}
+				break;
 			default:
 				fprintf(stderr, "%s", usage);
 				return EXIT_FAILURE;
@@ -766,6 +782,7 @@ main(int argc, char **argv)
 		unsigned long percentage = 0;
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
 		char *fgets_rv;
+		struct wob_color effective_color = colors.bar;
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
@@ -833,9 +850,10 @@ main(int argc, char **argv)
 						return EXIT_FAILURE;
 					} else if (percentage > maximum && allow_overflow) {
 						percentage%=maximum;
+						effective_color = colors.overflow;
 					}
 					
-					wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
+					wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %#x }", percentage, colors.background, colors.border, colors.bar, colors.overflow);
 
 					if (hidden) {
 						wob_show(&app);
@@ -854,7 +872,7 @@ main(int argc, char **argv)
 						wob_draw_border(app.wob_geom, argb, colors.border);
 					}
 
-					wob_draw_percentage(app.wob_geom, argb, colors.bar, colors.background, percentage, maximum);
+					wob_draw_percentage(app.wob_geom, argb, effective_color, colors.background, percentage, maximum);
 
 					wob_flush(&app);
 					hidden = false;
