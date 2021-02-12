@@ -508,6 +508,7 @@ main(int argc, char **argv)
 		"  --border-color <#argb>     Define border color\n"
 		"  --background-color <#argb> Define background color\n"
 		"  --bar-color <#argb>        Define bar color\n"
+		"  --allow-overflow           Allow values over maximum\n"
 		"\n";
 
 	struct wob app = {0};
@@ -515,6 +516,7 @@ main(int argc, char **argv)
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
+	bool allow_overflow = false;
 	struct wob_geom geom = {
 		.width = WOB_DEFAULT_WIDTH,
 		.height = WOB_DEFAULT_HEIGHT,
@@ -575,8 +577,9 @@ main(int argc, char **argv)
 		{"background-color", required_argument, NULL, 2},
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
+		{"allow-overflow", no_argument, NULL, 'f'}
 	};
-	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) {
@@ -694,6 +697,9 @@ main(int argc, char **argv)
 				return EXIT_SUCCESS;
 			case 'v':
 				wob_log_inc_verbosity();
+				break;
+			case 'f':
+				allow_overflow=true;
 				break;
 			default:
 				fprintf(stderr, "%s", usage);
@@ -819,14 +825,16 @@ main(int argc, char **argv)
 						return EXIT_FAILURE;
 					}
 
-					if (percentage > maximum) {
+					if (percentage > maximum && !allow_overflow) {
 						wob_log_error("Received value %ld is above defined maximum %ld", percentage, maximum);
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
 
 						return EXIT_FAILURE;
+					} else if (percentage > maximum && allow_overflow) {
+						percentage%=maximum;
 					}
-
+					
 					wob_log_info("Received input { value = %ld, bg = %#x, border = %#x, bar = %#x }", percentage, colors.background, colors.border, colors.bar);
 
 					if (hidden) {
