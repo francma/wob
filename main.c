@@ -519,7 +519,8 @@ main(int argc, char **argv)
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
-	bool allow_overflow, no_wrap = false;
+	bool allow_overflow = false;
+	bool no_wrap = false;
 	struct wob_geom geom = {
 		.width = WOB_DEFAULT_WIDTH,
 		.height = WOB_DEFAULT_HEIGHT,
