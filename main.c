@@ -511,6 +511,7 @@ main(int argc, char **argv)
 		"  --bar-color <#argb>        Define bar color\n"
 		"  -f, --allow-overflow       Allow values over maximum\n"
 		"  --overflow-color <#argb>   Define bar color when overflowed"
+		"  --no-wrap                  Don't wrap around when above maximum. Only applies when -f is set."
 		"\n";
 
 	struct wob app = {0};
@@ -518,7 +519,7 @@ main(int argc, char **argv)
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
-	bool allow_overflow = false;
+	bool allow_overflow, no_wrap = false;
 	struct wob_geom geom = {
 		.width = WOB_DEFAULT_WIDTH,
 		.height = WOB_DEFAULT_HEIGHT,
@@ -587,7 +588,8 @@ main(int argc, char **argv)
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
 		{"allow-overflow", no_argument, NULL, 'f'},
-		{"overflow-color", required_argument, NULL, 5}};
+		{"overflow-color", required_argument, NULL, 5},
+		{"no-wrap", no_argument, NULL, 6}};
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
@@ -715,6 +717,9 @@ main(int argc, char **argv)
 					wob_log_error("Overflow color must be a value between #00000000 and #FFFFFFFF.");
 					return EXIT_FAILURE;
 				}
+				break;
+			case 6:
+				no_wrap = true;
 				break;
 			default:
 				fprintf(stderr, "%s", usage);
@@ -849,8 +854,13 @@ main(int argc, char **argv)
 						return EXIT_FAILURE;
 					}
 					else if (percentage > maximum && allow_overflow) {
-						percentage %= maximum;
 						effective_color = colors.overflow;
+						if (no_wrap) {
+							percentage = 100;
+						}
+						else {
+							percentage %= maximum;
+						}
 					}
 
 					wob_log_info(
