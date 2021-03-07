@@ -1,0 +1,6 @@
+[Socket]
+ListenFIFO=%t/wob.sock
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target
