@@ -1,0 +1,12 @@
+[Unit]
+Description=Socket for wob - A lightweight overlay volume/backlight/progress/anything bar for Wayland
+Before=wob.service
+
+[Socket]
+ListenFIFO=%t/wob.sock
+Service=wob.service
+SocketMode=0600
+
+[Install]
+WantedBy=sockets.target
+RequiredBy=wob.service
