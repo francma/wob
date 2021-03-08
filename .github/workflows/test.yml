@@ -18,7 +18,7 @@ jobs:
     container: archlinux
     steps:
       - uses: actions/checkout@v2
-      - run: pacman -Syuu --noconfirm gcc pkgconf meson wayland wayland-protocols
+      - run: pacman -Syu --noconfirm && pacman -S --noconfirm gcc pkgconf meson wayland wayland-protocols
       - run: meson build && ninja -C build && meson test -C build
 
   freebsd:
