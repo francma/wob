@@ -35,29 +35,12 @@
 
 #include "buffer.h"
 #include "color.h"
+#include "config.h"
 #include "log.h"
 #include "parse.h"
 #include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
-
-struct wob_geom {
-	unsigned long width;
-	unsigned long height;
-	unsigned long border_offset;
-	unsigned long border_size;
-	unsigned long bar_padding;
-	unsigned long stride;
-	unsigned long size;
-	unsigned long anchor;
-	unsigned long margin;
-};
-
-struct wob_colors {
-	struct wob_color bar;
-	struct wob_color background;
-	struct wob_color border;
-};
 
 struct wob_output_config {
 	char *name;
@@ -477,7 +460,7 @@ int
 main(int argc, char **argv)
 {
 	wob_log_use_colors(isatty(STDERR_FILENO));
-	wob_log_level_warn();
+	wob_log_setup();
 
 	// libc is doing fstat syscall to determine the optimal buffer size and that can be problematic to wob_pledge()
 	// to solve this problem we can just pass the optimal buffer ourselves
@@ -547,8 +530,8 @@ main(int argc, char **argv)
 				.blue = 1.0,
 			},
 	};
-	bool pledge = true;
 
+	bool pledge = true;
 	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
 	if (disable_pledge_env != NULL && strcmp(disable_pledge_env, "0") != 0) {
 		pledge = false;
@@ -576,6 +559,7 @@ main(int argc, char **argv)
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
 	};
+
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
@@ -646,22 +630,9 @@ main(int argc, char **argv)
 				}
 				break;
 			case 'a':
-				if (strcmp(optarg, "left") == 0) {
-					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
-				}
-				else if (strcmp(optarg, "right") == 0) {
-					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
-				}
-				else if (strcmp(optarg, "top") == 0) {
-					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
-				}
-				else if (strcmp(optarg, "bottom") == 0) {
-					geom.anchor |= ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
-				}
-				else if (strcmp(optarg, "center") != 0) {
-					wob_log_error("Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
+				if (!wob_parse_anchor(optarg, &geom.anchor)) {
 					return EXIT_FAILURE;
-				}
+				};
 				break;
 			case 'M':
 				geom.margin = strtoul(optarg, &strtoul_end, 10);
@@ -700,7 +671,10 @@ main(int argc, char **argv)
 				return EXIT_FAILURE;
 		}
 	}
-
+	if (!wob_parse_config_from_environment(&geom, &colors, &timeout_msec)) {
+		wob_log_error("Invalid configuration values parsed from environment");
+		/* return EXIT_FAILURE; */
+	}
 	if (geom.width < MIN_PERCENTAGE_BAR_WIDTH + 2 * (geom.border_offset + geom.border_size + geom.bar_padding)) {
 		wob_log_error("Invalid geometry: width is too small for given parameters");
 		return EXIT_FAILURE;

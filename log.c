@@ -111,3 +111,20 @@ wob_log_inc_verbosity(void)
 		wob_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
 	}
 }
+
+void
+wob_log_setup(void)
+{
+	if (getenv("WOB_DEBUG") != NULL) {
+		wob_log_level_debug();
+	}
+	else if (getenv("WOB_VERBOSE") != NULL) {
+		wob_log_level_info();
+	}
+	else if (getenv("WOB_ERROR") != NULL) {
+		wob_log_level_error();
+	}
+	else { // default log level
+		wob_log_level_warn();
+	};
+}

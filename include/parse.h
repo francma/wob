@@ -9,4 +9,6 @@ bool wob_parse_color(const char *restrict str, char **restrict str_end, struct w
 
 bool wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_color *background, struct wob_color *border, struct wob_color *bar);
 
+bool wob_parse_anchor(char *value, unsigned long *anchor);
+
 #endif
