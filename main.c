@@ -13,6 +13,10 @@
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
+#define OVERFLOW_MODE_NONE 0
+#define OVERFLOW_MODE_WRAP 1
+#define OVERFLOW_MODE_NOWRAP 2
+
 #define STR(x) #x
 
 // sizeof already includes NULL byte
@@ -57,7 +61,6 @@ struct wob_colors {
 	struct wob_color bar;
 	struct wob_color background;
 	struct wob_color border;
-	struct wob_color overflow;
 };
 
 struct wob_output_config {
@@ -491,27 +494,28 @@ main(int argc, char **argv)
 	const char *usage =
 		"Usage: wob [options]\n"
 		"\n"
-		"  -h, --help                 Show help message and quit.\n"
-		"  --version                  Show the version number and quit.\n"
-		"  -v                         Increase verbosity of messages, defaults to errors and warnings only\n"
-		"  -t, --timeout <ms>         Hide wob after <ms> milliseconds, defaults to " STR(WOB_DEFAULT_TIMEOUT) ".\n"
-		"  -m, --max <%>              Define the maximum percentage, defaults to " STR(WOB_DEFAULT_MAXIMUM) ". \n"
-		"  -W, --width <px>           Define bar width in pixels, defaults to " STR(WOB_DEFAULT_WIDTH) ". \n"
-		"  -H, --height <px>          Define bar height in pixels, defaults to " STR(WOB_DEFAULT_HEIGHT) ". \n"
-		"  -o, --offset <px>          Define border offset in pixels, defaults to " STR(WOB_DEFAULT_BORDER_OFFSET) ". \n"
-		"  -b, --border <px>          Define border size in pixels, defaults to " STR(WOB_DEFAULT_BORDER_SIZE) ". \n"
-		"  -p, --padding <px>         Define bar padding in pixels, defaults to " STR(WOB_DEFAULT_BAR_PADDING) ". \n"
-		"  -a, --anchor <s>           Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
-		"                             May be specified multiple times. \n"
-		"  -M, --margin <px>          Define anchor margin in pixels, defaults to " STR(WOB_DEFAULT_MARGIN) ". \n"
-		"  -O, --output <name>        Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
-		"                             May be specified multiple times.\n"
-		"  --border-color <#argb>     Define border color\n"
-		"  --background-color <#argb> Define background color\n"
-		"  --bar-color <#argb>        Define bar color\n"
-		"  -f, --allow-overflow       Allow values over maximum\n"
-		"  --overflow-color <#argb>   Define bar color when overflowed"
-		"  --no-wrap                  Don't wrap around when above maximum. Only applies when -f is set."
+		"  -h, --help                          Show help message and quit.\n"
+		"  --version                           Show the version number and quit.\n"
+		"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
+		"  -t, --timeout <ms>                  Hide wob after <ms> milliseconds, defaults to " STR(WOB_DEFAULT_TIMEOUT) ".\n"
+		"  -m, --max <%>                       Define the maximum percentage, defaults to " STR(WOB_DEFAULT_MAXIMUM) ". \n"
+		"  -W, --width <px>                    Define bar width in pixels, defaults to " STR(WOB_DEFAULT_WIDTH) ". \n"
+		"  -H, --height <px>                   Define bar height in pixels, defaults to " STR(WOB_DEFAULT_HEIGHT) ". \n"
+		"  -o, --offset <px>                   Define border offset in pixels, defaults to " STR(WOB_DEFAULT_BORDER_OFFSET) ". \n"
+		"  -b, --border <px>                   Define border size in pixels, defaults to " STR(WOB_DEFAULT_BORDER_SIZE) ". \n"
+		"  -p, --padding <px>                  Define bar padding in pixels, defaults to " STR(WOB_DEFAULT_BAR_PADDING) ". \n"
+		"  -a, --anchor <s>                    Define anchor point; one of 'top', 'left', 'right', 'bottom', 'center' (default). \n"
+		"                                      May be specified multiple times. \n"
+		"  -M, --margin <px>                   Define anchor margin in pixels, defaults to " STR(WOB_DEFAULT_MARGIN) ". \n"
+		"  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
+		"                                      May be specified multiple times.\n"
+		"  --border-color <#argb>              Define border color\n"
+		"  --background-color <#argb>          Define background color\n"
+		"  --bar-color <#argb>                 Define bar color\n"
+		"  --overflow-mode <mode>              Change the overflow behavior. Valid options are `none`, `wrap` (default), and `nowrap`.\n"
+		"  --overflow-bar-color <#argb>        Define bar color when overflowed\n"
+		"  --overflow-border-color <#argb>     Define the border color when overflowed\n"
+		"  --overflow-background-color <#argb> Define the background color when overflowed\n"
 		"\n";
 
 	struct wob app = {0};
@@ -519,8 +523,7 @@ main(int argc, char **argv)
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
-	bool allow_overflow = false;
-	bool no_wrap = false;
+	int overflow_mode = OVERFLOW_MODE_WRAP;
 	struct wob_geom geom = {
 		.width = WOB_DEFAULT_WIDTH,
 		.height = WOB_DEFAULT_HEIGHT,
@@ -545,21 +548,22 @@ main(int argc, char **argv)
 				.green = 1.0,
 				.blue = 1.0,
 			},
-		.border =
+		.border = (struct wob_color){
+			.alpha = 1.0,
+			.red = 1.0,
+			.green = 1.0,
+			.blue = 1.0,
+		}};
+	struct wob_colors overflow_colors = {
+		.background = (struct wob_color){.alpha = 1.0, .red = 0.0, .green = 0.0, .blue = 0.0},
+		.bar =
 			(struct wob_color){
 				.alpha = 1.0,
 				.red = 1.0,
 				.green = 1.0,
 				.blue = 1.0,
 			},
-		.overflow =
-			(struct wob_color){
-				.alpha = 1.0,
-				.red = 1.0,
-				.green = 0.0,
-				.blue = 0.0,
-			},
-	};
+		.border = (struct wob_color){.alpha = 1.0, .red = 1.0, .green = 1.0, .blue = 1.0}};
 	bool pledge = true;
 
 	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
@@ -588,9 +592,11 @@ main(int argc, char **argv)
 		{"background-color", required_argument, NULL, 2},
 		{"bar-color", required_argument, NULL, 3},
 		{"verbose", no_argument, NULL, 'v'},
-		{"allow-overflow", no_argument, NULL, 'f'},
-		{"overflow-color", required_argument, NULL, 5},
-		{"no-wrap", no_argument, NULL, 6}};
+		{"overflow-mode", required_argument, NULL, 6},
+		{"overflow-bar-color", required_argument, NULL, 5},
+		{"overflow-background-color", required_argument, NULL, 7},
+		{"overflow-border-color", required_argument, NULL, 8}};
+
 	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
@@ -710,17 +716,38 @@ main(int argc, char **argv)
 			case 'v':
 				wob_log_inc_verbosity();
 				break;
-			case 'f':
-				allow_overflow = true;
-				break;
 			case 5:
-				if (!wob_parse_color(optarg, &strtoul_end, &(colors.overflow))) {
-					wob_log_error("Overflow color must be a value between #00000000 and #FFFFFFFF.");
+				if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.bar))) {
+					wob_log_error("Overflow bar color must be a value between #00000000 and #FFFFFFFF.");
 					return EXIT_FAILURE;
 				}
 				break;
 			case 6:
-				no_wrap = true;
+				if (strcmp(optarg, "none") == 0) {
+					overflow_mode = OVERFLOW_MODE_NONE;
+				}
+				else if (strcmp(optarg, "wrap") == 0) {
+					overflow_mode = OVERFLOW_MODE_WRAP; // this is the default
+				}
+				else if (strcmp(optarg, "nowrap") == 0) {
+					overflow_mode = OVERFLOW_MODE_NOWRAP;
+				}
+				else {
+					wob_log_error("Invalid argument for overflow-mode. Valid options are none, wrap, and nowrap.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 7:
+				if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.background))) {
+					wob_log_error("Overflow background color must be a value between #00000000 and #FFFFFFFF.");
+					return EXIT_FAILURE;
+				}
+				break;
+			case 8:
+				if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.border))) {
+					wob_log_error("Overflow border color must be a value between #00000000 and #FFFFFFFF.");
+					return EXIT_FAILURE;
+				}
 				break;
 			default:
 				fprintf(stderr, "%s", usage);
@@ -766,6 +793,7 @@ main(int argc, char **argv)
 	}
 
 	struct wob_colors old_colors;
+	struct wob_colors effective_colors = colors;
 
 	// Draw these at least once
 	wob_draw_background(app.wob_geom, argb, colors.background);
@@ -787,7 +815,6 @@ main(int argc, char **argv)
 		unsigned long percentage = 0;
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
 		char *fgets_rv;
-		struct wob_color effective_color = colors.bar;
 
 		switch (poll(fds, 2, hidden ? -1 : timeout_msec)) {
 			case -1:
@@ -838,7 +865,6 @@ main(int argc, char **argv)
 						return EXIT_FAILURE;
 					}
 
-					old_colors = colors;
 					if (!wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar)) {
 						wob_log_error("Received invalid input");
 						if (!hidden) wob_hide(&app);
@@ -847,49 +873,54 @@ main(int argc, char **argv)
 						return EXIT_FAILURE;
 					}
 
-					if (percentage > maximum && !allow_overflow) {
-						wob_log_error("Received value %ld is above defined maximum %ld", percentage, maximum);
-						if (!hidden) wob_hide(&app);
-						wob_destroy(&app);
-
-						return EXIT_FAILURE;
+					old_colors = effective_colors;
+					if (percentage > maximum) {
+						switch (overflow_mode) {
+							case OVERFLOW_MODE_NONE:
+								wob_log_error("Received value %ld is above defined maximum %ld", percentage, maximum);
+								if (!hidden) wob_hide(&app);
+								wob_destroy(&app);
+								return EXIT_FAILURE;
+							case OVERFLOW_MODE_WRAP:
+								effective_colors = overflow_colors;
+								percentage %= maximum;
+								break;
+							case OVERFLOW_MODE_NOWRAP:
+								effective_colors = overflow_colors;
+								percentage = maximum;
+								break;
+						}
 					}
-					else if (percentage > maximum && allow_overflow) {
-						effective_color = colors.overflow;
-						if (no_wrap) {
-							percentage = 100;
-						}
-						else {
-							percentage %= maximum;
-						}
+					else {
+						effective_colors = colors;
 					}
 
 					wob_log_info(
-						"Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %#x }",
+						"Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %s }",
 						percentage,
-						colors.background,
-						colors.border,
-						colors.bar,
-						colors.overflow);
+						effective_colors.background,
+						effective_colors.border,
+						effective_colors.bar,
+						overflow_mode == OVERFLOW_MODE_NONE ? "false" : "true"); // how should this be handled w/ the overflow colors?
 
 					if (hidden) {
 						wob_show(&app);
 					}
 
 					bool redraw_background_and_border = false;
-					if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(colors.background)) {
+					if (wob_color_to_argb(old_colors.background) != wob_color_to_argb(effective_colors.background)) {
 						redraw_background_and_border = true;
 					}
-					else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(colors.border)) {
+					else if (wob_color_to_argb(old_colors.border) != wob_color_to_argb(effective_colors.border)) {
 						redraw_background_and_border = true;
 					}
 
 					if (redraw_background_and_border) {
-						wob_draw_background(app.wob_geom, argb, colors.background);
-						wob_draw_border(app.wob_geom, argb, colors.border);
+						wob_draw_background(app.wob_geom, argb, effective_colors.background);
+						wob_draw_border(app.wob_geom, argb, effective_colors.border);
 					}
 
-					wob_draw_percentage(app.wob_geom, argb, effective_color, colors.background, percentage, maximum);
+					wob_draw_percentage(app.wob_geom, argb, effective_colors.bar, effective_colors.background, percentage, maximum);
 
 					wob_flush(&app);
 					hidden = false;
