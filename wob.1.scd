@@ -55,13 +55,13 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 	Define output to show bar on or '\*' for all. If ommited, focused output is chosen.
 	May be specified multiple times.
 
-*--border-color* <#AARRGGBB>
+*--border-color* <#RRGGBBAA>
 	Define border color, defaults to #FFFFFFFF.
 
-*--background-color* <#AARRGGBB>
-	Define background color, defaults to #FF000000.
+*--background-color* <#RRGGBBAA>
+	Define background color, defaults to #000000FF.
 
-*--bar-color* <#AARRGGBB>
+*--bar-color* <#RRGGBBAA>
 	Define bar color, defaults to #FFFFFFFF.
 
 # USAGE
@@ -74,7 +74,7 @@ or
 
 <value> <#background_color> <#border_color> <#bar_color>
 
-Where <value> is number in interval from 0 to *--max* and <#\*color> is color in #AARRGGBB format.
+Where <value> is number in interval from 0 to *--max* and <#\*color> is color in #RRGGBBAA format.
 
 # ENVIRONMENT
 

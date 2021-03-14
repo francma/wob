@@ -18,6 +18,8 @@ void wob_log_inc_verbosity(void);
 
 void wob_log_use_colors(bool use_colors);
 
+void wob_log_setup(void);
+
 #define wob_log_debug(...) _wob_log(_WOB_LOG_DEBUG, WOB_FILE, __LINE__, __VA_ARGS__)
 #define wob_log_info(...) _wob_log(_WOB_LOG_INFO, WOB_FILE, __LINE__, __VA_ARGS__)
 #define wob_log_warn(...) _wob_log(_WOB_LOG_WARN, WOB_FILE, __LINE__, __VA_ARGS__)

@@ -6,6 +6,10 @@
 #include <string.h>
 
 #include "parse.h"
+#include <limits.h>
+
+#include "wlr-layer-shell-unstable-v1-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 
 bool
 wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_color *color)
@@ -28,10 +32,10 @@ wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_co
 	}
 
 	*color = (struct wob_color){
-		.alpha = parts[0] / ((float) UINT8_MAX),
-		.red = parts[1] / ((float) UINT8_MAX),
-		.green = parts[2] / ((float) UINT8_MAX),
-		.blue = parts[3] / ((float) UINT8_MAX),
+		.red = parts[0] / ((float) UINT8_MAX),
+		.green = parts[1] / ((float) UINT8_MAX),
+		.blue = parts[2] / ((float) UINT8_MAX),
+		.alpha = parts[3] / ((float) UINT8_MAX),
 	};
 
 	if (str_end) {
@@ -80,4 +84,28 @@ wob_parse_input(const char *input_buffer, unsigned long *percentage, struct wob_
 	}
 
 	return input_ptr == newline_position;
+}
+
+bool
+wob_parse_anchor(char *value, unsigned long *anchor)
+{
+	if (strcmp(value, "left") == 0) {
+		*anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT;
+	}
+	else if (strcmp(value, "right") == 0) {
+		*anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT;
+	}
+	else if (strcmp(value, "top") == 0) {
+		*anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP;
+	}
+	else if (strcmp(value, "bottom") == 0) {
+		*anchor = ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM;
+	}
+	else if (strcmp(value, "center") != 0) { // FIXME: remove last strcmp and just return false?
+		return false;
+	}
+	else {
+		return false;
+	}
+	return true;
 }
