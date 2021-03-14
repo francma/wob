@@ -32,10 +32,10 @@ wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_co
 	}
 
 	*color = (struct wob_color){
-		.alpha = parts[0] / ((float) UINT8_MAX),
-		.red = parts[1] / ((float) UINT8_MAX),
-		.green = parts[2] / ((float) UINT8_MAX),
-		.blue = parts[3] / ((float) UINT8_MAX),
+		.red = parts[0] / ((float) UINT8_MAX),
+		.green = parts[1] / ((float) UINT8_MAX),
+		.blue = parts[2] / ((float) UINT8_MAX),
+		.alpha = parts[3] / ((float) UINT8_MAX),
 	};
 
 	if (str_end) {
