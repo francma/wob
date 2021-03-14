@@ -16,7 +16,7 @@
 #define STR(x) #x
 
 // sizeof already includes NULL byte
-#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #FF000000 #FFFFFFFF #FFFFFFFF\n"))
+#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n"))
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -511,13 +511,13 @@ main(int argc, char **argv)
 		"  -M, --margin <px>                   Define anchor margin in pixels, defaults to " STR(WOB_DEFAULT_MARGIN) ". \n"
 		"  -O, --output <name>                 Define output to show bar on or '*' for all. If ommited, focused output is chosen.\n"
 		"                                      May be specified multiple times.\n"
-		"  --border-color <#argb>              Define border color\n"
-		"  --background-color <#argb>          Define background color\n"
-		"  --bar-color <#argb>                 Define bar color\n"
+		"  --border-color <#rgba>              Define border color\n"
+		"  --background-color <#rgba>          Define background color\n"
+		"  --bar-color <#rgba>                 Define bar color\n"
 		"  --overflow-mode <mode>              Change the overflow behavior. Valid options are `none`, `wrap` (default), and `nowrap`.\n"
-		"  --overflow-bar-color <#argb>        Define bar color when overflowed\n"
-		"  --overflow-border-color <#argb>     Define the border color when overflowed\n"
-		"  --overflow-background-color <#argb> Define the background color when overflowed\n"
+		"  --overflow-bar-color <#rgba>        Define bar color when overflowed\n"
+		"  --overflow-border-color <#rgba>     Define the border color when overflowed\n"
+		"  --overflow-background-color <#rgba> Define the background color when overflowed\n"
 		"\n";
 
 	struct wob app = {0};
