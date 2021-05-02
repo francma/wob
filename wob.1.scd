@@ -64,6 +64,18 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *--bar-color* <#AARRGGBB>
 	Define bar color, defaults to #FFFFFFFF.
 
+*--overflow-mode <mode>*
+	Change the overflow mode. Valid options are `none`, `wrap`, and `nowrap`.
+
+*--overflow-bar-color* <#AARRGGBB>
+	Define overflow bar color, defaults to #FFFF0000
+
+*--overflow-background-color* <#AARRGGBB>
+	Define overflow background color, defaults to #FF000000
+
+*--overflow-border-color* <#AARRGGBB>
+	Define overflow border color, defaults to #FFFFFFFF	
+
 # USAGE
 
 Wob reads values to display from standart input in the following formats:
