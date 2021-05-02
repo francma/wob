@@ -13,10 +13,6 @@
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
-#define OVERFLOW_MODE_NONE 0
-#define OVERFLOW_MODE_WRAP 1
-#define OVERFLOW_MODE_NOWRAP 2
-
 #define STR(x) #x
 
 // sizeof already includes NULL byte
@@ -44,6 +40,12 @@
 #include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
+
+enum wob_overflow_mode {
+	OVERFLOW_MODE_NONE,
+	OVERFLOW_MODE_WRAP,
+	OVERFLOW_MODE_NOWRAP,
+};
 
 struct wob_geom {
 	unsigned long width;
@@ -523,7 +525,7 @@ main(int argc, char **argv)
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
-	int overflow_mode = OVERFLOW_MODE_WRAP;
+	enum wob_overflow_mode overflow_mode = OVERFLOW_MODE_WRAP;
 	struct wob_geom geom = {
 		.width = WOB_DEFAULT_WIDTH,
 		.height = WOB_DEFAULT_HEIGHT,
