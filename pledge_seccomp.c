@@ -22,6 +22,7 @@ wob_pledge(void)
 		SCMP_SYS(exit_group),
 		SCMP_SYS(fcntl),
 		SCMP_SYS(gettimeofday),
+		SCMP_SYS(munmap),
 		SCMP_SYS(poll),
 		SCMP_SYS(ppoll),
 		SCMP_SYS(read),
