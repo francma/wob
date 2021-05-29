@@ -4,10 +4,10 @@
 #include <stdint.h>
 
 struct wob_color {
-	float alpha;
-	float red;
-	float green;
-	float blue;
+	float a;
+	float r;
+	float g;
+	float b;
 };
 
 uint32_t wob_color_to_argb(struct wob_color color);

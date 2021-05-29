@@ -32,7 +32,7 @@
 
 #include "log.h"
 
-static _wob_log_importance min_importance_to_log = _WOB_LOG_WARN;
+static wob_log_importance min_importance_to_log = WOB_LOG_WARN;
 
 static bool use_colors = false;
 
@@ -51,7 +51,7 @@ static const char *verbosity_colors[] = {
 };
 
 void
-_wob_log(const _wob_log_importance importance, const char *file, const int line, const char *fmt, ...)
+wob_log(const wob_log_importance importance, const char *file, const int line, const char *fmt, ...)
 {
 	if (importance < min_importance_to_log) {
 		return;
@@ -92,7 +92,7 @@ _wob_log(const _wob_log_importance importance, const char *file, const int line,
 }
 
 void
-_wob_log_set_level(const _wob_log_importance importance)
+wob_log_set_level(const wob_log_importance importance)
 {
 	min_importance_to_log = importance;
 }
@@ -106,7 +106,7 @@ wob_log_use_colors(const bool colors)
 void
 wob_log_inc_verbosity(void)
 {
-	if (min_importance_to_log != _WOB_LOG_DEBUG) {
+	if (min_importance_to_log != WOB_LOG_DEBUG) {
 		min_importance_to_log -= 1;
 		wob_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
 	}

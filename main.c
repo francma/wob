@@ -535,37 +535,17 @@ main(int argc, char **argv)
 		.anchor = WOB_DEFAULT_ANCHOR,
 		.margin = WOB_DEFAULT_MARGIN,
 	};
+
 	struct wob_colors colors = {
-		.background =
-			(struct wob_color){
-				.alpha = 1.0,
-				.red = 0.0,
-				.green = 0.0,
-				.blue = 0.0,
-			},
-		.bar =
-			(struct wob_color){
-				.alpha = 1.0,
-				.red = 1.0,
-				.green = 1.0,
-				.blue = 1.0,
-			},
-		.border = (struct wob_color){
-			.alpha = 1.0,
-			.red = 1.0,
-			.green = 1.0,
-			.blue = 1.0,
-		}};
+		.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f},
+		.bar = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f},
+		.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f}};
+
 	struct wob_colors overflow_colors = {
-		.background = (struct wob_color){.alpha = 1.0, .red = 0.0, .green = 0.0, .blue = 0.0},
-		.bar =
-			(struct wob_color){
-				.alpha = 1.0,
-				.red = 1.0,
-				.green = 1.0,
-				.blue = 1.0,
-			},
-		.border = (struct wob_color){.alpha = 1.0, .red = 1.0, .green = 1.0, .blue = 1.0}};
+		.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f},
+		.bar = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f},
+		.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f}};
+
 	bool pledge = true;
 
 	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");

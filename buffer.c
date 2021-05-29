@@ -18,8 +18,8 @@ wob_shm_create()
 {
 	int shmid = -1;
 	char shm_name[NAME_MAX];
-	for (unsigned char i = 0; i < UCHAR_MAX; ++i) {
-		if (snprintf(shm_name, NAME_MAX, "/wob-%hhu", i) >= NAME_MAX) {
+	for (int i = 0; i < UCHAR_MAX; ++i) {
+		if (snprintf(shm_name, NAME_MAX, "/wob-%d", i) >= NAME_MAX) {
 			break;
 		}
 		shmid = shm_open(shm_name, O_RDWR | O_CREAT | O_EXCL, 0600);

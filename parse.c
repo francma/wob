@@ -1,6 +1,5 @@
 #define WOB_FILE "parse.c"
 
-#include <errno.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,10 +27,10 @@ wob_parse_color(const char *restrict str, char **restrict str_end, struct wob_co
 	}
 
 	*color = (struct wob_color){
-		.alpha = parts[0] / ((float) UINT8_MAX),
-		.red = parts[1] / ((float) UINT8_MAX),
-		.green = parts[2] / ((float) UINT8_MAX),
-		.blue = parts[3] / ((float) UINT8_MAX),
+		.a = (float) parts[0] / UINT8_MAX,
+		.r = (float) parts[1] / UINT8_MAX,
+		.g = (float) parts[2] / UINT8_MAX,
+		.b = (float) parts[3] / UINT8_MAX,
 	};
 
 	if (str_end) {
