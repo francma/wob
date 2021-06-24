@@ -76,7 +76,7 @@ Add these lines to your Sway config file:
 
 ```
 set $WOBSOCK $XDG_RUNTIME_DIR/wob.sock
-exec mkfifo $SWAYSOCK.wob && tail -f $WOBSOCK | wob
+exec mkfifo $WOBSOCK && tail -f $WOBSOCK | wob
 ```
 
 Volume using alsa:
