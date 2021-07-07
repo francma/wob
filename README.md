@@ -26,7 +26,7 @@ Install dependencies:
 
 Run these commands:
 
-```
+```shell script
 git clone git@github.com:francma/wob.git
 cd wob
 meson build
@@ -42,7 +42,7 @@ sudo ninja -C build install
 
 Launch wob in a terminal, enter a value (positive integer), press return.
 
-```
+```shell script
 wob
 ```
 
@@ -50,25 +50,43 @@ wob
 
 You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. /tmp/wobpipe, on your filesystem using.
 
-```
+```shell script
 mkfifo /tmp/wobpipe
 ```
 
 Connect the named pipe to the standard input of an wob instance.
 
-```
+```shell script
 tail -f /tmp/wobpipe | wob
 ```
 
 Set up your environment so that after updating audio volume, backlight intensity, or whatever, to a new value like 43, it writes that value into the pipe:
 
-```
+```shell script
 echo 43 > /tmp/wobpipe
 ```
+
+Wob will accept values from 0 to `--max` (by default 100) and will exit on a non-valid input.
 
 Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled by the window manager).
 
 See [man page](https://github.com/francma/wob/blob/master/wob.1.scd) for styling and positioning options.
+
+### Colors
+
+![wob_colored](doc/img/wob_colored.png)
+
+You can specify colors when passing values to wob : 
+
+```shell script
+echo "25 #FF88c0d0 #FF5e81ac #FFe5e9f0" > /tmp/wobpipe
+```
+
+The first color value represents background color. 
+The second one represents border color.
+The third one is bar color.
+
+wob colors format is `#AARRGGBB` (Note that the first two digits represent opacity)
 
 ### Sway WM example
 
