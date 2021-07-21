@@ -22,7 +22,7 @@ main(int argc, char **argv)
 	}
 
 	printf("running 2\n");
-	input = "25 #FF000000\n";
+	input = "25 #000000FF\n";
 	result = wob_parse_input(input, &percentage, &background, &border, &bar);
 	if (result) {
 		return EXIT_FAILURE;
