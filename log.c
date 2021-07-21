@@ -108,6 +108,5 @@ wob_log_inc_verbosity(void)
 {
 	if (min_importance_to_log != WOB_LOG_DEBUG) {
 		min_importance_to_log -= 1;
-		wob_log_debug("Set log level to %s", verbosity_names[min_importance_to_log]);
 	}
 }

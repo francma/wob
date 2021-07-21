@@ -14,6 +14,7 @@ wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
+inih = dependency('inih')
 
 wob_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
@@ -59,8 +60,8 @@ endforeach
 
 wob_inc = include_directories('include')
 
-wob_sources = ['main.c', 'parse.c', 'buffer.c', 'log.c', 'color.c']
-wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt]
+wob_sources = ['main.c', 'parse.c', 'buffer.c', 'log.c', 'color.c', 'config.c']
+wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih]
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'pledge_seccomp.c'
@@ -84,20 +85,24 @@ test('parse-input', executable(
 
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()
+  scdfiles = ['wob.1.scd', 'wob.ini.5.scd']
   scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
   sh = find_program('sh', native: true)
   mandir = get_option('mandir')
-  scdfile = 'wob.1.scd'
-  manfile = scdfile.split('.scd')[0]
 
-  custom_target(
-    manfile,
-    input: scdfile,
-    output: manfile,
-    command: [
-      sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc.path(), manfile)
-    ],
-    install: true,
-    install_dir: join_paths(mandir, 'man1')
-  )
+  foreach scdfile : scdfiles
+    manfile = scdfile.split('.scd')[0]
+    section = scdfile.split('.')[-2]
+
+    custom_target(
+      manfile,
+      input: scdfile,
+      output: manfile,
+      command: [
+        sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc.path(), manfile)
+      ],
+      install: true,
+      install_dir: 'man@1@'.format(mandir, section)
+    )
+  endforeach
 endif

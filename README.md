@@ -17,6 +17,7 @@ Releases are signed with [5C6DA024DDE27178073EA103F4B432D5D67990E3](https://keys
 Install dependencies:
 
 - wayland
+- [inih](https://github.com/benhoyt/inih)
 - wayland-protocols \*
 - meson \*
 - [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*
@@ -48,13 +49,13 @@ wob
 
 ### General case
 
-You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. /tmp/wobpipe, on your filesystem using.
+You may manage a bar for audio volume, backlight intensity, or whatever, using a named pipe. Create a named pipe, e.g. `/tmp/wobpipe`, on your filesystem using.
 
 ```
 mkfifo /tmp/wobpipe
 ```
 
-Connect the named pipe to the standard input of an wob instance.
+Connect the named pipe to the standard input of a wob instance.
 
 ```
 tail -f /tmp/wobpipe | wob
@@ -68,7 +69,7 @@ echo 43 > /tmp/wobpipe
 
 Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled by the window manager).
 
-See [man page](https://github.com/francma/wob/blob/master/wob.1.scd) for styling and positioning options.
+See [wob.ini.5](https://github.com/francma/wob/blob/master/wob.ini.5.scd) for styling and positioning options.
 
 ### Sway WM example
 
