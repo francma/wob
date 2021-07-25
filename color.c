@@ -7,10 +7,10 @@
 uint32_t
 wob_color_to_argb(const struct wob_color color)
 {
-	uint8_t alpha = (uint8_t) color.a * UINT8_MAX;
-	uint8_t red = (uint8_t) color.r * UINT8_MAX;
-	uint8_t green = (uint8_t) color.g * UINT8_MAX;
-	uint8_t blue = (uint8_t) color.b * UINT8_MAX;
+	uint8_t alpha = (uint8_t) (color.a * UINT8_MAX);
+	uint8_t red = (uint8_t) (color.r * UINT8_MAX);
+	uint8_t green = (uint8_t) (color.g * UINT8_MAX);
+	uint8_t blue = (uint8_t) (color.b * UINT8_MAX);
 
 	return (alpha << 24) + (red << 16) + (green << 8) + blue;
 }
