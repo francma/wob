@@ -42,5 +42,15 @@ main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	printf("running 5\n");
+	input = "25 #000000FF #16a085FF #FF0000FF\n";
+	result = wob_parse_input(input, &percentage, &background, &border, &bar);
+	if (!result || percentage != 25 || wob_color_to_argb(background) != 0xFF000000 || wob_color_to_argb(border) != 0xFF16a085 || wob_color_to_argb(bar) != 0xFF0000FF) {
+		printf("background 0x%08x\n", wob_color_to_argb(background));
+		printf("border 0x%08x\n", wob_color_to_argb(border));
+		printf("bar 0x%08x\n", wob_color_to_argb(bar));
+		return EXIT_FAILURE;
+	}
+
 	return EXIT_SUCCESS;
 }
