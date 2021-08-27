@@ -13,3 +13,10 @@ indent_size = 4
 [*.{xml,yml}]
 indent_style = space
 indent_size = 2
+
+[meson.build]
+indent_style = space
+indent_size = 2
+
+[*.scd]
+indent_style = tab
