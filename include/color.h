@@ -12,6 +12,8 @@ struct wob_color {
 
 uint32_t wob_color_to_argb(struct wob_color color);
 
+uint32_t wob_color_to_rgba(struct wob_color color);
+
 struct wob_color wob_color_premultiply_alpha(struct wob_color color);
 
 #endif

@@ -878,12 +878,11 @@ main(int argc, char **argv)
 					}
 
 					wob_log_info(
-						"Received input { value = %ld, bg = %#x, border = %#x, bar = %#x, overflow = %s }",
+						"Rendering bar with { value = %ld, bg = #%08jx, border = #%08jx, bar = #%08jx }",
 						percentage,
-						effective_colors.background,
-						effective_colors.border,
-						effective_colors.bar,
-						overflow_mode == OVERFLOW_MODE_NONE ? "false" : "true"); // how should this be handled w/ the overflow colors?
+						wob_color_to_rgba(effective_colors.background),
+						wob_color_to_rgba(effective_colors.border),
+						wob_color_to_rgba(effective_colors.bar));
 
 					if (hidden) {
 						wob_show(&app);
