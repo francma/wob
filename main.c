@@ -499,6 +499,7 @@ main(int argc, char **argv)
 		"  -h, --help                          Show help message and quit.\n"
 		"  --version                           Show the version number and quit.\n"
 		"  -v                                  Increase verbosity of messages, defaults to errors and warnings only\n"
+		"  -i, --ignore-invalid                Ignore and skip invalid input\n"
 		"  -t, --timeout <ms>                  Hide wob after <ms> milliseconds, defaults to " STR(WOB_DEFAULT_TIMEOUT) ".\n"
 		"  -m, --max <%>                       Define the maximum percentage, defaults to " STR(WOB_DEFAULT_MAXIMUM) ". \n"
 		"  -W, --width <px>                    Define bar width in pixels, defaults to " STR(WOB_DEFAULT_WIDTH) ". \n"
@@ -522,6 +523,8 @@ main(int argc, char **argv)
 
 	struct wob app = {0};
 	wl_list_init(&(app.output_configs));
+
+	bool ignore_invalid = false;
 
 	unsigned long maximum = WOB_DEFAULT_MAXIMUM;
 	unsigned long timeout_msec = WOB_DEFAULT_TIMEOUT;
@@ -561,6 +564,7 @@ main(int argc, char **argv)
 		{"help", no_argument, NULL, 'h'},
 		{"version", no_argument, NULL, 4},
 		{"verbose", no_argument, NULL, 'v'},
+		{"ignore-invalid", no_argument, NULL, 'i'},
 		{"timeout", required_argument, NULL, 't'},
 		{"max", required_argument, NULL, 'm'},
 		{"width", required_argument, NULL, 'W'},
@@ -579,7 +583,7 @@ main(int argc, char **argv)
 		{"overflow-background-color", required_argument, NULL, 7},
 		{"overflow-border-color", required_argument, NULL, 8}};
 
-	while ((c = getopt_long(argc, argv, "hvt:m:W:H:o:b:p:a:M:O:", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "hvit:m:W:H:o:b:p:a:M:O:", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) {
@@ -697,6 +701,9 @@ main(int argc, char **argv)
 				return EXIT_SUCCESS;
 			case 'v':
 				wob_log_inc_verbosity();
+				break;
+			case 'i':
+				ignore_invalid = true;
 				break;
 			case 5:
 				if (!wob_parse_color(optarg, &strtoul_end, &(overflow_colors.bar))) {
@@ -849,6 +856,9 @@ main(int argc, char **argv)
 
 					if (!wob_parse_input(input_buffer, &percentage, &colors.background, &colors.border, &colors.bar)) {
 						wob_log_error("Received invalid input");
+
+						if (ignore_invalid) break;
+
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
 
