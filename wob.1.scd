@@ -23,7 +23,7 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *-v*
 	Increase verbosity of messages, defaults to errors and warnings only.
 
-*-t --timeout* <ms> 
+*-t --timeout* <ms>
 	Hide wob after <ms> milliseconds, defaults to 1000.
 
 *-m --max* <%>
@@ -74,7 +74,7 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 	Define overflow background color, defaults to #FF000000
 
 *--overflow-border-color* <#AARRGGBB>
-	Define overflow border color, defaults to #FFFFFFFF	
+	Define overflow border color, defaults to #FFFFFFFF
 
 # USAGE
 
