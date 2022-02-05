@@ -23,6 +23,9 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 *-v*
 	Increase verbosity of messages, defaults to errors and warnings only.
 
+*--i --ignore-invalid
+	Ignore and skip invalid input, defaults to quitting with exit code 1.
+
 *-t --timeout* <ms>
 	Hide wob after <ms> milliseconds, defaults to 1000.
 
