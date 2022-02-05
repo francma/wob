@@ -560,6 +560,7 @@ main(int argc, char **argv)
 	static struct option long_options[] = {
 		{"help", no_argument, NULL, 'h'},
 		{"version", no_argument, NULL, 4},
+		{"verbose", no_argument, NULL, 'v'},
 		{"timeout", required_argument, NULL, 't'},
 		{"max", required_argument, NULL, 'm'},
 		{"width", required_argument, NULL, 'W'},
@@ -573,13 +574,12 @@ main(int argc, char **argv)
 		{"border-color", required_argument, NULL, 1},
 		{"background-color", required_argument, NULL, 2},
 		{"bar-color", required_argument, NULL, 3},
-		{"verbose", no_argument, NULL, 'v'},
 		{"overflow-mode", required_argument, NULL, 6},
 		{"overflow-bar-color", required_argument, NULL, 5},
 		{"overflow-background-color", required_argument, NULL, 7},
 		{"overflow-border-color", required_argument, NULL, 8}};
 
-	while ((c = getopt_long(argc, argv, "t:m:W:H:o:b:p:a:M:O:vh:f", long_options, &option_index)) != -1) {
+	while ((c = getopt_long(argc, argv, "hvt:m:W:H:o:b:p:a:M:O:", long_options, &option_index)) != -1) {
 		switch (c) {
 			case 1:
 				if (!wob_parse_color(optarg, &strtoul_end, &(colors.border))) {
