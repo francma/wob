@@ -13,7 +13,8 @@
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
-#define STR(x) #x
+#define STR1(x) #x
+#define STR(x) STR1(x)
 
 // sizeof already includes NULL byte
 #define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n"))
