@@ -95,6 +95,13 @@ bindsym XF86AudioLowerVolume exec pamixer -ud 2 && pamixer --get-volume > $WOBSO
 bindsym XF86AudioMute exec pamixer --toggle-mute && ( pamixer --get-mute && echo 0 > $WOBSOCK ) || pamixer --get-volume > $WOBSOCK
 ```
 
+Volume using pulse audio (altenative with pactl) :
+
+```
+bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5% && pactl get-sink-volume @DEFAULT_SINK@ | head -n 1| awk '{print substr($5, 1, length($5)-1)}' > $WOBSOCK
+bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5% && pactl get-sink-volume @DEFAULT_SINK@ | head -n 1 | awk '{print substr($5, 1, length($5)-1)}' > $WOBSOCK
+```
+
 Brightness using [haikarainen/light](https://github.com/haikarainen/light):
 
 ```
