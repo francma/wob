@@ -12,7 +12,7 @@ jobs:
     container: alpine:3.14
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev
       - run: meson build && ninja -C build && meson test -C build
 
   archlinux:
@@ -20,7 +20,7 @@ jobs:
     container: archlinux
     steps:
       - uses: actions/checkout@v2
-      - run: pacman -Syu --noconfirm && pacman -S --noconfirm gcc pkgconf meson wayland wayland-protocols
+      - run: pacman -Syu --noconfirm && pacman -S --noconfirm gcc pkgconf meson wayland wayland-protocols libinih
       - run: meson build && ninja -C build && meson test -C build
 
   clang-format:
@@ -36,7 +36,7 @@ jobs:
     container: alpine:3.14
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer inih-dev
       - run: scan-build meson build && scan-build --status-bugs ninja -C build
 
   valgrind:
@@ -44,5 +44,5 @@ jobs:
     container: alpine:3.14
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind inih-dev
       - run: meson build && meson test -C build --wrap="valgrind --leak-check=full --error-exitcode=2"
