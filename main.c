@@ -136,10 +136,6 @@ wob_surface_create(struct wob *app, struct wl_output *wl_output)
 void
 wob_surface_destroy(struct wob_surface *wob_surface)
 {
-	if (wob_surface == NULL) {
-		return;
-	}
-
 	zwlr_layer_surface_v1_destroy(wob_surface->wlr_layer_surface);
 	wl_surface_destroy(wob_surface->wl_surface);
 
@@ -172,7 +168,6 @@ wob_output_destroy(struct wob_output *output)
 void
 xdg_output_handle_name(void *data, struct zxdg_output_v1 *xdg_output, const char *name)
 {
-	wob_log_info("Detected output %s", name);
 	struct wob_output *output = (struct wob_output *) data;
 	output->name = strdup(name);
 	if (output->name == NULL) {
@@ -249,7 +244,7 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 			output->xdg_output = zxdg_output_manager_v1_get_xdg_output(app->xdg_output_manager, output->wl_output);
 			zxdg_output_v1_add_listener(output->xdg_output, &xdg_output_listener, output);
 
-			if (wl_display_roundtrip(app->wl_display) == -1) {
+			if (wl_display_roundtrip(app->wl_display) < 1) {
 				wob_log_error("wl_display_roundtrip failed");
 				exit(EXIT_FAILURE);
 			}
@@ -264,35 +259,35 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 }
 
 void
-wob_flush(struct wob *app)
+handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 {
-	struct wob_dimensions dimensions = app->wob_config.dimensions;
+	struct wob *app = (struct wob *) data;
 
-	struct wob_output *output;
-	wl_list_for_each (output, &(app->wob_outputs), link) {
-		wl_surface_attach(output->wob_surface->wl_surface, app->wl_buffer, 0, 0);
-		wl_surface_damage(output->wob_surface->wl_surface, 0, 0, dimensions.width, dimensions.height);
-		wl_surface_commit(output->wob_surface->wl_surface);
-	}
-
-	if (wl_display_dispatch(app->wl_display) == -1) {
-		wob_log_error("wl_display_dispatch failed");
-		exit(EXIT_FAILURE);
+	struct wob_output *output, *output_tmp;
+	wl_list_for_each_safe(output, output_tmp, &(app->wob_outputs), link) {
+		if (output->wl_name == name) {
+			wob_log_info("Output %s disconnected", output->name);
+			wob_output_destroy(output);
+			wl_list_remove(&output->link);
+			free(output);
+			return;
+		}
 	}
 }
 
 void
 wob_hide(struct wob *app)
 {
-	struct wob_output *output, *tmp;
-	wl_list_for_each_safe (output, tmp, &app->wob_outputs, link) {
+	struct wob_output *output;
+	wl_list_for_each (output, &app->wob_outputs, link) {
+		if (output->wob_surface == NULL) continue;
 		wob_log_info("Hiding bar on output %s", output->name);
 		wob_surface_destroy(output->wob_surface);
 		free(output->wob_surface);
 		output->wob_surface = NULL;
 	}
 
-	if (wl_display_roundtrip(app->wl_display) == -1) {
+	if (wl_display_roundtrip(app->wl_display) < 1) {
 		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
@@ -303,11 +298,23 @@ wob_show(struct wob *app)
 {
 	struct wob_output *output;
 	wl_list_for_each (output, &app->wob_outputs, link) {
+		if (output->wob_surface != NULL) continue;
 		wob_log_info("Showing bar on output %s", output->name);
 		output->wob_surface = wob_surface_create(app, output->wl_output);
 	}
 
-	if (wl_display_roundtrip(app->wl_display) == -1) {
+	if (wl_display_roundtrip(app->wl_display) < 1) {
+		wob_log_error("wl_display_roundtrip failed");
+		exit(EXIT_FAILURE);
+	}
+
+	wl_list_for_each (output, &(app->wob_outputs), link) {
+		wl_surface_attach(output->wob_surface->wl_surface, app->wl_buffer, 0, 0);
+		wl_surface_damage(output->wob_surface->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
+		wl_surface_commit(output->wob_surface->wl_surface);
+	}
+
+	if (wl_display_roundtrip(app->wl_display) < 1) {
 		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
@@ -339,7 +346,7 @@ wob_connect(struct wob *app)
 {
 	const static struct wl_registry_listener wl_registry_listener = {
 		.global = handle_global,
-		.global_remove = noop,
+		.global_remove = handle_global_remove,
 	};
 
 	app->wl_display = wl_display_connect(NULL);
@@ -357,7 +364,7 @@ wob_connect(struct wob *app)
 	wl_registry_add_listener(app->wl_registry, &wl_registry_listener, app);
 
 	wl_list_init(&app->wob_outputs);
-	if (wl_display_roundtrip(app->wl_display) == -1) {
+	if (wl_display_roundtrip(app->wl_display) < 1) {
 		wob_log_error("wl_display_roundtrip failed");
 		exit(EXIT_FAILURE);
 	}
@@ -629,6 +636,11 @@ main(int argc, char **argv)
 						}
 					}
 
+					if (wl_list_empty(&app.wob_outputs) == 1) {
+						wob_log_info("No output found to render wob on");
+						break;
+					}
+
 					wob_log_info(
 						"Rendering { value = %lu, bg = #%08jx, border = #%08jx, bar = #%08jx }",
 						percentage,
@@ -636,13 +648,9 @@ main(int argc, char **argv)
 						wob_color_to_rgba(effective_colors.border),
 						wob_color_to_rgba(effective_colors.value));
 
-					if (hidden) {
-						wob_show(&app);
-					}
-
 					wob_draw(argb, effective_colors, app.wob_config.dimensions, percentage, app.wob_config.max);
+					wob_show(&app);
 
-					wob_flush(&app);
 					hidden = false;
 				}
 		}
