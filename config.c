@@ -192,7 +192,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "background_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Background color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Background color must be in RRGGBB[AA] format");
 				return 0;
 			}
 			config->colors.background = color;
@@ -200,7 +200,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "border_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Border color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Border color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			config->colors.border = color;
@@ -208,7 +208,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "bar_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Bar color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Bar color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			config->colors.value = color;
@@ -216,7 +216,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "overflow_background_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Overflow background color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			config->overflow_colors.background = color;
@@ -224,7 +224,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "overflow_border_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Overflow border color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Overflow border color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			config->overflow_colors.border = color;
@@ -232,7 +232,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "overflow_bar_color") == 0) {
 			if (!parse_color(value, &color)) {
-				wob_log_error("Overflow bar color must be a value between #00000000 and #FFFFFFFF.");
+				wob_log_error("Overflow bar color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			config->overflow_colors.value = color;

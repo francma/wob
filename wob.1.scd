@@ -28,9 +28,9 @@ wob reads values to display from standard input in the following formats:
 
 or
 
-<value> <#background_color> <#border_color> <#bar_color>
+<value> <background_color> <border_color> <bar_color>
 
-Where <value> is number in interval from 0 to *max* and <#\*color> is color in #RRGGBBAA format.
+Where <value> is number in interval from 0 to *max* and <\*color> is color in RRGGBB[AA] format.
 
 # CONFIGURATION
 

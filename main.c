@@ -4,7 +4,7 @@
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
 // sizeof already includes NULL byte
-#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" #000000FF #FFFFFFFF #FFFFFFFF\n"))
+#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" 000000FF FFFFFFFF FFFFFFFF\n"))
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -509,6 +509,7 @@ main(int argc, char **argv)
 	wob_config_init(&app.wob_config);
 	if (wob_config_path != NULL) {
 		if (!wob_config_load(&app.wob_config, wob_config_path)) {
+			wob_config_destroy(&app.wob_config);
 			free(wob_config_path);
 			return EXIT_FAILURE;
 		}

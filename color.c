@@ -1,5 +1,6 @@
 #define WOB_FILE "color.c"
 
+#include <ctype.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -45,21 +46,26 @@ wob_color_premultiply_alpha(const struct wob_color color)
 bool
 wob_color_from_string(const char *restrict str, char **restrict str_end, struct wob_color *color)
 {
-	if (str[0] != '#') {
+	char buffer[3] = {0};
+	uint8_t parts[4];
+	parts[3] = 0xFF;
+
+	int i;
+	for (i = 0; i < 4; ++i) {
+		strncpy(buffer, &str[i * 2], 2);
+		if (!isxdigit(buffer[0]) || !isxdigit(buffer[1])) {
+			break;
+		}
+
+		parts[i] = strtoul(buffer, NULL, 16);
+	}
+
+	if (i < 3) {
 		return false;
 	}
-	str += 1;
 
-	uint8_t parts[4];
-	for (size_t i = 0; i < (sizeof(parts) / sizeof(uint8_t)); ++i) {
-		char *strtoul_end;
-		char buffer[3] = {0};
-
-		strncpy(buffer, &str[i * 2], 2);
-		parts[i] = strtoul(buffer, &strtoul_end, 16);
-		if (strtoul_end != buffer + 2) {
-			return false;
-		}
+	if (str_end) {
+		*str_end = ((char *) str) + i * 2;
 	}
 
 	*color = (struct wob_color){
@@ -68,10 +74,6 @@ wob_color_from_string(const char *restrict str, char **restrict str_end, struct 
 		.b = (float) parts[2] / UINT8_MAX,
 		.a = (float) parts[3] / UINT8_MAX,
 	};
-
-	if (str_end) {
-		*str_end = ((char *) str) + sizeof("FFFFFFFF") - 1;
-	}
 
 	return true;
 }

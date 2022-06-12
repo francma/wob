@@ -38,13 +38,13 @@ You can run `wob -vv` to find the default values.
 	Anchor margin, in pixels.
 
 *border_color*
-	Border color, in #RRGGBBAA format.
+	Border color, in RRGGBB[AA] format.
 
 *background_color*
-	Background color, in #RRGGBBAA format.
+	Background color, in RRGGBB[AA] format.
 
 *bar_color*
-	Bar color, in #RRGGBBAA format.
+	Bar color, in RRGGBB[AA] format.
 
 *overflow_mode*
 	Overflow mode, one of *wrap*, and *nowrap*.
@@ -54,13 +54,13 @@ You can run `wob -vv` to find the default values.
 	*nowrap* values > *max* will be displayed as just *max*
 
 *overflow_bar_color*
-	Overflow bar color, in #RRGGBBAA format.
+	Overflow bar color, in RRGGBB[AA] format.
 
 *overflow_background_color*
-	Overflow background color, in #RRGGBBAA format.
+	Overflow background color, in RRGGBB[AA] format.
 
 *overflow_border_color*
-	Overflow border color, in #RRGGBBAA format.
+	Overflow border color, in RRGGBB[AA] format.
 
 *output_mode*
 	Output mode, one of *whitelist*, *all*, *focused*.
@@ -89,6 +89,7 @@ Replace *\** with user friendly name of your choosing.
 timeout = 1000
 max = 100
 output_mode = whitelist
+bar_color = FFFFFF
 
 [output.left]
 name = DP-1
