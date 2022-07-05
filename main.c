@@ -384,6 +384,66 @@ wob_connect(struct wob *app)
 	}
 }
 
+/**
+ * Draw a 1px horizontal line, drawing it in bar_color until bar_colored_width
+ * and then background_color until bar_width.
+ *
+ * @param start			The starting point in the output buffer.
+ *                              The output buffer must have room for at least
+ *                              bar_width elements after the starting point.
+ * @param bar_width		The output bar width.
+ * @param bar_colored_width	The output colored bar width.
+ *                              Must be <= bar_width.
+ * @param bar_color		The output bar color.
+ * @param background_color	The output background color.
+ */
+void
+wob_draw_horizontal_line(uint32_t *start, size_t bar_width, size_t bar_colored_width, uint32_t bar_color, uint32_t background_color)
+{
+	uint32_t *end, *pixel;
+
+	end = start + bar_colored_width;
+
+	for (pixel = start; pixel < end; ++pixel) {
+		*pixel = bar_color;
+	}
+	for (end = start + bar_width; pixel < end; ++pixel) {
+		*pixel = background_color;
+	}
+}
+
+/**
+ * Draw a horizontal bar of bar_height, drawing it in bar_color until
+ * bar_colored_width and then background_color until bar_width.
+ *
+ * @param source		The starting point in the output buffer.
+ *                              The output buffer must have room for at least
+ *                              bar_height * buffer_width elements after start.
+ * @param buffer_width		The output buffer width.
+ * @param offset_border_padding	The output combined padding.
+ * @param bar_width		The output bar width.
+ * @param bar_colored_width	The output colored bar width.
+ *                              Expected to be <= bar_width.
+ * @param bar_height		The output bar height.
+ * @param bar_color		The output bar color.
+ * @param background_color	The output background color.
+ */
+void wob_draw_horizontal_bar(uint32_t *source, size_t buffer_width, size_t offset_border_padding, size_t bar_width, size_t bar_colored_width, size_t bar_height, uint32_t bar_color, uint32_t background_color)
+{
+	// Draw a 1px horizontal line
+	wob_draw_horizontal_line(source + offset_border_padding,
+			bar_width, bar_colored_width,
+			bar_color, background_color);
+
+	// Copy it to make a bar_height high bar
+	uint32_t *destination = source + buffer_width;
+	uint32_t *end = source + (buffer_width * bar_height);
+	while (destination != end) {
+		memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
+		destination += MIN(destination - source, end - destination);
+	}
+}
+
 void
 wob_draw(uint32_t *argb, struct wob_colors colors, struct wob_dimensions dimensions, unsigned long percentage, unsigned long maximum)
 {
@@ -394,7 +454,7 @@ wob_draw(uint32_t *argb, struct wob_colors colors, struct wob_dimensions dimensi
 	size_t offset_border_padding = dimensions.border_offset + dimensions.border_size + dimensions.bar_padding;
 	size_t bar_width = dimensions.width - 2 * offset_border_padding;
 	size_t bar_height = dimensions.height - 2 * offset_border_padding;
-	size_t bar_colored_width = (bar_width * percentage) / maximum;
+	size_t bar_colored_width, bar_colored_height;
 
 	for (size_t i = 0; i < dimensions.width * dimensions.height; ++i) {
 		argb[i] = argb_background_color;
@@ -428,24 +488,29 @@ wob_draw(uint32_t *argb, struct wob_colors colors, struct wob_dimensions dimensi
 		k += dimensions.border_offset;
 	}
 
-	// draw 1px horizontal line
-	uint32_t *start, *end, *pixel;
-	start = &argb[offset_border_padding * (dimensions.width + 1)];
-	end = start + bar_colored_width;
-	for (pixel = start; pixel < end; ++pixel) {
-		*pixel = argb_bar_color;
+	// Calculate colored bar percentages depending on orientation
+	if (dimensions.direction == WOB_DIRECTION_HORIZONTAL) {
+		bar_colored_width = (bar_width * percentage) / maximum;
+		bar_colored_height = bar_height;
 	}
-	for (end = start + bar_width; pixel < end; ++pixel) {
-		*pixel = argb_background_color;
+	else {
+		bar_colored_width = bar_width;
+		bar_colored_height = (bar_height * percentage) / maximum;
 	}
 
-	// copy it to make full percentage bar
 	uint32_t *source = &argb[offset_border_padding * dimensions.width];
-	uint32_t *destination = source + dimensions.width;
-	end = &argb[dimensions.width * (bar_height + offset_border_padding)];
-	while (destination != end) {
-		memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
-		destination += MIN(destination - source, end - destination);
+	// If we're drawing a vertical bar, draw a first horizontal bar acting as background if needed
+	if (bar_height > bar_colored_height) {
+		wob_draw_horizontal_bar(source, dimensions.width, offset_border_padding,
+				bar_width, 0, bar_height - bar_colored_height,
+				argb_bar_color, argb_background_color);
+		source += (bar_height - bar_colored_height) * dimensions.width;
+	}
+	// Draw the generic horizontal bar
+	if (bar_colored_height > 0) {
+		wob_draw_horizontal_bar(source, dimensions.width, offset_border_padding,
+				bar_width, bar_colored_width, bar_colored_height,
+				argb_bar_color, argb_background_color);
 	}
 }
 

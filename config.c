@@ -98,6 +98,22 @@ parse_anchor(const char *str, unsigned long *anchor)
 }
 
 bool
+parse_direction(const char *str, enum wob_direction *direction)
+{
+	if (strcmp(str, "horizontal") == 0) {
+		*direction = WOB_DIRECTION_HORIZONTAL;
+		return true;
+	}
+
+	if (strcmp(str, "vertical") == 0) {
+		*direction = WOB_DIRECTION_VERTICAL;
+		return true;
+	}
+
+	return false;
+}
+
+bool
 parse_color(const char *str, struct wob_color *color)
 {
 	char *str_end;
@@ -147,6 +163,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 				return 0;
 			}
 			config->dimensions.height = ul;
+			return 1;
+		}
+		if (strcmp(name, "direction") == 0) {
+			if (parse_direction(value, &config->dimensions.direction) == false) {
+				wob_log_error("Direction must be one of 'horizontal', 'vertical'.");
+				return 0;
+			}
 			return 1;
 		}
 		if (strcmp(name, "border_offset") == 0) {
@@ -312,6 +335,7 @@ wob_config_init(struct wob_config *config)
 	config->timeout_msec = 1000;
 	config->dimensions.width = 400;
 	config->dimensions.height = 50;
+	config->dimensions.direction = WOB_DIRECTION_HORIZONTAL;
 	config->dimensions.border_offset = 4;
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
@@ -365,6 +389,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.timeout_msec = %lu", config->timeout_msec);
 	wob_log_debug("config.dimensions.width = %lu", config->dimensions.width);
 	wob_log_debug("config.dimensions.height = %lu", config->dimensions.height);
+	wob_log_debug("config.dimensions.direction = %lu (horizontal = %d, vertical = %d)", config->dimensions.direction, WOB_DIRECTION_HORIZONTAL, WOB_DIRECTION_VERTICAL);
 	wob_log_debug("config.dimensions.border_offset = %lu", config->dimensions.border_offset);
 	wob_log_debug("config.dimensions.border_size = %lu", config->dimensions.border_size);
 	wob_log_debug("config.dimensions.bar_padding = %lu", config->dimensions.bar_padding);

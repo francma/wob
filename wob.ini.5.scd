@@ -11,6 +11,9 @@ You can run `wob -vv` to find the default values.
 *timeout*
 	Timeout after which wob hides itself, in milliseconds.
 
+*direction*
+	Bar direction (*horizontal*, *vertical*).
+
 *max*
 	This value will be represented as fully filled bar.
 

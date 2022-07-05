@@ -20,6 +20,11 @@ enum wob_anchor {
 	WOB_ANCHOR_RIGHT = 8,
 };
 
+enum wob_direction {
+	WOB_DIRECTION_HORIZONTAL,
+	WOB_DIRECTION_VERTICAL,
+};
+
 enum wob_output_mode {
 	WOB_OUTPUT_MODE_WHITELIST,
 	WOB_OUTPUT_MODE_ALL,
@@ -43,6 +48,7 @@ struct wob_dimensions {
 	unsigned long border_offset;
 	unsigned long border_size;
 	unsigned long bar_padding;
+	enum wob_direction direction;
 };
 
 struct wob_config {
