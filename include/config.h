@@ -23,7 +23,7 @@ enum wob_anchor {
 enum wob_output_mode {
 	WOB_OUTPUT_MODE_WHITELIST,
 	WOB_OUTPUT_MODE_ALL,
-    WOB_OUTPUT_MODE_FOCUSED,
+	WOB_OUTPUT_MODE_FOCUSED,
 };
 
 struct wob_output_config {

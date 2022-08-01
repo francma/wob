@@ -147,13 +147,13 @@ void
 wob_output_destroy(struct wob_output *output)
 {
 	if (output->wob_surface != NULL) {
-        wob_surface_destroy(output->wob_surface);
+		wob_surface_destroy(output->wob_surface);
 	}
 	if (output->xdg_output != NULL) {
-        zxdg_output_v1_destroy(output->xdg_output);
+		zxdg_output_v1_destroy(output->xdg_output);
 	}
 	if (output->wl_output != NULL) {
-        wl_output_destroy(output->wl_output);
+		wl_output_destroy(output->wl_output);
 	}
 
 	free(output->name);
@@ -233,7 +233,7 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 			output->xdg_output = NULL;
 			output->name = strdup("focused");
 
-            wl_list_insert(&output->app->wob_outputs, &output->link);
+			wl_list_insert(&output->app->wob_outputs, &output->link);
 		}
 		else {
 			struct wob_output *output = calloc(1, sizeof(struct wob_output));
@@ -264,7 +264,7 @@ handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 	struct wob *app = (struct wob *) data;
 
 	struct wob_output *output, *output_tmp;
-	wl_list_for_each_safe(output, output_tmp, &(app->wob_outputs), link) {
+	wl_list_for_each_safe (output, output_tmp, &(app->wob_outputs), link) {
 		if (output->wl_name == name) {
 			wob_log_info("Output %s disconnected", output->name);
 			wob_output_destroy(output);
