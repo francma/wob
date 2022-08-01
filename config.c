@@ -291,7 +291,7 @@ wob_config_default_path()
 			wordfree(&p);
 
 			if (access(path, F_OK) == 0) {
-				wob_log_info("Using configuration file at %s", config_paths[i]);
+				wob_log_info("Found configuration file at %s", config_paths[i]);
 				return path;
 			}
 

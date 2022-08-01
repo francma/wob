@@ -479,7 +479,7 @@ main(int argc, char **argv)
 	const char *usage = "usage: wob [-c config]\n";
 
 	int c;
-	char *wob_config_path = wob_config_default_path();
+	char *wob_config_path = NULL;
 	while ((c = getopt(argc, argv, "vc:")) != -1) {
 		switch (c) {
 			case 'v':
@@ -506,8 +506,13 @@ main(int argc, char **argv)
 	wob_log_info("wob version %s started", WOB_VERSION);
 	struct wob app = {0};
 
+	if (wob_config_path == NULL) {
+		wob_config_path = wob_config_default_path();
+	}
+
 	wob_config_init(&app.wob_config);
 	if (wob_config_path != NULL) {
+		wob_log_info("Using configuration file at %s", wob_config_path);
 		if (!wob_config_load(&app.wob_config, wob_config_path)) {
 			wob_config_destroy(&app.wob_config);
 			free(wob_config_path);
