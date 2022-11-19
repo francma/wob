@@ -78,7 +78,8 @@ wob_log(const wob_log_importance importance, const char *file, const int line, c
 			COLOR_LIGHT_GRAY,
 			file,
 			line,
-			COLOR_RESET);
+			COLOR_RESET
+		);
 	}
 	else {
 		fprintf(stderr, "%jd.%06ld %s %s:%d: ", (intmax_t) ts.tv_sec, ts.tv_nsec / 1000, verbosity_names[importance], file, line);

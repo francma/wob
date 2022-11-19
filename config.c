@@ -371,8 +371,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.margin = %lu", config->margin);
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
-	wob_log_debug(
-		"config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
+	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
 	wob_log_debug("config.colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.background));
 	wob_log_debug("config.colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.value));
 	wob_log_debug("config.colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.border));

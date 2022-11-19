@@ -628,7 +628,8 @@ main(int argc, char **argv)
 						percentage,
 						wob_color_to_rgba(effective_colors.background),
 						wob_color_to_rgba(effective_colors.border),
-						wob_color_to_rgba(effective_colors.value));
+						wob_color_to_rgba(effective_colors.value)
+					);
 
 					if (percentage > app.wob_config.max) {
 						effective_colors = app.wob_config.overflow_colors;
@@ -652,7 +653,8 @@ main(int argc, char **argv)
 						percentage,
 						wob_color_to_rgba(effective_colors.background),
 						wob_color_to_rgba(effective_colors.border),
-						wob_color_to_rgba(effective_colors.value));
+						wob_color_to_rgba(effective_colors.value)
+					);
 
 					wob_draw(argb, effective_colors, app.wob_config.dimensions, percentage, app.wob_config.max);
 					wob_show(&app);
