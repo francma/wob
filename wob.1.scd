@@ -14,11 +14,17 @@ wob is a lightweight overlay volume/backlight/progress/anything bar for Wayland.
 
 # OPTIONS
 
-*-c <file>*
+*-c, --config <file>*
 	Configuration file location.
 
-*-v*
+*-v, --verbose*
 	Increase verbosity of messages, defaults to errors and warnings only.
+
+*-V, --version*
+	Show the version number and quit.
+
+*-h, --help*
+	Show help message and quit.
 
 # USAGE
 

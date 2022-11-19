@@ -476,12 +476,35 @@ main(int argc, char **argv)
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 
-	const char *usage = "usage: wob [-c config]\n";
+	static struct option long_options[] = {
+		{"config", required_argument, NULL, 'c'},
+		{"help", no_argument, NULL, 'h'},
+		{"version", no_argument, NULL, 'V'},
+		{"verbose", no_argument, NULL, 'v'},
+		{0, 0, 0, 0},
+	};
+
+	const char *usage =
+		"Usage: wob [options]\n"
+		"  -c, --config <config>  Specify a config file.\n"
+		"  -v, --verbose          Increase verbosity of messages, defaults to errors and warnings only.\n"
+		"  -h, --help             Show help message and quit.\n"
+		"  -V, --version          Show the version number and quit.\n"
+		"\n";
 
 	int c;
+	int option_index = 0;
 	char *wob_config_path = NULL;
-	while ((c = getopt(argc, argv, "vc:")) != -1) {
+	while ((c = getopt_long(argc, argv, "hvVc:", long_options, &option_index)) != -1) {
 		switch (c) {
+			case 'V':
+				printf("wob version " WOB_VERSION "\n");
+				free(wob_config_path);
+				return EXIT_SUCCESS;
+			case 'h':
+				printf("%s", usage);
+				free(wob_config_path);
+				return EXIT_SUCCESS;
 			case 'v':
 				wob_log_inc_verbosity();
 				break;
