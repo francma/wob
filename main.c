@@ -225,17 +225,7 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 		app->wl_compositor = wl_registry_bind(registry, name, &wl_compositor_interface, 1);
 	}
 	else if (strcmp(interface, "wl_output") == 0) {
-		if (app->wob_config.output_mode == WOB_OUTPUT_MODE_FOCUSED) {
-			struct wob_output *output = calloc(1, sizeof(struct wob_output));
-			output->wl_output = NULL;
-			output->app = app;
-			output->wl_name = 0;
-			output->xdg_output = NULL;
-			output->name = strdup("focused");
-
-			wl_list_insert(&output->app->wob_outputs, &output->link);
-		}
-		else {
+		if (app->wob_config.output_mode != WOB_OUTPUT_MODE_FOCUSED) {
 			struct wob_output *output = calloc(1, sizeof(struct wob_output));
 			output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 1);
 			output->app = app;
@@ -369,7 +359,18 @@ wob_connect(struct wob *app)
 		exit(EXIT_FAILURE);
 	}
 
-	struct wob_dimensions dimensions = app->wob_config.dimensions;
+	if (app->wob_config.output_mode == WOB_OUTPUT_MODE_FOCUSED) {
+        struct wob_output *output = calloc(1, sizeof(struct wob_output));
+        output->wl_output = NULL;
+        output->app = app;
+        output->wl_name = 0;
+        output->xdg_output = NULL;
+        output->name = strdup("focused");
+
+        wl_list_insert(&app->wob_outputs, &output->link);
+    }
+
+    struct wob_dimensions dimensions = app->wob_config.dimensions;
 	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, dimensions.height * dimensions.width * 4);
 	if (pool == NULL) {
 		wob_log_error("wl_shm_create_pool failed");
