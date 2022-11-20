@@ -1,6 +1,9 @@
 [Socket]
 ListenFIFO=%t/wob.sock
 SocketMode=0600
+RemoveOnStop=on
+# If wob exits on invalid input, systemd should NOT shove following input right back into it after it restarts
+FlushPending=yes
 
 [Install]
 WantedBy=sockets.target
