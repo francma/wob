@@ -166,7 +166,6 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "bar_padding") == 0) {
-			printf("%s\n", value);
 			if (parse_number(value, &ul) == false) {
 				wob_log_error("Bar padding must be a positive value.");
 				return 0;

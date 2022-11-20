@@ -20,13 +20,13 @@ You can run `wob -vv` to find the default values.
 *height*
 	Height of wob, in pixels.
 
-*offset*
+*border_offset*
 	Border offset, in pixels.
 
-*border*
+*border_size*
 	Border size, in pixels.
 
-*padding*
+*bar_padding*
 	Bar padding, in pixels.
 
 *anchor*
