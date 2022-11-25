@@ -108,6 +108,22 @@ parse_color(const char *str, struct wob_color *color)
 	return true;
 }
 
+bool
+parse_orientation(const char *str, enum wob_orientation *value)
+{
+	if (strcmp(str, "horizontal") == 0) {
+		*value = WOB_ORIENTATION_HORIZONTAL;
+		return true;
+	}
+
+	if (strcmp(str, "vertical") == 0) {
+		*value = WOB_ORIENTATION_VERTICAL;
+		return true;
+	}
+
+	return false;
+}
+
 int
 handler(void *user, const char *section, const char *name, const char *value)
 {
@@ -251,6 +267,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "orientation") == 0) {
+			if (parse_orientation(value, &config->dimensions.orientation) == false) {
+				wob_log_error("Invalid argument for orientation. Valid options are horizontal and vertical");
+				return 0;
+			}
+			return 1;
+		}
 
 		wob_log_error("Unknown config key %s", name);
 		return 0;
@@ -314,6 +337,7 @@ wob_config_init(struct wob_config *config)
 	config->dimensions.border_offset = 4;
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
+	config->dimensions.orientation = WOB_ORIENTATION_HORIZONTAL;
 	config->margin = 0;
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
@@ -367,6 +391,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.dimensions.border_offset = %lu", config->dimensions.border_offset);
 	wob_log_debug("config.dimensions.border_size = %lu", config->dimensions.border_size);
 	wob_log_debug("config.dimensions.bar_padding = %lu", config->dimensions.bar_padding);
+	wob_log_debug("config.dimensions.orientation = %lu (horizontal = %d, vertical = %d)", config->dimensions.orientation, WOB_ORIENTATION_HORIZONTAL, WOB_ORIENTATION_VERTICAL);
 	wob_log_debug("config.margin = %lu", config->margin);
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);

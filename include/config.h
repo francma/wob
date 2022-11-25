@@ -26,6 +26,11 @@ enum wob_output_mode {
 	WOB_OUTPUT_MODE_FOCUSED,
 };
 
+enum wob_orientation {
+	WOB_ORIENTATION_HORIZONTAL,
+	WOB_ORIENTATION_VERTICAL,
+};
+
 struct wob_output_config {
 	char *name;
 	struct wl_list link;
@@ -43,6 +48,7 @@ struct wob_dimensions {
 	unsigned long border_offset;
 	unsigned long border_size;
 	unsigned long bar_padding;
+	enum wob_orientation orientation;
 };
 
 struct wob_config {
