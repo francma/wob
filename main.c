@@ -360,17 +360,17 @@ wob_connect(struct wob *app)
 	}
 
 	if (app->wob_config.output_mode == WOB_OUTPUT_MODE_FOCUSED) {
-        struct wob_output *output = calloc(1, sizeof(struct wob_output));
-        output->wl_output = NULL;
-        output->app = app;
-        output->wl_name = 0;
-        output->xdg_output = NULL;
-        output->name = strdup("focused");
+		struct wob_output *output = calloc(1, sizeof(struct wob_output));
+		output->wl_output = NULL;
+		output->app = app;
+		output->wl_name = 0;
+		output->xdg_output = NULL;
+		output->name = strdup("focused");
 
-        wl_list_insert(&app->wob_outputs, &output->link);
-    }
+		wl_list_insert(&app->wob_outputs, &output->link);
+	}
 
-    struct wob_dimensions dimensions = app->wob_config.dimensions;
+	struct wob_dimensions dimensions = app->wob_config.dimensions;
 	struct wl_shm_pool *pool = wl_shm_create_pool(app->wl_shm, app->shmid, dimensions.height * dimensions.width * 4);
 	if (pool == NULL) {
 		wob_log_error("wl_shm_create_pool failed");
