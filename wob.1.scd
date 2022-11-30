@@ -44,6 +44,7 @@ wob searches for a config file in the following locations, in this order:
 
 1. $XDG_CONFIG_HOME/wob/wob.ini
 2. ~/.config/wob/wob.ini
+3. /etc/wob/wob.ini
 
 For information on the config file format, see *wob.ini*(5).
 
