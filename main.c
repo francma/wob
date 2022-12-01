@@ -121,12 +121,13 @@ wob_surface_create(struct wob *app, struct wl_output *wl_output)
 	}
 
 	struct wob_dimensions dimensions = config.dimensions;
-	unsigned long margin = config.margin;
+	unsigned long margin_x = config.margin_x;
+	unsigned long margin_y = config.margin_y;
 	enum wob_anchor anchor = config.anchor;
 
 	zwlr_layer_surface_v1_set_size(wob_surface->wlr_layer_surface, dimensions.width, dimensions.height);
 	zwlr_layer_surface_v1_set_anchor(wob_surface->wlr_layer_surface, wob_anchor_to_wlr_layer_surface_anchor(anchor));
-	zwlr_layer_surface_v1_set_margin(wob_surface->wlr_layer_surface, margin, margin, margin, margin);
+	zwlr_layer_surface_v1_set_margin(wob_surface->wlr_layer_surface, margin_y, margin_x, margin_y, margin_x);
 	zwlr_layer_surface_v1_add_listener(wob_surface->wlr_layer_surface, &zwlr_layer_surface_listener, app);
 	wl_surface_commit(wob_surface->wl_surface);
 

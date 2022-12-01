@@ -173,12 +173,20 @@ handler(void *user, const char *section, const char *name, const char *value)
 			config->dimensions.bar_padding = ul;
 			return 1;
 		}
-		if (strcmp(name, "margin") == 0) {
+		if (strcmp(name, "margin_x") == 0) {
 			if (parse_number(value, &ul) == false) {
-				wob_log_error("Anchor margin must be a positive value.");
+				wob_log_error("Anchor margin_x must be a positive value.");
 				return 0;
 			}
-			config->margin = ul;
+			config->margin_x = ul;
+			return 1;
+		}
+		if (strcmp(name, "margin_y") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Anchor margin_y must be a positive value.");
+				return 0;
+			}
+			config->margin_y = ul;
 			return 1;
 		}
 		if (strcmp(name, "anchor") == 0) {
@@ -315,7 +323,8 @@ wob_config_init(struct wob_config *config)
 	config->dimensions.border_offset = 4;
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
-	config->margin = 0;
+	config->margin_x = 0;
+	config->margin_y = 0;
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
 	config->output_mode = WOB_OUTPUT_MODE_FOCUSED;
@@ -368,7 +377,8 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.dimensions.border_offset = %lu", config->dimensions.border_offset);
 	wob_log_debug("config.dimensions.border_size = %lu", config->dimensions.border_size);
 	wob_log_debug("config.dimensions.bar_padding = %lu", config->dimensions.bar_padding);
-	wob_log_debug("config.margin = %lu", config->margin);
+	wob_log_debug("config.margin_x = %lu", config->margin_x);
+	wob_log_debug("config.margin_y = %lu", config->margin_y);
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
 	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);

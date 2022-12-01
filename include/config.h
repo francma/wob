@@ -48,7 +48,8 @@ struct wob_dimensions {
 struct wob_config {
 	unsigned long max;
 	unsigned long timeout_msec;
-	unsigned long margin;
+	unsigned long margin_x;
+	unsigned long margin_y;
 	unsigned long anchor;
 	enum wob_output_mode output_mode;
 	enum wob_overflow_mode overflow_mode;

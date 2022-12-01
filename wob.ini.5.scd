@@ -34,8 +34,11 @@ You can run `wob -vv` to find the default values.
 
 	Example: *bottom* *right*
 
-*margin*
-	Anchor margin, in pixels.
+*margin_x*
+	Anchor margin for x-axis, in pixels.
+
+*margin_y*
+	Anchor margin for y-axis, in pixels.
 
 *border_color*
 	Border color, in RRGGBB[AA] format.
