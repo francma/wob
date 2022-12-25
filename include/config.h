@@ -32,10 +32,10 @@ enum wob_orientation {
 };
 
 struct wob_margin {
-    unsigned long top;
-    unsigned long right;
-    unsigned long bottom;
-    unsigned long left;
+	unsigned long top;
+	unsigned long right;
+	unsigned long bottom;
+	unsigned long left;
 };
 
 struct wob_output_config {

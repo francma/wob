@@ -17,48 +17,48 @@
 bool
 parse_margin(const char *str, struct wob_margin *margin)
 {
-    char str_dup[INI_MAX_LINE + 1] = {0};
-    strncpy(str_dup, str, INI_MAX_LINE);
+	char str_dup[INI_MAX_LINE + 1] = {0};
+	strncpy(str_dup, str, INI_MAX_LINE);
 
-    size_t i = 0;
-    unsigned long values[4] = {0};
+	size_t i = 0;
+	unsigned long values[4] = {0};
 
-    char *token = strtok(str_dup, " ");
-    while (token) {
-        if (i >= 4) {
-            return false;
-        }
+	char *token = strtok(str_dup, " ");
+	while (token) {
+		if (i >= 4) {
+			return false;
+		}
 
-        char *str_end;
-        unsigned long ul = strtoul(token, &str_end, 10);
-        if (*str_end != '\0') {
-            return false;
-        }
+		char *str_end;
+		unsigned long ul = strtoul(token, &str_end, 10);
+		if (*str_end != '\0') {
+			return false;
+		}
 
-        values[i] = ul;
+		values[i] = ul;
 
-        token = strtok(NULL, " ");
-        i += 1;
-    }
+		token = strtok(NULL, " ");
+		i += 1;
+	}
 
-    switch (i) {
-        case 4:
-            margin->top = values[0];
-            margin->right = values[1];
-            margin->bottom = values[2];
-            margin->left = values[3];
-            break;
-        case 1:
-            margin->top = values[0];
-            margin->right = values[0];
-            margin->bottom = values[0];
-            margin->left = values[0];
-            break;
-        default:
-            return false;
-    }
+	switch (i) {
+		case 4:
+			margin->top = values[0];
+			margin->right = values[1];
+			margin->bottom = values[2];
+			margin->left = values[3];
+			break;
+		case 1:
+			margin->top = values[0];
+			margin->right = values[0];
+			margin->bottom = values[0];
+			margin->left = values[0];
+			break;
+		default:
+			return false;
+	}
 
-    return true;
+	return true;
 }
 
 bool
@@ -440,9 +440,9 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.dimensions.bar_padding = %lu", config->dimensions.bar_padding);
 	wob_log_debug("config.dimensions.orientation = %lu (horizontal = %d, vertical = %d)", config->dimensions.orientation, WOB_ORIENTATION_HORIZONTAL, WOB_ORIENTATION_VERTICAL);
 	wob_log_debug("config.margin.top = %lu", config->margin.top);
-    wob_log_debug("config.margin.right = %lu", config->margin.right);
-    wob_log_debug("config.margin.bottom = %lu", config->margin.bottom);
-    wob_log_debug("config.margin.left = %lu", config->margin.left);
+	wob_log_debug("config.margin.right = %lu", config->margin.right);
+	wob_log_debug("config.margin.bottom = %lu", config->margin.bottom);
+	wob_log_debug("config.margin.left = %lu", config->margin.left);
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
 	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
