@@ -71,6 +71,11 @@ You can run `wob -vv` to find the default values.
 
 	*focused*: show wob on compositor default (focused) output
 
+*orientation*
+	Orientation of the bar, one of *horizontal* and *vertical*.
+
+	*width* and *height* is kept as is, you most likely want to set *height* greater than *width* in *vertical* mode
+
 # SECTION: output.*
 
 This section will be used in future releases of wob to provide per output configuration.

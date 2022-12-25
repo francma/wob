@@ -13,6 +13,7 @@
 #define _POSIX_C_SOURCE 200809L
 #include <errno.h>
 #include <getopt.h>
+#include <pixman.h>
 #include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -79,6 +80,17 @@ wob_anchor_to_wlr_layer_surface_anchor(enum wob_anchor wob_anchor)
 	}
 
 	return wlr_layer_surface_anchor;
+}
+
+pixman_color_t
+wob_color_to_pixman(struct wob_color color)
+{
+	return (pixman_color_t){
+		.red = (uint16_t) (color.r * UINT16_MAX),
+		.green = (uint16_t) (color.g * UINT16_MAX),
+		.blue = (uint16_t) (color.b * UINT16_MAX),
+		.alpha = (uint16_t) (color.a * UINT16_MAX),
+	};
 }
 
 void
@@ -386,67 +398,33 @@ wob_connect(struct wob *app)
 }
 
 void
-wob_draw(uint32_t *argb, struct wob_colors colors, struct wob_dimensions dimensions, unsigned long percentage, unsigned long maximum)
+wob_draw(pixman_image_t *image, struct wob_colors colors, struct wob_dimensions dimensions, unsigned long percentage, unsigned long maximum)
 {
-	uint32_t argb_bar_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.value));
-	uint32_t argb_background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
-	uint32_t argb_border_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.border));
+	pixman_color_t bar_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.value));
+	pixman_color_t background_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.background));
+	pixman_color_t border_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.border));
 
 	size_t offset_border_padding = dimensions.border_offset + dimensions.border_size + dimensions.bar_padding;
 	size_t bar_width = dimensions.width - 2 * offset_border_padding;
 	size_t bar_height = dimensions.height - 2 * offset_border_padding;
-	size_t bar_colored_width = (bar_width * percentage) / maximum;
 
-	for (size_t i = 0; i < dimensions.width * dimensions.height; ++i) {
-		argb[i] = argb_background_color;
-	}
+	uint32_t offset = 0;
+	pixman_image_fill_rectangles(PIXMAN_OP_SRC, image, &background_color, 1, &(pixman_rectangle16_t){0, 0, dimensions.width, dimensions.height});
+	offset += dimensions.border_offset;
+	pixman_image_fill_rectangles(PIXMAN_OP_SRC, image, &border_color, 1, &(pixman_rectangle16_t){offset, offset, dimensions.width - 2 * offset, dimensions.height - 2 * offset});
+	offset += dimensions.border_size;
+	pixman_image_fill_rectangles(PIXMAN_OP_SRC, image, &background_color, 1, &(pixman_rectangle16_t){offset, offset, dimensions.width - 2 * offset, dimensions.height - 2 * offset});
 
-	// create top and bottom line
-	size_t i = dimensions.width * dimensions.border_offset;
-	size_t k = dimensions.width * (dimensions.height - dimensions.border_offset - dimensions.border_size);
-	for (size_t line = 0; line < dimensions.border_size; ++line) {
-		i += dimensions.border_offset;
-		k += dimensions.border_offset;
-		for (size_t pixel = 0; pixel < dimensions.width - 2 * dimensions.border_offset; ++pixel) {
-			argb[i++] = argb_border_color;
-			argb[k++] = argb_border_color;
-		}
-		i += dimensions.border_offset;
-		k += dimensions.border_offset;
-	}
-
-	// create left and right horizontal line
-	i = dimensions.width * (dimensions.border_offset + dimensions.border_size);
-	k = dimensions.width * (dimensions.border_offset + dimensions.border_size);
-	for (size_t line = 0; line < dimensions.height - 2 * (dimensions.border_size + dimensions.border_offset); ++line) {
-		i += dimensions.border_offset;
-		k += dimensions.width - dimensions.border_offset - dimensions.border_size;
-		for (size_t pixel = 0; pixel < dimensions.border_size; ++pixel) {
-			argb[i++] = argb_border_color;
-			argb[k++] = argb_border_color;
-		}
-		i += dimensions.width - dimensions.border_offset - dimensions.border_size;
-		k += dimensions.border_offset;
-	}
-
-	// draw 1px horizontal line
-	uint32_t *start, *end, *pixel;
-	start = &argb[offset_border_padding * (dimensions.width + 1)];
-	end = start + bar_colored_width;
-	for (pixel = start; pixel < end; ++pixel) {
-		*pixel = argb_bar_color;
-	}
-	for (end = start + bar_width; pixel < end; ++pixel) {
-		*pixel = argb_background_color;
-	}
-
-	// copy it to make full percentage bar
-	uint32_t *source = &argb[offset_border_padding * dimensions.width];
-	uint32_t *destination = source + dimensions.width;
-	end = &argb[dimensions.width * (bar_height + offset_border_padding)];
-	while (destination != end) {
-		memcpy(destination, source, MIN(destination - source, end - destination) * sizeof(uint32_t));
-		destination += MIN(destination - source, end - destination);
+	offset += dimensions.bar_padding;
+	uint32_t filled_width = (bar_width * percentage) / maximum;
+	uint32_t filled_height = (bar_height * percentage) / maximum;
+	switch (dimensions.orientation) {
+		case WOB_ORIENTATION_HORIZONTAL:
+			pixman_image_fill_rectangles(PIXMAN_OP_SRC, image, &bar_color, 1, &(pixman_rectangle16_t){offset, offset, filled_width, bar_height});
+			break;
+		case WOB_ORIENTATION_VERTICAL:
+			pixman_image_fill_rectangles(PIXMAN_OP_SRC, image, &bar_color, 1, &(pixman_rectangle16_t){offset, offset + bar_height - filled_height, bar_width, filled_height});
+			break;
 	}
 }
 
@@ -569,6 +547,8 @@ main(int argc, char **argv)
 		}
 	}
 
+	pixman_image_t *image = pixman_image_create_bits_no_clear(PIXMAN_a8r8g8b8, app.wob_config.dimensions.width, app.wob_config.dimensions.height, argb, app.wob_config.dimensions.width * 4);
+
 	struct wob_colors effective_colors;
 
 	struct pollfd fds[2] = {
@@ -615,6 +595,7 @@ main(int argc, char **argv)
 						wob_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
+						pixman_image_unref(image);
 
 						return EXIT_FAILURE;
 					}
@@ -625,6 +606,7 @@ main(int argc, char **argv)
 						wob_log_info("Received EOF");
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
+						pixman_image_unref(image);
 
 						return EXIT_SUCCESS;
 					}
@@ -633,6 +615,7 @@ main(int argc, char **argv)
 						wob_log_error("fgets() failed: %s", strerror(errno));
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
+						pixman_image_unref(image);
 
 						return EXIT_FAILURE;
 					}
@@ -643,6 +626,7 @@ main(int argc, char **argv)
 						wob_log_error("Received invalid input");
 						if (!hidden) wob_hide(&app);
 						wob_destroy(&app);
+						pixman_image_unref(image);
 
 						return EXIT_FAILURE;
 					}
@@ -680,7 +664,7 @@ main(int argc, char **argv)
 						wob_color_to_rgba(effective_colors.value)
 					);
 
-					wob_draw(argb, effective_colors, app.wob_config.dimensions, percentage, app.wob_config.max);
+					wob_draw(image, effective_colors, app.wob_config.dimensions, percentage, app.wob_config.max);
 					wob_show(&app);
 
 					hidden = false;
