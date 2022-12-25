@@ -31,6 +31,13 @@ enum wob_orientation {
 	WOB_ORIENTATION_VERTICAL,
 };
 
+struct wob_margin {
+    unsigned long top;
+    unsigned long right;
+    unsigned long bottom;
+    unsigned long left;
+};
+
 struct wob_output_config {
 	char *name;
 	struct wl_list link;
@@ -54,7 +61,7 @@ struct wob_dimensions {
 struct wob_config {
 	unsigned long max;
 	unsigned long timeout_msec;
-	unsigned long margin;
+	struct wob_margin margin;
 	unsigned long anchor;
 	enum wob_output_mode output_mode;
 	enum wob_overflow_mode overflow_mode;
