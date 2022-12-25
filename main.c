@@ -3,8 +3,7 @@
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
-// sizeof already includes NULL byte
-#define INPUT_BUFFER_LENGTH (3 * sizeof(unsigned long) + sizeof(" 000000FF FFFFFFFF FFFFFFFF\n"))
+#define INPUT_BUFFER_LENGTH 255
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
@@ -25,7 +24,6 @@
 #include "color.h"
 #include "config.h"
 #include "log.h"
-#include "parse.h"
 #include "pledge.h"
 #include "wlr-layer-shell-unstable-v1-client-protocol.h"
 #include "xdg-output-unstable-v1-client-protocol.h"
@@ -564,15 +562,12 @@ main(int argc, char **argv)
 
 	bool hidden = true;
 	for (;;) {
-		unsigned long percentage = 0;
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
-		char *fgets_rv;
 
 		switch (poll(fds, 2, hidden ? -1 : app.wob_config.timeout_msec)) {
 			case -1:
 				wob_log_error("poll() failed: %s", strerror(errno));
-
-				return EXIT_FAILURE;
+				goto exit_cleanup_failure;
 			case 0:
 				if (!hidden) wob_hide(&app);
 
@@ -582,65 +577,60 @@ main(int argc, char **argv)
 				if (fds[0].revents) {
 					if (!(fds[0].revents & POLLIN)) {
 						wob_log_error("WL_DISPLAY_FD unexpectedly closed, revents = %hd", fds[0].revents);
-						return EXIT_FAILURE;
+						goto exit_cleanup_failure;
 					}
 
 					if (wl_display_dispatch(app.wl_display) == -1) {
-						return EXIT_FAILURE;
+						goto exit_cleanup_failure;
 					}
 				}
 
 				if (fds[1].revents) {
 					if (!(fds[1].revents & POLLIN)) {
 						wob_log_error("STDIN unexpectedly closed, revents = %hd", fds[1].revents);
-						if (!hidden) wob_hide(&app);
-						wob_destroy(&app);
-						pixman_image_unref(image);
-
-						return EXIT_FAILURE;
+						goto exit_cleanup_failure;
 					}
 
-					fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
-
-					if (feof(stdin)) {
-						wob_log_info("Received EOF");
-						if (!hidden) wob_hide(&app);
-						wob_destroy(&app);
-						pixman_image_unref(image);
-
-						return EXIT_SUCCESS;
-					}
-
+					char *fgets_rv = fgets(input_buffer, INPUT_BUFFER_LENGTH, stdin);
 					if (fgets_rv == NULL) {
-						wob_log_error("fgets() failed: %s", strerror(errno));
-						if (!hidden) wob_hide(&app);
-						wob_destroy(&app);
-						pixman_image_unref(image);
-
-						return EXIT_FAILURE;
+						if (feof(stdin)) {
+							wob_log_info("Received EOF");
+							goto exit_cleanup_success;
+						}
+						else {
+							wob_log_error("fgets() failed: %s", strerror(errno));
+							goto exit_cleanup_failure;
+						}
 					}
 
-					effective_colors = app.wob_config.colors;
+					// strip newline from the end of the buffer
+					strtok(input_buffer, "\n");
 
-					if (!wob_parse_input(input_buffer, &percentage, &effective_colors.background, &effective_colors.border, &effective_colors.value)) {
-						wob_log_error("Received invalid input");
-						if (!hidden) wob_hide(&app);
-						wob_destroy(&app);
-						pixman_image_unref(image);
-
-						return EXIT_FAILURE;
+					char *str_end;
+					char *token = strtok(input_buffer, " ");
+					unsigned long percentage = strtoul(token, &str_end, 10);
+					if (*str_end != '\0') {
+						wob_log_error("Invalid value received '%s'", token);
+						goto exit_cleanup_failure;
 					}
 
-					wob_log_info(
-						"Received input { value = %lu, bg = #%08jx, border = #%08jx, bar = #%08jx }",
-						percentage,
-						wob_color_to_rgba(effective_colors.background),
-						wob_color_to_rgba(effective_colors.border),
-						wob_color_to_rgba(effective_colors.value)
-					);
+					struct wob_style *selected_style = NULL;
+					token = strtok(NULL, "");
+					if (token != NULL) {
+						selected_style = wob_config_find_style(&app.wob_config, token);
+						if (selected_style == NULL) {
+							wob_log_error("Style named '%s' not found", token);
+							goto exit_cleanup_failure;
+						}
+						wob_log_info("Received input { value = %lu, style = %s }", percentage, token);
+					}
+					else {
+						selected_style = &app.wob_config.default_style;
+						wob_log_info("Received input { value = %lu, style = <empty> }", percentage);
+					}
 
 					if (percentage > app.wob_config.max) {
-						effective_colors = app.wob_config.overflow_colors;
+						effective_colors = selected_style->overflow_colors;
 						switch (app.wob_config.overflow_mode) {
 							case WOB_OVERFLOW_MODE_WRAP:
 								percentage %= app.wob_config.max;
@@ -649,6 +639,9 @@ main(int argc, char **argv)
 								percentage = app.wob_config.max;
 								break;
 						}
+					}
+					else {
+						effective_colors = selected_style->colors;
 					}
 
 					if (wl_list_empty(&app.wob_outputs) == 1) {
@@ -671,4 +664,17 @@ main(int argc, char **argv)
 				}
 		}
 	}
+
+	int _exit_code;
+_cleanup:
+	if (!hidden) wob_hide(&app);
+	wob_destroy(&app);
+	pixman_image_unref(image);
+	return _exit_code;
+exit_cleanup_success:
+	_exit_code = EXIT_SUCCESS;
+	goto _cleanup;
+exit_cleanup_failure:
+	_exit_code = EXIT_FAILURE;
+	goto _cleanup;
 }

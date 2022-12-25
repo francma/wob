@@ -88,6 +88,26 @@ Replace *\** with user friendly name of your choosing.
 
 	Example: DP-1
 
+# SECTION: style.*
+
+*border_color*
+	Border color, in RRGGBB[AA] format.
+
+*background_color*
+	Background color, in RRGGBB[AA] format.
+
+*bar_color*
+	Bar color, in RRGGBB[AA] format.
+
+*overflow_bar_color*
+	Overflow bar color, in RRGGBB[AA] format.
+
+*overflow_background_color*
+	Overflow background color, in RRGGBB[AA] format.
+
+*overflow_border_color*
+	Overflow border color, in RRGGBB[AA] format.
+
 # EXAMPLE
 
 ```
@@ -101,6 +121,9 @@ name = DP-1
 
 [output.ips]
 name = HDMI-1
+
+[style.muted]
+background_color = 032cfc
 ```
 
 # See also

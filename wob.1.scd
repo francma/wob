@@ -34,9 +34,9 @@ wob reads values to display from standard input in the following formats:
 
 or
 
-<value> <background_color> <border_color> <bar_color>
+<value> <style>
 
-Where <value> is number in interval from 0 to *max* and <\*color> is color in RRGGBB[AA] format.
+Where <value> is number in interval from 0 to *max* and <style> is style defined in *wob.ini*(5).
 
 # CONFIGURATION
 
@@ -54,3 +54,7 @@ The following environment variables have an effect on wob:
 
 *WOB_DISABLE_PLEDGE*
 	Disable seccomp syscall filtering on Linux. Set this if you are having trouble running wob with tools like valgrind.
+
+# See also
+
+*wob.ini*(5)
