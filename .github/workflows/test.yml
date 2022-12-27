@@ -9,7 +9,7 @@ on:
 jobs:
   alpine:
     runs-on: ubuntu-latest
-    container: alpine:3.14
+    container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
       - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev
@@ -25,7 +25,7 @@ jobs:
 
   clang-format:
     runs-on: ubuntu-latest
-    container: alpine:3.14
+    container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
       - run: apk update && apk add clang
@@ -33,7 +33,7 @@ jobs:
 
   clang-analyzer:
     runs-on: ubuntu-latest
-    container: alpine:3.14
+    container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
       - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer inih-dev pixman-dev
@@ -41,7 +41,7 @@ jobs:
 
   valgrind:
     runs-on: ubuntu-latest
-    container: alpine:3.14
+    container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
       - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind inih-dev pixman-dev
