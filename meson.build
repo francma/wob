@@ -10,7 +10,7 @@ project(
 cc = meson.get_compiler('c')
 
 wayland_protos = dependency('wayland-protocols', version: '>=1.13')
-wl_protocol_dir = wayland_protos.get_pkgconfig_variable('pkgdatadir')
+wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
@@ -36,7 +36,7 @@ wayland_scanner_client = generator(
 client_protocols = [
   [wl_protocol_dir + '/stable/xdg-shell', 'xdg-shell.xml'],
   [wl_protocol_dir + '/unstable/xdg-output', 'xdg-output-unstable-v1.xml'],
-  [meson.source_root() + '/protocols', 'wlr-layer-shell-unstable-v1.xml'],
+  [meson.project_source_root() + '/protocols', 'wlr-layer-shell-unstable-v1.xml'],
 ]
 
 foreach p : client_protocols
@@ -88,7 +88,6 @@ test('parse-input', executable(
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()
   scdfiles = ['wob.1.scd', 'wob.ini.5.scd']
-  scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
   mandir = get_option('mandir')
 
   foreach scdfile : scdfiles
@@ -99,7 +98,7 @@ if scdoc.found()
       manfile,
       input: scdfile,
       output: manfile,
-      command: scdoc.path(),
+      command: scdoc.get_variable('scdoc'),
       feed: true,
       capture: true,
       install: true,
