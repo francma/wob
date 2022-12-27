@@ -321,8 +321,8 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 
-		wob_log_error("Unknown config key %s", name);
-		return 0;
+		wob_log_warn("Unknown config key %s", name);
+		return 1;
 	}
 
 	if (strncmp(section, "output.", sizeof("output.") - 1) == 0) {
@@ -334,12 +334,12 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 
-		wob_log_error("Unknown config key %s", name);
-		return 0;
+		wob_log_warn("Unknown config key %s", name);
+		return 1;
 	}
 
-	wob_log_error("Unknown config section %s", section);
-	return 0;
+	wob_log_warn("Unknown config section %s", section);
+	return 1;
 }
 
 char *
