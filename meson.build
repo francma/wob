@@ -3,7 +3,8 @@ project(
   'c',
   version: '0.14.2',
   license: 'ISC',
-  default_options: ['c_std=c99']
+  default_options: ['c_std=c99'],
+  meson_version: '>=0.60.0',
 )
 
 cc = meson.get_compiler('c')
@@ -88,7 +89,6 @@ scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_opti
 if scdoc.found()
   scdfiles = ['wob.1.scd', 'wob.ini.5.scd']
   scdoc = find_program(scdoc.get_pkgconfig_variable('scdoc'), native: true)
-  sh = find_program('sh', native: true)
   mandir = get_option('mandir')
 
   foreach scdfile : scdfiles
@@ -99,9 +99,9 @@ if scdoc.found()
       manfile,
       input: scdfile,
       output: manfile,
-      command: [
-        sh, '-c', '@0@ < @INPUT@ > @1@'.format(scdoc.path(), manfile)
-      ],
+      command: scdoc.path(),
+      feed: true,
+      capture: true,
       install: true,
       install_dir: '@0@/man@1@'.format(mandir, section)
     )
