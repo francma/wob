@@ -28,8 +28,8 @@ jobs:
     container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add clang
-      - run: clang-format *.c tests/*.c --output-replacements-xml | (! grep "</replacement>" 1>/dev/null)
+      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols inih-dev pixman-dev gcc clang15-extra-tools git
+      - run: meson build && ninja -C build clang-format-check
 
   clang-analyzer:
     runs-on: ubuntu-latest
