@@ -62,7 +62,7 @@ endforeach
 
 wob_inc = include_directories('include')
 
-wob_sources = ['main.c', 'parse.c', 'buffer.c', 'log.c', 'color.c', 'config.c']
+wob_sources = ['main.c', 'buffer.c', 'log.c', 'color.c', 'config.c']
 wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih, pixman]
 if seccomp.found()
   wob_dependencies += seccomp
@@ -78,12 +78,6 @@ executable(
   dependencies: wob_dependencies,
   install: true
 )
-
-test('parse-input', executable(
-  'test-parse-input',
-  ['tests/wob_parse_input.c', 'parse.c', 'color.c'],
-  include_directories: [wob_inc]
-))
 
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()

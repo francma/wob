@@ -177,7 +177,6 @@ handler(void *user, const char *section, const char *name, const char *value)
 	struct wob_config *config = (struct wob_config *) user;
 
 	unsigned long ul;
-	struct wob_color color;
 
 	if (strcmp(section, "") == 0) {
 		if (strcmp(name, "max") == 0) {
@@ -252,51 +251,45 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "background_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.colors.background)) {
 				wob_log_error("Background color must be in RRGGBB[AA] format");
 				return 0;
 			}
-			config->colors.background = color;
 			return 1;
 		}
 		if (strcmp(name, "border_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.colors.border)) {
 				wob_log_error("Border color must be in RRGGBB[AA] format.");
 				return 0;
 			}
-			config->colors.border = color;
 			return 1;
 		}
 		if (strcmp(name, "bar_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.colors.value)) {
 				wob_log_error("Bar color must be in RRGGBB[AA] format.");
 				return 0;
 			}
-			config->colors.value = color;
 			return 1;
 		}
 		if (strcmp(name, "overflow_background_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.overflow_colors.background)) {
 				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
 				return 0;
 			}
-			config->overflow_colors.background = color;
 			return 1;
 		}
 		if (strcmp(name, "overflow_border_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.overflow_colors.border)) {
 				wob_log_error("Overflow border color must be in RRGGBB[AA] format.");
 				return 0;
 			}
-			config->overflow_colors.border = color;
 			return 1;
 		}
 		if (strcmp(name, "overflow_bar_color") == 0) {
-			if (!parse_color(value, &color)) {
+			if (!parse_color(value, &config->default_style.overflow_colors.value)) {
 				wob_log_error("Overflow bar color must be in RRGGBB[AA] format.");
 				return 0;
 			}
-			config->overflow_colors.value = color;
 			return 1;
 		}
 		if (strcmp(name, "overflow_mode") == 0) {
@@ -326,11 +319,79 @@ handler(void *user, const char *section, const char *name, const char *value)
 	}
 
 	if (strncmp(section, "output.", sizeof("output.") - 1) == 0) {
+		char output_id[INI_MAX_LINE + 1] = {0};
+		strcpy(output_id, section + sizeof("output.") - 1);
+
+		struct wob_output_config *output_config = wob_config_find_output(config, output_id);
+		if (output_config == NULL) {
+			output_config = malloc(sizeof(struct wob_output_config));
+			output_config->id = strdup(output_id);
+			wl_list_insert(&config->outputs, &output_config->link);
+		}
+
 		if (strcmp(name, "name") == 0) {
-			struct wob_output_config *output_config = malloc(sizeof(struct wob_output_config));
 			output_config->name = strdup(value);
 
-			wl_list_insert(&config->outputs, &output_config->link);
+			return 1;
+		}
+
+		wob_log_warn("Unknown config key %s", name);
+		return 1;
+	}
+
+	if (strncmp(section, "style.", sizeof("style.") - 1) == 0) {
+		char style_name[INI_MAX_LINE + 1] = {0};
+		strcpy(style_name, section + sizeof("style.") - 1);
+
+		struct wob_style *style = wob_config_find_style(config, style_name);
+		if (style == NULL) {
+			style = malloc(sizeof(struct wob_style));
+			style->name = strdup(style_name);
+			style->colors = config->default_style.colors;
+			style->overflow_colors = config->default_style.overflow_colors;
+			wl_list_insert(&config->styles, &style->link);
+		}
+
+		if (strcmp(name, "background_color") == 0) {
+			if (!parse_color(value, &style->colors.background)) {
+				wob_log_error("Background color must be in RRGGBB[AA] format");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "border_color") == 0) {
+			if (!parse_color(value, &style->colors.border)) {
+				wob_log_error("Border color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "bar_color") == 0) {
+			if (!parse_color(value, &style->colors.value)) {
+				wob_log_error("Bar color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "overflow_background_color") == 0) {
+			if (!parse_color(value, &style->overflow_colors.background)) {
+				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "overflow_border_color") == 0) {
+			if (!parse_color(value, &style->overflow_colors.border)) {
+				wob_log_error("Overflow border color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "overflow_bar_color") == 0) {
+			if (!parse_color(value, &style->overflow_colors.value)) {
+				wob_log_error("Overflow bar color must be in RRGGBB[AA] format.");
+				return 0;
+			}
 			return 1;
 		}
 
@@ -376,6 +437,7 @@ void
 wob_config_init(struct wob_config *config)
 {
 	wl_list_init(&config->outputs);
+	wl_list_init(&config->styles);
 
 	config->max = 100;
 	config->timeout_msec = 1000;
@@ -389,12 +451,12 @@ wob_config_init(struct wob_config *config)
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
 	config->output_mode = WOB_OUTPUT_MODE_FOCUSED;
-	config->colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
-	config->overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 }
 
 bool
@@ -446,16 +508,27 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
 	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
-	wob_log_debug("config.colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.background));
-	wob_log_debug("config.colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.value));
-	wob_log_debug("config.colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->colors.border));
-	wob_log_debug("config.overflow_colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->overflow_colors.background));
-	wob_log_debug("config.overflow_colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->overflow_colors.value));
-	wob_log_debug("config.overflow_colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->overflow_colors.border));
+
+	wob_log_debug("config.colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.background));
+	wob_log_debug("config.colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.value));
+	wob_log_debug("config.colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.border));
+	wob_log_debug("config.overflow_colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.background));
+	wob_log_debug("config.overflow_colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.value));
+	wob_log_debug("config.overflow_colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.border));
+
+	struct wob_style *style;
+	wl_list_for_each (style, &config->styles, link) {
+		wob_log_debug("config.style.%s.colors.background = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.background));
+		wob_log_debug("config.style.%s.colors.value = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.value));
+		wob_log_debug("config.style.%s.colors.border = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.border));
+		wob_log_debug("config.style.%s.overflow_colors.background = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.background));
+		wob_log_debug("config.style.%s.overflow_colors.value = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.value));
+		wob_log_debug("config.style.%s.overflow_colors.border = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.border));
+	}
 
 	struct wob_output_config *output_config;
 	wl_list_for_each (output_config, &config->outputs, link) {
-		wob_log_debug("config.output.%s.name = %s", output_config->name, output_config->name);
+		wob_log_debug("config.output.%s.name = %s", output_config->id, output_config->name);
 	}
 }
 
@@ -465,6 +538,53 @@ wob_config_destroy(struct wob_config *config)
 	struct wob_output_config *output, *output_tmp;
 	wl_list_for_each_safe (output, output_tmp, &config->outputs, link) {
 		free(output->name);
+		free(output->id);
 		free(output);
+	}
+
+	struct wob_style *style, *style_tmp;
+	wl_list_for_each_safe (style, style_tmp, &config->styles, link) {
+		free(style->name);
+		free(style);
+	}
+}
+
+struct wob_style *
+wob_config_find_style(struct wob_config *config, const char *style_name)
+{
+	struct wob_style *style = NULL;
+	bool style_found = false;
+	wl_list_for_each (style, &config->styles, link) {
+		if (strcmp(style->name, style_name) == 0) {
+			style_found = true;
+			break;
+		}
+	}
+
+	if (style_found) {
+		return style;
+	}
+	else {
+		return NULL;
+	}
+}
+
+struct wob_output_config *
+wob_config_find_output(struct wob_config *config, const char *output_id)
+{
+	struct wob_output_config *output_config = NULL;
+	bool output_found = false;
+	wl_list_for_each (output_config, &config->outputs, link) {
+		if (strcmp(output_config->id, output_id) == 0) {
+			output_found = true;
+			break;
+		}
+	}
+
+	if (output_found) {
+		return output_config;
+	}
+	else {
+		return NULL;
 	}
 }

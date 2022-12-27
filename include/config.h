@@ -39,6 +39,7 @@ struct wob_margin {
 };
 
 struct wob_output_config {
+	char *id;
 	char *name;
 	struct wl_list link;
 };
@@ -47,6 +48,13 @@ struct wob_colors {
 	struct wob_color background;
 	struct wob_color border;
 	struct wob_color value;
+};
+
+struct wob_style {
+	char *name;
+	struct wob_colors colors;
+	struct wob_colors overflow_colors;
+	struct wl_list link;
 };
 
 struct wob_dimensions {
@@ -66,8 +74,8 @@ struct wob_config {
 	enum wob_output_mode output_mode;
 	enum wob_overflow_mode overflow_mode;
 	struct wob_dimensions dimensions;
-	struct wob_colors colors;
-	struct wob_colors overflow_colors;
+	struct wob_style default_style;
+	struct wl_list styles;
 	struct wl_list outputs;
 };
 
@@ -80,5 +88,9 @@ void wob_config_destroy(struct wob_config *config);
 void wob_config_debug(struct wob_config *config);
 
 char *wob_config_default_path();
+
+struct wob_style *wob_config_find_style(struct wob_config *config, const char *style_name);
+
+struct wob_output_config *wob_config_find_output(struct wob_config *config, const char *output_id);
 
 #endif
