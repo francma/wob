@@ -2,8 +2,8 @@
 
 #include "pledge.h"
 
-bool
+void
 wob_pledge(void)
 {
-	return true;
+	return;
 }

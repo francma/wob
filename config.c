@@ -5,14 +5,13 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <ini.h>
-#include <limits.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <wordexp.h>
 
 #include "config.h"
+#include "log.h"
 
 bool
 parse_margin(const char *str, struct wob_margin *margin)
@@ -433,12 +432,15 @@ wob_config_default_path()
 	return NULL;
 }
 
-void
-wob_config_init(struct wob_config *config)
+struct wob_config *
+wob_config_create()
 {
+	struct wob_config *config = malloc(sizeof(struct wob_config));
+
 	wl_list_init(&config->outputs);
 	wl_list_init(&config->styles);
 
+	config->sandbox = true;
 	config->max = 100;
 	config->timeout_msec = 1000;
 	config->dimensions.width = 400;
@@ -457,6 +459,8 @@ wob_config_init(struct wob_config *config)
 	config->default_style.overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+
+	return config;
 }
 
 bool
@@ -547,6 +551,8 @@ wob_config_destroy(struct wob_config *config)
 		free(style->name);
 		free(style);
 	}
+
+	free(config);
 }
 
 struct wob_style *

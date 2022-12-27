@@ -5,7 +5,6 @@
 #include <wayland-util.h>
 
 #include "color.h"
-#include "log.h"
 
 enum wob_overflow_mode {
 	WOB_OVERFLOW_MODE_WRAP,
@@ -77,9 +76,10 @@ struct wob_config {
 	struct wob_style default_style;
 	struct wl_list styles;
 	struct wl_list outputs;
+	bool sandbox;
 };
 
-void wob_config_init(struct wob_config *config);
+struct wob_config *wob_config_create();
 
 bool wob_config_load(struct wob_config *config, const char *config_path);
 

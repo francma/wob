@@ -41,6 +41,7 @@ static const char *verbosity_names[] = {
 	"INFO",
 	"WARN",
 	"ERROR",
+	"PANIC",
 };
 
 static const char *verbosity_colors[] = {
@@ -48,6 +49,7 @@ static const char *verbosity_colors[] = {
 	COLOR_GREEN,
 	COLOR_YELLOW,
 	COLOR_LIGHT_RED,
+	COLOR_RED,
 };
 
 void
