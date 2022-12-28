@@ -8,6 +8,7 @@ typedef enum {
 	WOB_LOG_INFO = 1,
 	WOB_LOG_WARN = 2,
 	WOB_LOG_ERROR = 3,
+	WOB_LOG_PANIC = 4,
 } wob_log_importance;
 
 void wob_log(wob_log_importance importance, const char *file, int line, const char *fmt, ...);
@@ -22,6 +23,9 @@ void wob_log_use_colors(bool use_colors);
 #define wob_log_info(...) wob_log(WOB_LOG_INFO, WOB_FILE, __LINE__, __VA_ARGS__)
 #define wob_log_warn(...) wob_log(WOB_LOG_WARN, WOB_FILE, __LINE__, __VA_ARGS__)
 #define wob_log_error(...) wob_log(WOB_LOG_ERROR, WOB_FILE, __LINE__, __VA_ARGS__)
+#define wob_log_panic(...)                                                                                                                                                                             \
+	wob_log(WOB_LOG_PANIC, WOB_FILE, __LINE__, __VA_ARGS__);                                                                                                                                           \
+	exit(2)
 
 #define wob_log_level_debug() wob_log_set_level(WOB_LOG_DEBUG);
 #define wob_log_level_info() wob_log_set_level(WOB_LOG_INFO);

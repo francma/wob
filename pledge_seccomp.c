@@ -12,7 +12,7 @@
 #include "log.h"
 #include "pledge.h"
 
-bool
+void
 wob_pledge(void)
 {
 	// clang-format off
@@ -41,27 +41,20 @@ wob_pledge(void)
 	int ret;
 	scmp_filter_ctx scmp_ctx = seccomp_init(SCMP_ACT_KILL);
 	if (scmp_ctx == NULL) {
-		wob_log_error("seccomp_init(SCMP_ACT_KILL) failed");
-		return false;
+		wob_log_panic("seccomp_init(SCMP_ACT_KILL) failed");
 	}
 
 	for (size_t i = 0; i < sizeof(scmp_sc) / sizeof(int); ++i) {
 		wob_log_debug("Adding syscall %d to whitelist", scmp_sc[i]);
 		if ((ret = seccomp_rule_add(scmp_ctx, SCMP_ACT_ALLOW, scmp_sc[i], 0)) < 0) {
-			wob_log_error("seccomp_rule_add(scmp_ctxm, SCMP_ACT_ALLOW, %d) failed with return value %d", scmp_sc[i], ret);
-			seccomp_release(scmp_ctx);
-			return false;
+			wob_log_panic("seccomp_rule_add(scmp_ctxm, SCMP_ACT_ALLOW, %d) failed with return value %d", scmp_sc[i], ret);
 		}
 	}
 
 	if ((ret = seccomp_load(scmp_ctx)) < 0) {
-		wob_log_error("seccomp_load(scmp_ctx) failed with return value %d", ret);
-		seccomp_release(scmp_ctx);
-		return false;
+		wob_log_panic("seccomp_load(scmp_ctx) failed with return value %d", ret);
 	}
 	wob_log_debug("Seccomp syscall whitelist successfully installed");
 
 	seccomp_release(scmp_ctx);
-
-	return true;
 }

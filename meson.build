@@ -35,7 +35,6 @@ wayland_scanner_client = generator(
 
 client_protocols = [
   [wl_protocol_dir + '/stable/xdg-shell', 'xdg-shell.xml'],
-  [wl_protocol_dir + '/unstable/xdg-output', 'xdg-output-unstable-v1.xml'],
   [meson.project_source_root() + '/protocols', 'wlr-layer-shell-unstable-v1.xml'],
 ]
 
@@ -62,8 +61,8 @@ endforeach
 
 wob_inc = include_directories('include')
 
-wob_sources = ['main.c', 'buffer.c', 'log.c', 'color.c', 'config.c']
-wob_dependencies = [xdg_output_unstable_v1, wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih, pixman]
+wob_sources = ['main.c', 'image.c', 'log.c', 'color.c', 'config.c', 'wob.c']
+wob_dependencies = [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih, pixman]
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'pledge_seccomp.c'
