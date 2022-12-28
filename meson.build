@@ -59,21 +59,18 @@ foreach p : client_protocols
   set_variable(name, dep)
 endforeach
 
-wob_inc = include_directories('include')
-
-wob_sources = ['main.c', 'image.c', 'log.c', 'color.c', 'config.c', 'wob.c']
+wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c']
 wob_dependencies = [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih, pixman]
 if seccomp.found()
   wob_dependencies += seccomp
-  wob_sources += 'pledge_seccomp.c'
+  wob_sources += 'src/pledge_seccomp.c'
 else
-  wob_sources += 'pledge.c'
+  wob_sources += 'src/pledge.c'
 endif
 
 executable(
   'wob',
   wob_sources,
-  include_directories: [wob_inc],
   dependencies: wob_dependencies,
   install: true
 )
