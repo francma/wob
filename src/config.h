@@ -93,4 +93,6 @@ struct wob_style *wob_config_find_style(struct wob_config *config, const char *s
 
 struct wob_output_config *wob_config_find_output(struct wob_config *config, const char *output_id);
 
+struct wob_output_config *wob_config_find_output_by_name(struct wob_config *config, const char *output_name);
+
 #endif

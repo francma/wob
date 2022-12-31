@@ -594,3 +594,23 @@ wob_config_find_output(struct wob_config *config, const char *output_id)
 		return NULL;
 	}
 }
+
+struct wob_output_config *
+wob_config_find_output_by_name(struct wob_config *config, const char *output_name)
+{
+	struct wob_output_config *output_config = NULL;
+	bool output_found = false;
+	wl_list_for_each (output_config, &config->outputs, link) {
+		if (strcmp(output_config->name, output_name) == 0) {
+			output_found = true;
+			break;
+		}
+	}
+
+	if (output_found) {
+		return output_config;
+	}
+	else {
+		return NULL;
+	}
+}

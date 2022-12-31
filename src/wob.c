@@ -51,18 +51,13 @@ noop()
 bool
 wob_should_render_on_output(struct wob *app, struct wob_output *output)
 {
-	struct wob_output_config *output_config = NULL;
 	switch (app->config->output_mode) {
 		case WOB_OUTPUT_MODE_FOCUSED:
 			return output->focused;
 		case WOB_OUTPUT_MODE_ALL:
 			return true;
 		case WOB_OUTPUT_MODE_WHITELIST:
-			wl_list_for_each (output_config, &app->config->outputs, link) {
-				if (strcmp(output->name, output_config->name) == 0) {
-					return true;
-				}
-			}
+			return wob_config_find_output_by_name(app->config, output->name) != NULL;
 	}
 
 	return false;
@@ -157,6 +152,8 @@ void
 xdg_output_handle_name(void *data, struct wl_output *wl_output, const char *name)
 {
 	struct wob_output *output = (struct wob_output *) data;
+	free(output->name);
+
 	output->name = strdup(name);
 	if (output->name == NULL) {
 		wob_log_panic("strdup failed\n");
@@ -193,9 +190,16 @@ handle_global(void *data, struct wl_registry *registry, uint32_t name, const cha
 	}
 	else if (strcmp(interface, wl_output_interface.name) == 0) {
 		struct wob_output *output = calloc(1, sizeof(struct wob_output));
-		// TODO check version > 4
-		output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, version);
 		output->wl_name = name;
+		output->name = strdup("UNKNOWN");
+
+		if (version < 4) {
+			wob_log_warn("Need %s version > 4 to match outputs based on name, got version %zu. Some features might not work.", wl_output_interface.name, version);
+			output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, version);
+		}
+		else {
+			output->wl_output = wl_registry_bind(registry, name, &wl_output_interface, 4);
+		}
 
 		wl_list_insert(&app->wob_outputs, &output->link);
 		wl_output_add_listener(output->wl_output, &wl_output_listener, output);
@@ -262,9 +266,13 @@ wob_run(struct wob_config *config)
 
 	wl_registry_add_listener(app->wl_registry, &wl_registry_listener, app);
 	// first roundtrip to get global interfaces
-	wl_display_roundtrip(app->wl_display);
+	if (wl_display_roundtrip(app->wl_display) < 0) {
+		wob_log_panic("global listeners wl_display_roundtrip failed");
+	}
 	// second roundtrip for output configuration
-	wl_display_roundtrip(app->wl_display);
+	if (wl_display_roundtrip(app->wl_display) < 0) {
+		wob_log_panic("global listeners wl_display_roundtrip failed");
+	}
 
 	if (app->wl_shm == NULL || app->wl_compositor == NULL || app->wlr_layer_shell == NULL) {
 		wob_log_panic("Wayland compositor doesn't support all required protocols");
@@ -414,12 +422,13 @@ wob_run(struct wob_config *config)
 						}
 
 						if (!wob_should_render_on_output(app, output)) {
+							wob_log_info("NOT Showing bar on output %s", output->name);
 							continue;
 						}
 
-						wob_log_info("Showing bar on output %s", output->name);
 						output->wob_surface = wob_surface_create(app, output->wl_output);
 						wl_surface_commit(output->wob_surface->wl_surface);
+						wob_log_info("Showing bar on output %s", output->name);
 					}
 
 					if (wl_display_roundtrip(app->wl_display) < 0) {
