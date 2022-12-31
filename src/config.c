@@ -319,7 +319,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 
 	if (strncmp(section, "output.", sizeof("output.") - 1) == 0) {
 		char output_id[INI_MAX_LINE + 1] = {0};
-		strcpy(output_id, section + sizeof("output.") - 1);
+		strncpy(output_id, section + sizeof("output.") - 1, INI_MAX_LINE);
 
 		struct wob_output_config *output_config = wob_config_find_output(config, output_id);
 		if (output_config == NULL) {
@@ -340,7 +340,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 
 	if (strncmp(section, "style.", sizeof("style.") - 1) == 0) {
 		char style_name[INI_MAX_LINE + 1] = {0};
-		strcpy(style_name, section + sizeof("style.") - 1);
+		strncpy(style_name, section + sizeof("style.") - 1, INI_MAX_LINE);
 
 		struct wob_style *style = wob_config_find_style(config, style_name);
 		if (style == NULL) {

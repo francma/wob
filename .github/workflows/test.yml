@@ -7,42 +7,36 @@ on:
   pull_request:
 
 jobs:
-  alpine:
+  test:
     runs-on: ubuntu-latest
     container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev
-      - run: meson build && ninja -C build && meson test -C build
+      - name: Install dependencies
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev
+      - name: Run tests
+        run: meson setup test && ninja -C test test
 
-  archlinux:
-    runs-on: ubuntu-latest
-    container: archlinux
-    steps:
-      - uses: actions/checkout@v2
-      - run: pacman -Syu --noconfirm && pacman -S --noconfirm gcc pkgconf meson wayland wayland-protocols libinih pixman
-      - run: meson build && ninja -C build && meson test -C build
-
-  clang-format:
+  analyze:
     runs-on: ubuntu-latest
     container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add clang15-extra-tools
-      - run: clang-format -Werror --dry-run src/*
+      - name: Install dependencies
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev clang15 clang15-extra-tools clang15-analyzer
+      - name: Run clang-analyzer
+        if: success() || failure()
+        run: scan-build meson setup clang-analyzer && scan-build --status-bugs ninja -C clang-analyzer wob
+      - name: Run clang-tidy
+        if: success() || failure()
+        run: meson setup tidy && ninja -C tidy wob && run-clang-tidy -p tidy
 
-  clang-analyzer:
+  format:
     runs-on: ubuntu-latest
     container: alpine:3.17
     steps:
       - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc clang-analyzer inih-dev pixman-dev
-      - run: scan-build meson build && scan-build --status-bugs ninja -C build
-
-  valgrind:
-    runs-on: ubuntu-latest
-    container: alpine:3.17
-    steps:
-      - uses: actions/checkout@v2
-      - run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc valgrind inih-dev pixman-dev
-      - run: meson build && meson test -C build --wrap="valgrind --leak-check=full --error-exitcode=2"
+      - name: Install dependencies
+        run: apk update && apk add clang15-extra-tools
+      - name: Run clang-format
+        run: clang-format -Werror --dry-run src/*
