@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev cmocka-dev
       - name: Run tests
         run: meson setup test && ninja -C test test
 
@@ -23,13 +23,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev clang15 clang15-extra-tools clang15-analyzer
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev cmocka-dev clang15 clang15-extra-tools clang15-analyzer
       - name: Run clang-analyzer
         if: success() || failure()
-        run: scan-build meson setup clang-analyzer && scan-build --status-bugs ninja -C clang-analyzer wob
+        run: scan-build meson setup clang-analyzer && scan-build --status-bugs ninja -C clang-analyzer
       - name: Run clang-tidy
         if: success() || failure()
-        run: meson setup tidy && ninja -C tidy wob && run-clang-tidy -p tidy
+        run: meson setup clang-tidy && ninja -C clang-tidy && run-clang-tidy -p clang-tidy
 
   format:
     runs-on: ubuntu-latest
@@ -39,4 +39,4 @@ jobs:
       - name: Install dependencies
         run: apk update && apk add clang15-extra-tools
       - name: Run clang-format
-        run: clang-format -Werror --dry-run src/*
+        run: clang-format -Werror --dry-run src/* test/*

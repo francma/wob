@@ -75,6 +75,15 @@ executable(
   install: true
 )
 
+cmocka = dependency('cmocka', required: get_option('tests'))
+if cmocka.found()
+  test('color', executable(
+    'color_test',
+    ['test/color_test.c', 'src/color.c'],
+    dependencies: [cmocka]
+  ))
+endif
+
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
 if scdoc.found()
   scdfiles = ['wob.1.scd', 'wob.ini.5.scd']

@@ -23,6 +23,7 @@ Install dependencies:
 - meson \*
 - [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*
 - [libseccomp](https://github.com/seccomp/libseccomp) (optional: Linux kernel syscall filtering) \*
+- [cmocka](https://cmocka.org/) (optional: tests) \*
 
 \* _compile-time dependecy_
 

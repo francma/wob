@@ -1,2 +1,3 @@
 option('man-pages', type: 'feature', value: 'auto', description: 'Generate and install man pages')
 option('seccomp', type: 'feature', value: 'auto', description: 'Use seccomp on Linux')
+option('tests', type: 'feature', value: 'auto', description: 'Build tests')

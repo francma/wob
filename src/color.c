@@ -43,29 +43,44 @@ wob_color_premultiply_alpha(const struct wob_color color)
 	return premultiplied_color;
 }
 
-bool
-wob_color_from_string(const char *restrict str, char **restrict str_end, struct wob_color *color)
+int
+hex_to_int(char c)
 {
-	char buffer[3] = {0};
+	if (c >= '0' && c <= '9') {
+		return c - '0';
+	}
+	if (c >= 'a' && c <= 'f') {
+		return c - 'a' + 10;
+	}
+	if (c >= 'A' && c <= 'F') {
+		return c - 'A' + 10;
+	}
+
+	return -1;
+}
+
+bool
+wob_color_from_rgba_string(const char *str, struct wob_color *color)
+{
+	unsigned long length = strlen(str);
+	for (const char *c = str; *c != '\0'; ++c) {
+		if (!isxdigit(*c)) {
+			return false;
+		}
+	}
+
 	uint8_t parts[4];
 	parts[3] = 0xFF;
-
-	int i;
-	for (i = 0; i < 4; ++i) {
-		strncpy(buffer, &str[i * 2], 2);
-		if (!isxdigit(buffer[0]) || !isxdigit(buffer[1])) {
+	switch (length) {
+		case 8:
+			parts[3] = hex_to_int(str[6]) * 16 + hex_to_int(str[7]);
+		case 6:
+			parts[0] = hex_to_int(str[0]) * 16 + hex_to_int(str[1]);
+			parts[1] = hex_to_int(str[2]) * 16 + hex_to_int(str[3]);
+			parts[2] = hex_to_int(str[4]) * 16 + hex_to_int(str[5]);
 			break;
-		}
-
-		parts[i] = strtoul(buffer, NULL, 16);
-	}
-
-	if (i < 3) {
-		return false;
-	}
-
-	if (str_end) {
-		*str_end = ((char *) str) + i * 2;
+		default:
+			return false;
 	}
 
 	*color = (struct wob_color){

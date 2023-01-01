@@ -146,12 +146,7 @@ parse_anchor(const char *str, unsigned long *anchor)
 bool
 parse_color(const char *str, struct wob_color *color)
 {
-	char *str_end;
-	if (wob_color_from_string(str, &str_end, color) == false || *str_end != '\0') {
-		return false;
-	}
-
-	return true;
+	return wob_color_from_rgba_string(str, color);
 }
 
 bool
@@ -513,21 +508,21 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
 	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
 
-	wob_log_debug("config.colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.background));
-	wob_log_debug("config.colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.value));
-	wob_log_debug("config.colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.colors.border));
-	wob_log_debug("config.overflow_colors.background = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.background));
-	wob_log_debug("config.overflow_colors.value = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.value));
-	wob_log_debug("config.overflow_colors.border = #%08jx", (uintmax_t) wob_color_to_rgba(config->default_style.overflow_colors.border));
+	wob_log_debug("config.colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.background));
+	wob_log_debug("config.colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.value));
+	wob_log_debug("config.colors.border = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.border));
+	wob_log_debug("config.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.background));
+	wob_log_debug("config.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.value));
+	wob_log_debug("config.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.border));
 
 	struct wob_style *style;
 	wl_list_for_each (style, &config->styles, link) {
-		wob_log_debug("config.style.%s.colors.background = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.background));
-		wob_log_debug("config.style.%s.colors.value = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.value));
-		wob_log_debug("config.style.%s.colors.border = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->colors.border));
-		wob_log_debug("config.style.%s.overflow_colors.background = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.background));
-		wob_log_debug("config.style.%s.overflow_colors.value = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.value));
-		wob_log_debug("config.style.%s.overflow_colors.border = #%08jx", style->name, (uintmax_t) wob_color_to_rgba(style->overflow_colors.border));
+		wob_log_debug("config.style.%s.colors.background = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.background));
+		wob_log_debug("config.style.%s.colors.value = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.value));
+		wob_log_debug("config.style.%s.colors.border = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.border));
+		wob_log_debug("config.style.%s.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.background));
+		wob_log_debug("config.style.%s.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.value));
+		wob_log_debug("config.style.%s.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.border));
 	}
 
 	struct wob_output_config *output_config;
