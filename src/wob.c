@@ -406,11 +406,11 @@ wob_run(struct wob_config *config)
 					}
 
 					wob_log_info(
-						"Rendering { value = %lu, bg = #%08jx, border = #%08jx, bar = #%08jx }",
+						"Rendering { value = %lu, bg = " WOB_COLOR_PRINTF_FORMAT ", border = " WOB_COLOR_PRINTF_FORMAT ", bar = " WOB_COLOR_PRINTF_FORMAT " }",
 						percentage,
-						wob_color_to_rgba(effective_colors.background),
-						wob_color_to_rgba(effective_colors.border),
-						wob_color_to_rgba(effective_colors.value)
+						WOB_COLOR_PRINTF_RGBA(effective_colors.background),
+						WOB_COLOR_PRINTF_RGBA(effective_colors.border),
+						WOB_COLOR_PRINTF_RGBA(effective_colors.value)
 					);
 
 					wob_image_draw(app->image, effective_colors, app->config->dimensions, percentage, app->config->max);
