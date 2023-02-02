@@ -25,7 +25,7 @@ Install dependencies:
 - [libseccomp](https://github.com/seccomp/libseccomp) (optional: Linux kernel syscall filtering) \*
 - [cmocka](https://cmocka.org/) (optional: tests) \*
 
-\* _compile-time dependecy_
+\* _compile-time dependency_
 
 Run these commands:
 
@@ -98,7 +98,7 @@ bindsym XF86AudioLowerVolume exec pamixer -ud 2 && pamixer --get-volume > $WOBSO
 bindsym XF86AudioMute exec pamixer --toggle-mute && ( [ "$(pamixer --get-mute)" = "true" ] && echo 0 > $WOBSOCK ) || pamixer --get-volume > $WOBSOCK
 ```
 
-Volume using pulse audio (altenative with pactl) :
+Volume using pulse audio (alternative with pactl) :
 
 ```
 bindsym XF86AudioRaiseVolume exec pactl set-sink-volume @DEFAULT_SINK@ +5% && pactl get-sink-volume @DEFAULT_SINK@ | head -n 1| awk '{print substr($5, 1, length($5)-1)}' > $WOBSOCK
