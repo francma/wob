@@ -1,7 +1,7 @@
 project(
   'wob',
   'c',
-  version: '0.14.2',
+  version: '0.15',
   license: 'ISC',
   default_options: ['c_std=c99'],
   meson_version: '>=0.60.0',
