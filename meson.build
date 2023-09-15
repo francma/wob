@@ -16,7 +16,6 @@ wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 inih = dependency('inih')
-pixman = dependency('pixman-1')
 
 wob_version = '"@0@"'.format(meson.project_version())
 add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
@@ -60,7 +59,7 @@ foreach p : client_protocols
 endforeach
 
 wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c']
-wob_dependencies = [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih, pixman]
+wob_dependencies = [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih]
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'src/pledge_seccomp.c'

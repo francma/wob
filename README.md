@@ -18,7 +18,6 @@ Install dependencies:
 
 - wayland
 - [inih](https://github.com/benhoyt/inih)
-- [pixman](http://www.pixman.org/)
 - wayland-protocols \*
 - meson \*
 - [scdoc](https://git.sr.ht/~sircmpwn/scdoc) (optional: man page) \*

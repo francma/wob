@@ -11,8 +11,7 @@ struct wob_image {
 	size_t width;
 	size_t height;
 	size_t size_in_bytes;
-	size_t stride;
-	void *_data;
+	uint32_t *data;
 };
 
 struct wob_image *wob_image_create_argb8888(size_t width, size_t height);
