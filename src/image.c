@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-#include <pixman.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,16 +51,13 @@ wob_image_create_argb8888(size_t width, size_t height)
 		return NULL;
 	}
 
-	pixman_image_t *pixman = pixman_image_create_bits_no_clear(PIXMAN_a8r8g8b8, width, height, buffer, width * 4);
-
 	struct wob_image *image = malloc(sizeof(struct wob_image));
 
 	image->shmid = shmid;
 	image->width = width;
 	image->height = height;
 	image->size_in_bytes = width * height * 4;
-	image->stride = width * 4;
-	image->_data = pixman;
+	image->data = buffer;
 
 	return image;
 }
@@ -69,52 +65,65 @@ wob_image_create_argb8888(size_t width, size_t height)
 void
 wob_image_destroy(struct wob_image *image)
 {
-	pixman_image_t *pixman = image->_data;
-
-	pixman_image_unref(pixman);
 	free(image);
 }
 
-pixman_color_t
-wob_color_to_pixman(struct wob_color color)
+void
+fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uint32_t color)
 {
-	return (pixman_color_t){
-		.red = (uint16_t) (color.r * UINT16_MAX),
-		.green = (uint16_t) (color.g * UINT16_MAX),
-		.blue = (uint16_t) (color.b * UINT16_MAX),
-		.alpha = (uint16_t) (color.a * UINT16_MAX),
-	};
+	for (size_t y = 0; y < height; ++y) {
+		for (size_t x = 0; x < width; ++x) {
+			pixels[x] = color;
+		}
+		pixels += stride;
+	}
 }
 
 void
 wob_image_draw(struct wob_image *image, struct wob_colors colors, struct wob_dimensions dimensions, unsigned long percentage, unsigned long maximum)
 {
-	pixman_image_t *pixman = image->_data;
+	uint32_t bar_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.value));
+	uint32_t background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
+	uint32_t border_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.border));
 
-	pixman_color_t bar_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.value));
-	pixman_color_t background_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.background));
-	pixman_color_t border_color = wob_color_to_pixman(wob_color_premultiply_alpha(colors.border));
+	uint32_t *data;
+	uint32_t height;
+	uint32_t width;
+	uint32_t offset;
+	uint32_t stride = image->width;
 
-	size_t offset_border_padding = dimensions.border_offset + dimensions.border_size + dimensions.bar_padding;
-	size_t bar_width = dimensions.width - 2 * offset_border_padding;
-	size_t bar_height = dimensions.height - 2 * offset_border_padding;
+	height = dimensions.height;
+	width = dimensions.width;
+	data = image->data;
+	fill_rectangle(data, width, height, stride, background_color);
 
-	uint32_t offset = 0;
-	pixman_image_fill_rectangles(PIXMAN_OP_SRC, pixman, &background_color, 1, &(pixman_rectangle16_t){0, 0, dimensions.width, dimensions.height});
-	offset += dimensions.border_offset;
-	pixman_image_fill_rectangles(PIXMAN_OP_SRC, pixman, &border_color, 1, &(pixman_rectangle16_t){offset, offset, dimensions.width - 2 * offset, dimensions.height - 2 * offset});
-	offset += dimensions.border_size;
-	pixman_image_fill_rectangles(PIXMAN_OP_SRC, pixman, &background_color, 1, &(pixman_rectangle16_t){offset, offset, dimensions.width - 2 * offset, dimensions.height - 2 * offset});
+	offset = dimensions.border_offset;
+	height = image->height - (2 * offset);
+	width = image->width - (2 * offset);
+	data = image->data + (offset * (dimensions.width + 1));
+	fill_rectangle(data, width, height, stride, border_color);
 
-	offset += dimensions.bar_padding;
-	uint32_t filled_width = (bar_width * percentage) / maximum;
-	uint32_t filled_height = (bar_height * percentage) / maximum;
+	offset = dimensions.border_offset + dimensions.border_size;
+	height = image->height - (2 * offset);
+	width = image->width - (2 * offset);
+	data = image->data + (offset * (dimensions.width + 1));
+	fill_rectangle(data, width, height, stride, background_color);
+
+	offset = dimensions.border_offset + dimensions.border_size + dimensions.bar_padding;
+	size_t bar_width = dimensions.width - 2 * offset;
+	size_t bar_height = dimensions.height - 2 * offset;
 	switch (dimensions.orientation) {
 		case WOB_ORIENTATION_HORIZONTAL:
-			pixman_image_fill_rectangles(PIXMAN_OP_SRC, pixman, &bar_color, 1, &(pixman_rectangle16_t){offset, offset, filled_width, bar_height});
+			height = bar_height;
+			width = bar_width * percentage / maximum;
+			data = image->data + (offset * (dimensions.width + 1));
+			fill_rectangle(data, width, height, stride, bar_color);
 			break;
 		case WOB_ORIENTATION_VERTICAL:
-			pixman_image_fill_rectangles(PIXMAN_OP_SRC, pixman, &bar_color, 1, &(pixman_rectangle16_t){offset, offset + bar_height - filled_height, bar_width, filled_height});
+			height = bar_height * percentage / maximum;
+			width = bar_width;
+			data = image->data + (offset * (dimensions.width + 1)) + (bar_height - height) * dimensions.width;
+			fill_rectangle(data, width, height, stride, bar_color);
 			break;
 	}
 }

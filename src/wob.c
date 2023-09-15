@@ -283,7 +283,7 @@ wob_run(struct wob_config *config)
 		wob_log_panic("wl_shm_create_pool failed");
 	}
 
-	app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->image->width, app->image->height, app->image->stride, WL_SHM_FORMAT_ARGB8888);
+	app->wl_buffer = wl_shm_pool_create_buffer(pool, 0, app->image->width, app->image->height, app->image->width * 4, WL_SHM_FORMAT_ARGB8888);
 	wl_shm_pool_destroy(pool);
 	if (app->wl_buffer == NULL) {
 		wob_log_panic("wl_shm_pool_create_buffer failed");
