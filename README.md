@@ -4,7 +4,7 @@
 
 ![preview](https://martinfranc.eu/wob-preview.svg)
 
-A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requrires support for `wlr_layer_shell_unstable_v1`). This project is inspired by [xob - X Overlay Bar](https://github.com/florentc/xob).
+A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requires support for `wlr_layer_shell_unstable_v1`). This project is inspired by [xob - X Overlay Bar](https://github.com/florentc/xob).
 
 ## Release signatures
 
