@@ -78,7 +78,8 @@ See [Contrib space](contrib/README.md).
 
 ## Alternatives
 
-- [avizo](https://github.com/misterdanb/avizo) - GTK, icons
+- [avizo](https://github.com/misterdanb/avizo) - icons, volume and brightness
+- [SwayOSD](https://github.com/ErikReider/SwayOSD) - icons, volume, brightness and keyboard (caps lock, num lock)
 - Notification daemon + [custom script](https://github.com/luispabon/sway-dotfiles/blob/master/scripts/notifications/audio-notification.sh)
 - [xob - X Overlay Bar](https://github.com/florentc/xob) - X11 only, inspiration for wob
 
