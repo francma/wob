@@ -4,7 +4,7 @@
 
 ![preview](https://martinfranc.eu/wob-preview.svg)
 
-A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requires support for `wlr_layer_shell_unstable_v1`). This project is inspired by [xob - X Overlay Bar](https://github.com/florentc/xob).
+A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requires support for `wlr_layer_shell_unstable_v1`).
 
 ## Release signatures
 
@@ -75,6 +75,12 @@ See [wob.ini.5](https://github.com/francma/wob/blob/master/wob.ini.5.scd) for st
 ## Examples
 
 See [Contrib space](contrib/README.md).
+
+## Alternatives
+
+- [avizo](https://github.com/misterdanb/avizo) - GTK, icons
+- Notification daemon + [custom script](https://github.com/luispabon/sway-dotfiles/blob/master/scripts/notifications/audio-notification.sh)
+- [xob - X Overlay Bar](https://github.com/florentc/xob) - X11 only, inspiration for wob
 
 ## License
 
