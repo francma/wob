@@ -25,6 +25,7 @@ wob_pledge(void)
 		SCMP_SYS(gettimeofday),
 		SCMP_SYS(_llseek),
 		SCMP_SYS(lseek),
+		SCMP_SYS(mmap),
 		SCMP_SYS(mprotect),
 		SCMP_SYS(munmap),
 		SCMP_SYS(poll),
