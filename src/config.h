@@ -37,10 +37,22 @@ struct wob_margin {
 	unsigned long left;
 };
 
+struct wob_dimensions {
+	unsigned long width;
+	unsigned long height;
+	unsigned long border_offset;
+	unsigned long border_size;
+	unsigned long bar_padding;
+	enum wob_orientation orientation;
+};
+
 struct wob_output_config {
 	char *id;
-	char *name;
+	char *match;
 	struct wl_list link;
+	struct wob_dimensions dimensions;
+	struct wob_margin margin;
+	unsigned long anchor;
 };
 
 struct wob_colors {
@@ -54,15 +66,6 @@ struct wob_style {
 	struct wob_colors colors;
 	struct wob_colors overflow_colors;
 	struct wl_list link;
-};
-
-struct wob_dimensions {
-	unsigned long width;
-	unsigned long height;
-	unsigned long border_offset;
-	unsigned long border_size;
-	unsigned long bar_padding;
-	enum wob_orientation orientation;
 };
 
 struct wob_config {
@@ -93,6 +96,12 @@ struct wob_style *wob_config_find_style(struct wob_config *config, const char *s
 
 struct wob_output_config *wob_config_find_output(struct wob_config *config, const char *output_id);
 
-struct wob_output_config *wob_config_find_output_by_name(struct wob_config *config, const char *output_name);
+struct wob_output_config *wob_config_match_output(struct wob_config *config, const char *match);
+
+struct wob_dimensions wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale);
+
+bool wob_dimensions_eq(struct wob_dimensions a, struct wob_dimensions b);
+
+bool wob_margin_eq(struct wob_margin a, struct wob_margin b);
 
 #endif

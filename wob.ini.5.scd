@@ -62,15 +62,6 @@ You can run `wob -vv` to find the default values.
 *overflow_border_color*
 	Overflow border color, in RRGGBB[AA] format.
 
-*output_mode*
-	Output mode, one of *whitelist*, *all*, *focused*.
-
-	*whitelist*: show wob only on outputs defined in *output.\** sections of config file
-
-	*all*: show wob on all available outputs
-
-	*focused*: show wob on compositor default (focused) output
-
 *orientation*
 	Orientation of the bar, one of *horizontal* and *vertical*.
 
@@ -78,15 +69,35 @@ You can run `wob -vv` to find the default values.
 
 # SECTION: output.*
 
-This section will be used in future releases of wob to provide per output configuration.
-Currently this servers only as list of outputs to show wob on in *whitelist* mode.
-
 Replace *\** with user friendly name of your choosing.
 
-*name*
-	Output name.
+*match*
+	Substring to match the output.
 
-	Example: DP-1
+	Example: DP-1, Dell U2722DE
+
+*width*
+	Width of wob, in pixels.
+
+*height*
+	Height of wob, in pixels.
+
+*border_offset*
+	Border offset, in pixels.
+
+*border_size*
+	Border size, in pixels.
+
+*bar_padding*
+	Bar padding, in pixels.
+
+*anchor*
+	Anchor point, combination of *top*, *left*, *right*, *bottom*, *center*.
+
+	Example: *bottom* *right*
+
+*margin*
+	Anchor margin, in pixels. Either as a single value or 4 values (top right bottom left).
 
 # SECTION: style.*
 
@@ -120,7 +131,9 @@ bar_color = FFFFFF
 name = DP-1
 
 [output.ips]
-name = HDMI-1
+match = DELL U2722DE
+width = 200
+height = 30
 
 [style.muted]
 background_color = 032cfc
