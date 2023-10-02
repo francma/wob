@@ -12,6 +12,7 @@
 void
 test_colors_are_case_insensitive(void **state)
 {
+	(void) state;
 	struct wob_color color_a, color_b;
 	assert_true(wob_color_from_rgba_string("ABCDEF", &color_a));
 	assert_true(wob_color_from_rgba_string("abcdef", &color_b));
@@ -25,6 +26,7 @@ test_colors_are_case_insensitive(void **state)
 void
 test_alpha_channel_is_optional(void **state)
 {
+	(void) state;
 	struct wob_color color_a, color_b;
 	assert_true(wob_color_from_rgba_string("AAAAAAFF", &color_a));
 	assert_true(wob_color_from_rgba_string("AAAAAA", &color_b));
@@ -38,6 +40,7 @@ test_alpha_channel_is_optional(void **state)
 void
 test_string_with_invalid_length_fails(void **state)
 {
+	(void) state;
 	struct wob_color color;
 	// too short
 	assert_true(!wob_color_from_rgba_string("12345", &color));
@@ -50,6 +53,7 @@ test_string_with_invalid_length_fails(void **state)
 void
 test_string_with_invalid_characters_fails(void **state)
 {
+	(void) state;
 	struct wob_color color;
 	// whitespaces
 	assert_true(!wob_color_from_rgba_string("  123456  ", &color));
@@ -58,6 +62,7 @@ test_string_with_invalid_characters_fails(void **state)
 void
 test_valid_colors_from_string(void **state)
 {
+	(void) state;
 	struct wob_color color;
 	// without alpha
 	assert_true(wob_color_from_rgba_string("123456", &color));

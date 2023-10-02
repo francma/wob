@@ -5,6 +5,7 @@
 
 #define _POSIX_C_SOURCE 200809L
 #include <ini.h>
+#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -168,7 +169,7 @@ parse_orientation(const char *str, enum wob_orientation *value)
 int
 handler(void *user, const char *section, const char *name, const char *value)
 {
-	struct wob_config *config = (struct wob_config *) user;
+	struct wob_config *config = user;
 
 	unsigned long ul;
 
@@ -318,14 +319,76 @@ handler(void *user, const char *section, const char *name, const char *value)
 
 		struct wob_output_config *output_config = wob_config_find_output(config, output_id);
 		if (output_config == NULL) {
-			output_config = malloc(sizeof(struct wob_output_config));
+			output_config = calloc(1, sizeof(struct wob_output_config));
+			if (output_config == NULL) {
+				wob_log_panic("calloc() failed");
+			}
+
 			output_config->id = strdup(output_id);
+			output_config->match = NULL;
+			output_config->dimensions = config->dimensions;
+			output_config->margin = config->margin;
+			output_config->anchor = config->anchor;
 			wl_list_insert(&config->outputs, &output_config->link);
 		}
 
-		if (strcmp(name, "name") == 0) {
-			output_config->name = strdup(value);
-
+		if (strcmp(name, "match") == 0) {
+			output_config->match = strdup(value);
+			return 1;
+		}
+		if (strcmp(name, "width") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Width must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.width = ul;
+			return 1;
+		}
+		if (strcmp(name, "height") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Height must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.height = ul;
+			return 1;
+		}
+		if (strcmp(name, "margin") == 0) {
+			if (parse_margin(value, &output_config->margin) == false) {
+				wob_log_error("Margin must be in format <value> or <value_top> <value_right> <value_bottom> <value_left>.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "anchor") == 0) {
+			if (parse_anchor(value, &ul) == false) {
+				wob_log_error("Anchor must be one of 'top', 'bottom', 'left', 'right', 'center'.");
+				return 0;
+			}
+			output_config->anchor = ul;
+			return 1;
+		}
+		if (strcmp(name, "border_offset") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Border offset must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.border_offset = ul;
+			return 1;
+		}
+		if (strcmp(name, "border_size") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Border size must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.border_size = ul;
+			return 1;
+		}
+		if (strcmp(name, "bar_padding") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Bar padding must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.bar_padding = ul;
 			return 1;
 		}
 
@@ -339,7 +402,11 @@ handler(void *user, const char *section, const char *name, const char *value)
 
 		struct wob_style *style = wob_config_find_style(config, style_name);
 		if (style == NULL) {
-			style = malloc(sizeof(struct wob_style));
+			style = calloc(1, sizeof(struct wob_style));
+			if (style == NULL) {
+				wob_log_panic("calloc() failed");
+			}
+
 			style->name = strdup(style_name);
 			style->colors = config->default_style.colors;
 			style->overflow_colors = config->default_style.overflow_colors;
@@ -486,6 +553,14 @@ wob_config_load(struct wob_config *config, const char *config_path)
 		return false;
 	}
 
+	struct wob_output_config *output;
+	wl_list_for_each (output, &config->outputs, link) {
+		if (output->match == NULL) {
+			wob_log_error("Output %s is missing \"match\" property", output->id);
+			return false;
+		}
+	}
+
 	return true;
 }
 
@@ -527,7 +602,23 @@ wob_config_debug(struct wob_config *config)
 
 	struct wob_output_config *output_config;
 	wl_list_for_each (output_config, &config->outputs, link) {
-		wob_log_debug("config.output.%s.name = %s", output_config->id, output_config->name);
+		wob_log_debug("config.output.%s.match = %s", output_config->id, output_config->match);
+		wob_log_debug("config.output.%s.margin.top = %lu", output_config->id, output_config->margin.top);
+		wob_log_debug("config.output.%s.margin.right = %lu", output_config->id, output_config->margin.right);
+		wob_log_debug("config.output.%s.margin.bottom = %lu", output_config->id, output_config->margin.bottom);
+		wob_log_debug("config.output.%s.margin.left = %lu", output_config->id, output_config->margin.left);
+		wob_log_debug("config.output.%s.dimensions.width = %lu", output_config->id, output_config->dimensions.width);
+		wob_log_debug("config.output.%s.dimensions.height = %lu", output_config->id, output_config->dimensions.height);
+		wob_log_debug("config.output.%s.dimensions.border_offset = %lu", output_config->id, output_config->dimensions.border_offset);
+		wob_log_debug("config.output.%s.dimensions.border_size = %lu", output_config->id, output_config->dimensions.border_size);
+		wob_log_debug("config.output.%s.dimensions.bar_padding = %lu", output_config->id, output_config->dimensions.bar_padding);
+		wob_log_debug(
+			"config.output.%s.dimensions.orientation = %lu (horizontal = %d, vertical = %d)",
+			output_config->id,
+			output_config->dimensions.orientation,
+			WOB_ORIENTATION_HORIZONTAL,
+			WOB_ORIENTATION_VERTICAL
+		);
 	}
 }
 
@@ -536,7 +627,7 @@ wob_config_destroy(struct wob_config *config)
 {
 	struct wob_output_config *output, *output_tmp;
 	wl_list_for_each_safe (output, output_tmp, &config->outputs, link) {
-		free(output->name);
+		free(output->match);
 		free(output->id);
 		free(output);
 	}
@@ -591,12 +682,12 @@ wob_config_find_output(struct wob_config *config, const char *output_id)
 }
 
 struct wob_output_config *
-wob_config_find_output_by_name(struct wob_config *config, const char *output_name)
+wob_config_match_output(struct wob_config *config, const char *match)
 {
 	struct wob_output_config *output_config = NULL;
 	bool output_found = false;
 	wl_list_for_each (output_config, &config->outputs, link) {
-		if (strcmp(output_config->name, output_name) == 0) {
+		if (strstr(output_config->match, match) == 0) {
 			output_found = true;
 			break;
 		}
@@ -608,4 +699,49 @@ wob_config_find_output_by_name(struct wob_config *config, const char *output_nam
 	else {
 		return NULL;
 	}
+}
+
+uint32_t
+scale_apply(uint32_t base, uint32_t scale)
+{
+	return lround(base * (scale / 120.));
+}
+
+struct wob_dimensions
+wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale)
+{
+	struct wob_dimensions scaled_dimensions = {
+		.width = scale_apply(dimensions.width, scale),
+		.height = scale_apply(dimensions.height, scale),
+		.bar_padding = scale_apply(dimensions.bar_padding, scale),
+		.border_offset = scale_apply(dimensions.border_offset, scale),
+		.border_size = scale_apply(dimensions.border_size, scale),
+		.orientation = dimensions.orientation,
+	};
+
+	return scaled_dimensions;
+}
+
+bool
+wob_dimensions_eq(struct wob_dimensions a, struct wob_dimensions b)
+{
+	if (a.height != b.height) return false;
+	if (a.width != b.width) return false;
+	if (a.orientation != b.orientation) return false;
+	if (a.border_offset != b.border_offset) return false;
+	if (a.border_size != b.border_size) return false;
+	if (a.bar_padding != b.bar_padding) return false;
+
+	return true;
+}
+
+bool
+wob_margin_eq(struct wob_margin a, struct wob_margin b)
+{
+	if (a.top != b.top) return false;
+	if (a.right != b.right) return false;
+	if (a.bottom != b.bottom) return false;
+	if (a.left != b.left) return false;
+
+	return true;
 }
