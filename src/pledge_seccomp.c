@@ -23,6 +23,7 @@ wob_pledge(void)
 		SCMP_SYS(exit_group),
 		SCMP_SYS(fcntl),
 		SCMP_SYS(fcntl64),
+		SCMP_SYS(ftruncate),
 		SCMP_SYS(gettimeofday),
 		SCMP_SYS(_llseek),
 		SCMP_SYS(lseek),

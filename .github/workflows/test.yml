@@ -9,21 +9,21 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    container: alpine:3.17
+    container: alpine:3.18
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev cmocka-dev
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev
       - name: Run tests
         run: meson setup test && ninja -C test test
 
   analyze:
     runs-on: ubuntu-latest
-    container: alpine:3.17
+    container: alpine:3.18
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev pixman-dev cmocka-dev clang15 clang15-extra-tools clang15-analyzer
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev clang16 clang16-extra-tools clang16-analyzer
       - name: Run clang-analyzer
         if: success() || failure()
         run: scan-build meson setup clang-analyzer && scan-build --status-bugs ninja -C clang-analyzer
@@ -33,10 +33,10 @@ jobs:
 
   format:
     runs-on: ubuntu-latest
-    container: alpine:3.17
+    container: alpine:3.18
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add clang15-extra-tools
+        run: apk update && apk add clang16-extra-tools
       - name: Run clang-format
         run: clang-format -Werror --dry-run src/* test/*

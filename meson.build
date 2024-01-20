@@ -9,11 +9,13 @@ project(
 
 cc = meson.get_compiler('c')
 
-wayland_protos = dependency('wayland-protocols', version: '>=1.13')
+# minimal version with fractional scaling protocol
+wayland_protos = dependency('wayland-protocols', version: '>=1.31')
 wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
 wayland_scanner = find_program('wayland-scanner')
 wayland_client = dependency('wayland-client')
 rt = cc.find_library('rt')
+libm = cc.find_library('m')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 inih = dependency('inih')
 
@@ -32,34 +34,31 @@ wayland_scanner_client = generator(
   arguments: ['client-header', '@INPUT@', '@OUTPUT@'],
 )
 
-client_protocols = [
-  [wl_protocol_dir + '/stable/xdg-shell', 'xdg-shell.xml'],
-  [meson.project_source_root() + '/protocols', 'wlr-layer-shell-unstable-v1.xml'],
+wl_proto_xml = [
+  wl_protocol_dir / 'stable/xdg-shell/xdg-shell.xml',
+  wl_protocol_dir / 'stable/viewporter/viewporter.xml',
+  'protocols/wlr-layer-shell-unstable-v1.xml',
+  wl_protocol_dir / 'staging/fractional-scale/fractional-scale-v1.xml',
 ]
 
-foreach p : client_protocols
-  xml = join_paths(p)
-  src = wayland_scanner_code.process(xml)
-  header = wayland_scanner_client.process(xml)
+wl_proto_headers = []
+wl_proto_src = []
+foreach proto : wl_proto_xml
+  wl_proto_headers += custom_target(
+    proto.underscorify() + '_client_header',
+    output: '@BASENAME@.h',
+    input: proto,
+    command: [wayland_scanner, 'client-header', '@INPUT@', '@OUTPUT@'])
 
-  name = p[1].split('.')[0].underscorify()
-
-  lib = static_library(
-    name,
-    [src, header],
-    dependencies: [wayland_client],
-  )
-
-  dep = declare_dependency(
-    link_with: lib,
-    sources: header,
-  )
-
-  set_variable(name, dep)
+  wl_proto_src += custom_target(
+    proto.underscorify() + '_private_code',
+    output: '@BASENAME@.c',
+    input: proto,
+    command: [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'])
 endforeach
 
-wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c']
-wob_dependencies = [wayland_client, wlr_layer_shell_unstable_v1, xdg_shell, rt, inih]
+wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c', 'src/shm.c', wl_proto_src, wl_proto_headers]
+wob_dependencies = [wayland_client, rt, inih, libm]
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'src/pledge_seccomp.c'

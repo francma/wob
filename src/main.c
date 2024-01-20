@@ -78,6 +78,8 @@ main(int argc, char **argv)
 		}
 	}
 
+	wob_log_info("wob version %s started with pid %jd", WOB_VERSION, (intmax_t) getpid());
+
 	if (wob_config_path == NULL) {
 		wob_config_path = wob_config_default_path();
 	}
@@ -100,6 +102,5 @@ main(int argc, char **argv)
 	wob_config_debug(config);
 	free(wob_config_path);
 
-	wob_log_info("wob version %s started", WOB_VERSION);
 	return wob_run(config);
 }
