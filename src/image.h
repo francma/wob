@@ -6,18 +6,6 @@
 
 #include "config.h"
 
-struct wob_image {
-	int shmid;
-	size_t width;
-	size_t height;
-	size_t size_in_bytes;
-	uint32_t *data;
-};
-
-struct wob_image *wob_image_create_argb8888(size_t width, size_t height);
-
-void wob_image_destroy(struct wob_image *image);
-
-void wob_image_draw(struct wob_image *image, struct wob_colors colors, struct wob_dimensions dimensions, unsigned long percentage, unsigned long maximum);
+void wob_image_draw(uint32_t *data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage);
 
 #endif

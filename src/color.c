@@ -74,6 +74,7 @@ wob_color_from_rgba_string(const char *str, struct wob_color *color)
 	switch (length) {
 		case 8:
 			parts[3] = hex_to_int(str[6]) * 16 + hex_to_int(str[7]);
+			// fallthrough
 		case 6:
 			parts[0] = hex_to_int(str[0]) * 16 + hex_to_int(str[1]);
 			parts[1] = hex_to_int(str[2]) * 16 + hex_to_int(str[3]);

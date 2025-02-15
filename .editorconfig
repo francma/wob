@@ -8,7 +8,6 @@ trim_trailing_whitespace = true
 
 [*.{c,h,txt}]
 indent_style = tab
-indent_size = 4
 
 [*.{xml,yml}]
 indent_style = space
