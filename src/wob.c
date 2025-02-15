@@ -124,7 +124,7 @@ wob_buffer_create_argb8888(int shmid, const struct wob_dimensions dimensions)
 		wob_log_panic("calloc failed");
 	}
 
-	*wob_buffer = (struct wob_buffer){
+	*wob_buffer = (struct wob_buffer) {
 		.wl_buffer = wl_buffer,
 		.dimensions = dimensions,
 		.shm_data = shm_data,
@@ -307,7 +307,7 @@ wob_create_surface(struct wob *app)
 		wob_log_panic("calloc failed");
 	}
 
-	*rendered = (struct wob_surface){
+	*rendered = (struct wob_surface) {
 		.wlr_layer_surface = wlr_layer_surface,
 		.wl_surface = wl_surface,
 		.dimensions = dimensions,

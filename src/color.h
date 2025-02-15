@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define WOB_COLOR_PRINTF_FORMAT "%02X%02X%02X%02X"
-#define WOB_COLOR_PRINTF_RGBA(x) (uint8_t)(x.r * UINT8_MAX), (uint8_t) (x.g * UINT8_MAX), (uint8_t) (x.b * UINT8_MAX), (uint8_t) (x.a * UINT8_MAX)
+#define WOB_COLOR_PRINTF_RGBA(x) (uint8_t) (x.r * UINT8_MAX), (uint8_t) (x.g * UINT8_MAX), (uint8_t) (x.b * UINT8_MAX), (uint8_t) (x.a * UINT8_MAX)
 
 struct wob_color {
 	float a;

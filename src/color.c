@@ -84,7 +84,7 @@ wob_color_from_rgba_string(const char *str, struct wob_color *color)
 			return false;
 	}
 
-	*color = (struct wob_color){
+	*color = (struct wob_color) {
 		.r = (float) parts[0] / UINT8_MAX,
 		.g = (float) parts[1] / UINT8_MAX,
 		.b = (float) parts[2] / UINT8_MAX,
