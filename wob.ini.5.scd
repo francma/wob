@@ -124,7 +124,6 @@ Replace *\** with user friendly name of your choosing.
 ```
 timeout = 1000
 max = 100
-output_mode = whitelist
 bar_color = FFFFFF
 
 [output.left]
