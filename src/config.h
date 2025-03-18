@@ -73,7 +73,6 @@ struct wob_config {
 	unsigned long timeout_msec;
 	struct wob_margin margin;
 	unsigned long anchor;
-	enum wob_output_mode output_mode;
 	enum wob_overflow_mode overflow_mode;
 	struct wob_dimensions dimensions;
 	struct wob_style default_style;

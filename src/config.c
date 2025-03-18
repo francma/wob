@@ -295,11 +295,8 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "output_mode") == 0) {
-			if (parse_output_mode(value, &config->output_mode) == false) {
-				wob_log_error("Invalid argument for output_mode. Valid options are focused, whitelist and all.");
-				return 0;
-			}
-			return 1;
+			wob_log_warn("output_mode was removed, now it always behaves as \"focused\"");
+			return 0;
 		}
 		if (strcmp(name, "orientation") == 0) {
 			if (parse_orientation(value, &config->dimensions.orientation) == false) {
@@ -514,7 +511,6 @@ wob_config_create()
 	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
-	config->output_mode = WOB_OUTPUT_MODE_FOCUSED;
 	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
@@ -581,7 +577,6 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.margin.left = %lu", config->margin.left);
 	wob_log_debug("config.anchor = %lu (top = %d, bottom = %d, left = %d, right = %d)", config->anchor, WOB_ANCHOR_TOP, WOB_ANCHOR_BOTTOM, WOB_ANCHOR_LEFT, WOB_ANCHOR_RIGHT);
 	wob_log_debug("config.overflow_mode = %lu (wrap = %d, nowrap = %d)", config->overflow_mode, WOB_OVERFLOW_MODE_WRAP, WOB_OVERFLOW_MODE_NOWRAP);
-	wob_log_debug("config.output_mode = %lu (whitelist = %d, all = %d, focused = %d)", config->output_mode, WOB_OUTPUT_MODE_WHITELIST, WOB_OUTPUT_MODE_ALL, WOB_OUTPUT_MODE_FOCUSED);
 
 	wob_log_debug("config.colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.background));
 	wob_log_debug("config.colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.value));
