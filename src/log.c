@@ -68,24 +68,19 @@ wob_log(const wob_log_importance importance, const char *file, const int line, c
 
 	// formatting time via localtime() requires open syscall (to read /etc/localtime)
 	// and that is problematic with seccomp rules in place
-	if (use_colors) {
-		fprintf(
-			stderr,
-			"%jd.%06ld %s%-5s%s %s%s:%d:%s ",
-			(intmax_t) ts.tv_sec,
-			ts.tv_nsec / 1000,
-			verbosity_colors[importance],
-			verbosity_names[importance],
-			COLOR_RESET,
-			COLOR_LIGHT_GRAY,
-			file,
-			line,
-			COLOR_RESET
-		);
-	}
-	else {
-		fprintf(stderr, "%jd.%06ld %s %s:%d: ", (intmax_t) ts.tv_sec, ts.tv_nsec / 1000, verbosity_names[importance], file, line);
-	}
+	fprintf(
+		stderr,
+		"%jd.%06ld %s%-5s%s %s%s:%d:%s ",
+		(intmax_t) ts.tv_sec,
+		ts.tv_nsec / 1000,
+		verbosity_colors[importance],
+		verbosity_names[importance],
+		use_colors ? COLOR_RESET : "",
+		use_colors ? COLOR_LIGHT_GRAY : "",
+		file,
+		line,
+		use_colors ? COLOR_RESET : ""
+	);
 
 	va_list args;
 	va_start(args, fmt);
