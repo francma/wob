@@ -75,38 +75,3 @@ light -U 5 && light -G | cut -d'.' -f1 > $WOBSOCK
 brightnessctl set 5%- | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 brightnessctl set +5% | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 ```
-
-## Systemd integration
-
-Copy systemd unit files (if not provided by your distribution package):
-
-```
-cp contrib/systemd/wob.{service,socket} ~/.local/share/systemd/user/
-systemctl daemon-reload --user
-```
-
-Enable systemd wob socket:
-
-```
-systemctl enable --now --user wob.socket
-```
-
-Make sure the wayland environment is imported in your window manager:
-
-```
-systemctl --user import-environment WAYLAND_DISPLAY
-```
-
-Now the wob will be started by Systemd once we write to the socket. Make sure to NOT also start wob in your window manager configuration.
-
-Now you can input wob values to PIPE located in path:
-
-```
-$XDG_RUNTIME_DIR/wob.sock
-```
-
-Alternatively, you can get the path above with following command:
-
-```
-systemctl show --user wob.socket -p Listen | sed 's/Listen=//' | cut -d' ' -f1
-```

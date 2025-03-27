@@ -72,6 +72,8 @@ Adapt this use-case to your workflow (scripts, callbacks, or keybindings handled
 
 See [wob.ini.5](https://github.com/francma/wob/blob/master/wob.ini.5.scd) for styling and positioning options.
 
+See [systemd](etc/systemd/README.md) for systemd integration.
+
 ## Examples
 
 See [Contrib space](contrib/README.md).

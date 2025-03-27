@@ -9,6 +9,8 @@ project(
 
 cc = meson.get_compiler('c')
 
+prefix = get_option('prefix')
+
 # minimal version with fractional scaling protocol
 wayland_protos = dependency('wayland-protocols', version: '>=1.31')
 wl_protocol_dir = wayland_protos.get_variable('pkgdatadir')
@@ -102,4 +104,19 @@ if scdoc.found()
       install_dir: '@0@/man@1@'.format(mandir, section)
     )
   endforeach
+endif
+
+if get_option('systemd-unit-files').enabled()
+  systemd_unit_dir = prefix / 'lib' / 'systemd' / 'user'
+
+  conf_data = configuration_data()
+  conf_data.set('bindir', prefix / get_option('bindir'))
+
+  configure_file(
+    input: 'etc/systemd/wob.service.in',
+    output: 'wob.service',
+    configuration: conf_data,
+    install_dir: systemd_unit_dir,
+  )
+  install_data('etc/systemd/wob.socket', install_dir: systemd_unit_dir)
 endif
