@@ -1,7 +1,5 @@
 #define WOB_FILE "log.c"
 
-#define _POSIX_C_SOURCE 199506L
-
 #define COLOR_RESET "\x1B[0m"
 #define COLOR_WHITE "\x1B[1;37m"
 #define COLOR_BLACK "\x1B[0;30m"

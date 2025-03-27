@@ -3,8 +3,25 @@ project(
   'c',
   version: '0.15.1',
   license: 'ISC',
-  default_options: ['c_std=c99'],
+  default_options: [
+    'c_std=c99',
+    'warning_level=2',
+    'werror=true',
+  ],
   meson_version: '>=0.60.0',
+)
+
+add_project_arguments(
+  [
+    '-D_POSIX_C_SOURCE=200809L',
+    '-Wno-unused-parameter',
+    '-Wno-unused-result',
+    '-Wno-missing-braces',
+    '-Wno-format-zero-length',
+    '-Wundef',
+    '-Wvla',
+  ],
+  language: 'c',
 )
 
 cc = meson.get_compiler('c')
