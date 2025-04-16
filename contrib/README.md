@@ -75,3 +75,36 @@ light -U 5 && light -G | cut -d'.' -f1 > $WOBSOCK
 brightnessctl set 5%- | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 brightnessctl set +5% | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 ```
+
+### Print the volume as it changes
+
+Instead of configuring a key mapping to show the volume, it's possible to
+show the current volume automatically any time it changes.
+
+To do so, save the following script as `volume.sh`, and then execute `volume.sh
+| wob`:
+
+```sh
+#!/bin/sh
+# Print the volume followed by newline each time it changes.
+
+get_volume() {
+  pactl get-sink-volume "@DEFAULT_SINK@" | \
+    awk -F'/' '{print $2}' | awk '{print $1}' | tr -d '%'
+}
+
+last_volume=$(get_volume)
+echo "$last_volume"
+
+pactl subscribe | while read -r event; do
+  case "$event" in
+    *" on sink #"*)
+      current_volume=$(get_volume)
+      if [ "$current_volume" != "$last_volume" ]; then
+        echo "$current_volume"
+        last_volume="$current_volume"
+      fi
+      ;;
+  esac
+done
+```
