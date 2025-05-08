@@ -625,25 +625,21 @@ wob_run(struct wob_config *config)
 					char *token = strtok(input_buffer, " ");
 					unsigned long percentage = strtoul(token, &str_end, 10);
 					if (*str_end != '\0') {
-						wob_log_error("Invalid value received '%s'", token);
-						_exit_code = EXIT_FAILURE;
-						goto _exit_cleanup;
+						wob_log_warn("Invalid value received '%s'", token);
+						break;
 					}
 
-					struct wob_style *selected_style = NULL;
+					struct wob_style *selected_style = &state->config->default_style;
 					token = strtok(NULL, "");
+					wob_log_info("Received input { value = %lu, style = %s }", percentage, token != NULL ? token : "<empty>");
 					if (token != NULL) {
-						selected_style = wob_config_find_style(state->config, token);
-						if (selected_style == NULL) {
-							wob_log_error("Style named '%s' not found", token);
-							_exit_code = EXIT_FAILURE;
-							goto _exit_cleanup;
+						struct wob_style *selected_style_search = wob_config_find_style(state->config, token);
+						if (selected_style_search != NULL) {
+							selected_style = selected_style_search;
 						}
-						wob_log_info("Received input { value = %lu, style = %s }", percentage, token);
-					}
-					else {
-						selected_style = &state->config->default_style;
-						wob_log_info("Received input { value = %lu, style = <empty> }", percentage);
+						else {
+							wob_log_warn("Style named '%s' not found, using the default one", token);
+						}
 					}
 
 					if (percentage > state->config->max) {
