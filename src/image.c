@@ -1,4 +1,4 @@
-#define WOB_FILE "buffer.c"
+#define WOB_FILE "image.c"
 
 #include "image.h"
 

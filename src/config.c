@@ -3,7 +3,6 @@
 #define MIN_PERCENTAGE_BAR_WIDTH 1
 #define MIN_PERCENTAGE_BAR_HEIGHT 1
 
-#define _POSIX_C_SOURCE 200809L
 #include <ini.h>
 #include <math.h>
 #include <stdlib.h>
