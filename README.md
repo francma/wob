@@ -4,7 +4,7 @@
 
 ![preview](https://martinfranc.eu/wob-preview.svg)
 
-A lightweight overlay volume/backlight/progress/anything bar for wlroots based Wayland compositors (requires support for `wlr_layer_shell_unstable_v1`).
+Lightweight overlay volume, brightness (or anything) bar for Wayland compositors with support for [wlr_layer_shell_unstable_v1](https://wayland.app/protocols/wlr-layer-shell-unstable-v1) protocol.
 
 ## Release signatures
 
