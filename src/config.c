@@ -11,6 +11,8 @@
 #include <wordexp.h>
 
 #include "config.h"
+
+#include "global_configuration.h"
 #include "log.h"
 
 bool
@@ -466,7 +468,7 @@ wob_config_default_path()
 	static const char *config_paths[] = {
 		"$XDG_CONFIG_HOME/wob/wob.ini",
 		"$HOME/.config/wob/wob.ini",
-		"/etc/wob/wob.ini",
+		WOB_ETC_CONFIG_FOLDER_PATH "/wob.ini",
 	};
 
 	for (size_t i = 0; i < sizeof(config_paths) / sizeof(char *); ++i) {

@@ -25,6 +25,7 @@ add_project_arguments(
 )
 
 cc = meson.get_compiler('c')
+fs = import('fs')
 
 prefix = get_option('prefix')
 
@@ -38,8 +39,16 @@ libm = cc.find_library('m')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 inih = dependency('inih')
 
-wob_version = '"@0@"'.format(meson.project_version())
-add_project_arguments('-DWOB_VERSION=@0@'.format(wob_version), language: 'c')
+sysconfdir = get_option('sysconfdir')
+if not fs.is_absolute(sysconfdir)
+  sysconfdir = prefix / sysconfdir
+endif
+
+global_configuration_h = configuration_data({
+  'WOB_VERSION': '"@0@"'.format(meson.project_version()),
+  'WOB_ETC_CONFIG_FOLDER_PATH': '"@0@"'.format(sysconfdir),
+})
+configure_file(output: 'global_configuration.h', configuration: global_configuration_h)
 
 wayland_scanner_code = generator(
   wayland_scanner,
