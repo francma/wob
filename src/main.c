@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "global_configuration.h"
 #include "log.h"
 #include "wob.h"
 
