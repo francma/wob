@@ -39,7 +39,9 @@ struct wob_margin {
 
 struct wob_dimensions {
 	unsigned long width;
+	uint8_t width_percentage;
 	unsigned long height;
+	uint8_t height_percentage;
 	unsigned long border_offset;
 	unsigned long border_size;
 	unsigned long bar_padding;
@@ -98,6 +100,8 @@ struct wob_output_config *wob_config_find_output(struct wob_config *config, cons
 struct wob_output_config *wob_config_match_output(struct wob_config *config, const char *match);
 
 struct wob_dimensions wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale);
+
+struct wob_dimensions wob_dimensions_apply_percentage(struct wob_dimensions dimensions, uint32_t output_width, uint32_t output_height);
 
 bool wob_dimensions_eq(struct wob_dimensions a, struct wob_dimensions b);
 

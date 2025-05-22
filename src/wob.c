@@ -45,6 +45,8 @@ struct wob_surface {
 struct wob_output {
 	char *name;
 	char *description;
+	uint32_t width;
+	uint32_t height;
 	struct wl_list link;
 	struct wl_output *wl_output;
 	uint32_t wl_name;
@@ -213,6 +215,9 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 		anchor = output_config->anchor;
 	}
 
+	dimensions = wob_dimensions_apply_percentage(dimensions, selected_output->width, selected_output->height);
+	wob_log_debug("width %lu, height %lu, scale %lu", selected_output->width, selected_output->height, app->surface->scale);
+
 	struct wob_surface *surface = app->surface;
 	if (!wob_dimensions_eq(surface->dimensions, dimensions) || !wob_margin_eq(margin, surface->margin) || anchor != surface->anchor) {
 		zwlr_layer_surface_v1_set_anchor(surface->wlr_layer_surface, wob_anchor_to_wlr_layer_surface_anchor(anchor));
@@ -220,6 +225,8 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 		zwlr_layer_surface_v1_set_size(surface->wlr_layer_surface, dimensions.width, dimensions.height);
 
 		surface->dimensions = dimensions;
+		surface->anchor = anchor;
+		surface->margin = margin;
 		wl_surface_commit(surface->wl_surface);
 	}
 
@@ -438,11 +445,20 @@ xdg_output_handle_done(void *data, struct wl_output *wl_output)
 }
 
 void
+xdg_output_handle_mode(void* data, struct wl_output* wl_output, uint32_t flags, int32_t width, int32_t height, int32_t refresh)
+{
+	struct wob_output *output = data;
+
+	output->width = width;
+	output->height = height;
+}
+
+void
 handle_global(void *data, struct wl_registry *registry, uint32_t name, const char *interface, uint32_t version)
 {
 	static const struct wl_output_listener wl_output_listener = {
 		.geometry = xdg_output_handle_geometry,
-		.mode = noop,
+		.mode = xdg_output_handle_mode,
 		.scale = noop,
 		.name = xdg_output_handle_name,
 		.description = xdg_output_handle_description,

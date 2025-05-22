@@ -112,6 +112,19 @@ parse_number(const char *str, unsigned long *value)
 }
 
 bool
+parse_percentage(const char *str, unsigned long *value)
+{
+	char *str_end;
+	unsigned long ul = strtoul(str, &str_end, 10);
+	if (*str_end == '%' && *(str_end + 1) == '\0') {
+		*value = ul;
+		return true;
+	}
+
+	return false;
+}
+
+bool
 parse_anchor(const char *str, unsigned long *anchor)
 {
 	char str_dup[INI_MAX_LINE + 1] = {0};
@@ -190,12 +203,18 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "width") == 0) {
-			if (parse_number(value, &ul) == false) {
-				wob_log_error("Width must be a positive value.");
-				return 0;
+			if (parse_percentage(value, &ul) == true) {
+				config->dimensions.width_percentage = ul;
+				return 1;
 			}
-			config->dimensions.width = ul;
-			return 1;
+
+			if (parse_number(value, &ul) == true) {
+				config->dimensions.width = ul;
+				return 1;
+			}
+
+			wob_log_error("Width must be a positive value.");
+			return 0;
 		}
 		if (strcmp(name, "height") == 0) {
 			if (parse_number(value, &ul) == false) {
@@ -502,7 +521,9 @@ wob_config_create()
 	config->max = 100;
 	config->timeout_msec = 1000;
 	config->dimensions.width = 400;
+	config->dimensions.width_percentage = 0;
 	config->dimensions.height = 50;
+	config->dimensions.height_percentage = 0;
 	config->dimensions.border_offset = 4;
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
@@ -738,4 +759,19 @@ wob_margin_eq(struct wob_margin a, struct wob_margin b)
 	if (a.left != b.left) return false;
 
 	return true;
+}
+
+struct wob_dimensions
+wob_dimensions_apply_percentage(struct wob_dimensions dimensions, uint32_t output_width, uint32_t output_height)
+{
+	struct wob_dimensions scaled_dimensions = {
+		.width = dimensions.width_percentage > 0 ? ceil(((double)dimensions.width_percentage / 100) * output_width) : dimensions.width,
+		.height = dimensions.height_percentage > 0 ? ceil(((double)dimensions.height_percentage / 100) * output_height) : dimensions.height,
+		.bar_padding = dimensions.bar_padding,
+		.border_offset = dimensions.border_offset,
+		.border_size = dimensions.border_size,
+		.orientation = dimensions.orientation,
+	};
+
+	return scaled_dimensions;
 }
