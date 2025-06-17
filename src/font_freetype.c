@@ -3,8 +3,8 @@
 #include "font.h"
 #include "log.h"
 
-#include <wayland-util.h>
 #include <ft2build.h>
+#include <wayland-util.h>
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
@@ -77,6 +77,14 @@ wob_font_manager_load_font(struct wob_font_manager *manager, const char *fpath)
 	wl_list_insert(&manager->fonts, &font->link);
 }
 
+void
+wob_font_manager_load_fonts_from_config(struct wob_font_manager *manager, struct wob_config *config)
+{
+	if (config->font_path != NULL) {
+		wob_font_manager_load_font(manager, config->font_path);
+	}
+}
+
 struct wob_font *
 wob_font_manager_get(struct wob_font_manager *manager, const char *fpath)
 {
@@ -116,7 +124,7 @@ wob_font_render_text_dimensions(struct wob_font *font, char *text, int font_size
 		dimensions.w += glyph_bbox.xMax;
 
 		if (has_kerning && previous != 0) {
-			FT_Get_Kerning( ft_face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+			FT_Get_Kerning(ft_face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
 			dimensions.w += delta.x / 64;
 		}
 
@@ -136,7 +144,7 @@ wob_font_render_text(struct wob_font *font, char *text, int font_size, struct wo
 	bool has_kerning = FT_HAS_KERNING(ft_face);
 
 	for (const char *c = text; *c != '\0'; c += 1) {
-		FT_Vector  delta;
+		FT_Vector delta;
 		FT_UInt glyph_index = FT_Get_Char_Index(ft_face, *c);
 		FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT);
 		FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL);
@@ -145,7 +153,7 @@ wob_font_render_text(struct wob_font *font, char *text, int font_size, struct wo
 
 		argb8888_buffer += ft_face->glyph->advance.x / 64;
 		if (has_kerning && previous != 0) {
-			FT_Get_Kerning( ft_face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
+			FT_Get_Kerning(ft_face, previous, glyph_index, FT_KERNING_DEFAULT, &delta);
 			argb8888_buffer += delta.x / 64;
 		}
 

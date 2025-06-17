@@ -100,8 +100,10 @@ endif
 if freetype2.found()
   wob_dependencies += freetype2
   wob_sources += 'src/font_freetype.c'
+  global_configuration_h.set('WOB_TEXT_ENABLED', 'true')
 else
   wob_sources += 'src/font_stub.c'
+  global_configuration_h.set('WOB_TEXT_ENABLED', 'false')
 endif
 
 executable(

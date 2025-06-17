@@ -53,6 +53,7 @@ struct wob_output_config {
 	struct wob_dimensions dimensions;
 	struct wob_margin margin;
 	unsigned long anchor;
+	unsigned long font_size;
 };
 
 struct wob_colors {
@@ -63,7 +64,6 @@ struct wob_colors {
 
 struct wob_style {
 	char *name;
-	char *font_path;
 	struct wob_colors colors;
 	struct wob_colors overflow_colors;
 	struct wl_list link;
@@ -80,6 +80,8 @@ struct wob_config {
 	struct wl_list styles;
 	struct wl_list outputs;
 	bool sandbox;
+	char *font_path;
+	unsigned long font_size;
 };
 
 struct wob_config *wob_config_create();

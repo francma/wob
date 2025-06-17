@@ -4,6 +4,7 @@
 #include <stddef.h>
 
 #include "color.h"
+#include "config.h"
 
 struct wob_font_manager;
 
@@ -19,6 +20,8 @@ struct wob_font_manager *wob_font_manager_create();
 void wob_font_manager_destroy(struct wob_font_manager *);
 
 void wob_font_manager_load_font(struct wob_font_manager *, const char *fpath);
+
+void wob_font_manager_load_fonts_from_config(struct wob_font_manager *, struct wob_config *);
 
 struct wob_font *wob_font_manager_get(struct wob_font_manager *, const char *fpath);
 

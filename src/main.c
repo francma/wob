@@ -79,7 +79,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	wob_log_info("wob version %s started with pid %jd", WOB_VERSION, (intmax_t) getpid());
+	wob_log_info("wob version %s started with pid %jd, text = %s, pledge = %s", WOB_VERSION, getpid(), WOB_TEXT_ENABLED ? "YES" : "NO", WOB_PLEDGE_ENABLED ? "YES" : "NO");
 
 	if (wob_config_path == NULL) {
 		wob_config_path = wob_config_default_path();
@@ -101,16 +101,7 @@ main(int argc, char **argv)
 	}
 
 	struct wob_font_manager *font_manager = wob_font_manager_create();
-	if (config->default_style.font_path != NULL) {
-		wob_font_manager_load_font(font_manager, config->default_style.font_path);
-	}
-
-	struct wob_style *style = NULL;
-	wl_list_for_each (style, &config->styles, link) {
-		if (style->font_path != NULL) {
-			wob_font_manager_load_font(font_manager, config->default_style.font_path);
-		}
-	}
+	wob_font_manager_load_fonts_from_config(font_manager, config);
 
 	wob_config_debug(config);
 	free(wob_config_path);
