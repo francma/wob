@@ -2,6 +2,7 @@
 #define _WOB_LOG_H
 
 #include <stdbool.h>
+#include <stdlib.h>
 
 typedef enum {
 	WOB_LOG_DEBUG = 0,

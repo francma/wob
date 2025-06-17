@@ -306,6 +306,10 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font") == 0) {
+			config->default_style.font_path = strdup(value);
+			return 1;
+		}
 
 		wob_log_warn("Unknown config key %s", name);
 		return 1;
@@ -453,6 +457,10 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font") == 0) {
+			style->font_path = strdup(value);
+			return 1;
+		}
 
 		wob_log_warn("Unknown config key %s", name);
 		return 1;
@@ -518,6 +526,7 @@ wob_config_create()
 	config->default_style.overflow_colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.overflow_colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.overflow_colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.font_path = NULL;
 
 	return config;
 }
@@ -585,6 +594,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.background));
 	wob_log_debug("config.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.value));
 	wob_log_debug("config.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.border));
+	wob_log_debug("config.font = %s", config->default_style.font_path != NULL ? config->default_style.font_path : "<empty>");
 
 	struct wob_style *style;
 	wl_list_for_each (style, &config->styles, link) {
@@ -594,6 +604,7 @@ wob_config_debug(struct wob_config *config)
 		wob_log_debug("config.style.%s.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.background));
 		wob_log_debug("config.style.%s.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.value));
 		wob_log_debug("config.style.%s.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.border));
+		wob_log_debug("config.style.%s.font = %s", style->name, style->font_path != NULL ? style->font_path : "<empty>");
 	}
 
 	struct wob_output_config *output_config;
@@ -631,7 +642,12 @@ wob_config_destroy(struct wob_config *config)
 	struct wob_style *style, *style_tmp;
 	wl_list_for_each_safe (style, style_tmp, &config->styles, link) {
 		free(style->name);
+		free(style->font_path);
 		free(style);
+	}
+
+	if (config->default_style.font_path != NULL) {
+		free(config->default_style.font_path);
 	}
 
 	free(config);

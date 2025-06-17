@@ -1,6 +1,9 @@
 #define WOB_FILE "image.c"
 
+#include <stdio.h>
+
 #include "image.h"
+#include "log.h"
 
 void
 fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uint32_t color)
@@ -14,7 +17,7 @@ fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uin
 }
 
 void
-wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage)
+wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage, struct wob_font *font)
 {
 	uint32_t bar_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.value));
 	uint32_t background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
@@ -60,4 +63,46 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 			fill_rectangle(data, width, height, stride, bar_color);
 			break;
 	}
+
+	if (font == NULL) {
+		return;
+	}
+
+	size_t font_padding = 4;
+	size_t font_size = 18;
+
+	char percentage_buff[64] = {0};
+	snprintf(percentage_buff, 64, "%d", (int) (percentage * 100));
+	struct wob_font_text_dimensions text_dimensions = wob_font_render_text_dimensions(font, percentage_buff, font_size);
+	wob_log_debug("declared font height %d, rendered text width: %d x %d\n", font_size, text_dimensions.w, text_dimensions.h);
+
+	struct wob_color font_color;
+	switch (dimensions.orientation) {
+		case WOB_ORIENTATION_HORIZONTAL:
+			if (text_dimensions.w + 2 * font_padding < width) {
+				data += width - text_dimensions.w - font_padding;
+				data += stride * ((bar_height - text_dimensions.h) / 2);
+				font_color = colors.background;
+			}
+			else {
+				data += width + font_padding;
+				data += stride * ((bar_height - text_dimensions.h) / 2);
+				font_color = colors.value;
+			}
+			break;
+		case WOB_ORIENTATION_VERTICAL:
+			if (text_dimensions.h + 2 * font_padding < height) {
+				data += stride * font_padding + ((width - text_dimensions.w) / 2);
+				font_color = colors.background;
+			}
+			else {
+				data += (width - text_dimensions.w) / 2;
+				data -= stride * (text_dimensions.h + font_padding);
+				font_color = colors.value;
+			}
+
+			break;
+	}
+
+	wob_font_render_text(font, percentage_buff, font_size, font_color, data, stride);
 }

@@ -8,6 +8,32 @@
 
 #include "color.h"
 
+struct wob_color
+wob_color_from_argb8888(uint32_t argb)
+{
+	struct wob_color result = {
+		.a = (float) (argb >> 24 & 0xFF) / 255.0f,
+		.r = (float) (argb >> 16 & 0xFF) / 255.0f,
+		.g = (float) (argb >> 8 & 0xFF) / 255.0f,
+		.b = (float) (argb & 0xFF) / 255.0f,
+	};
+
+	return result;
+}
+
+struct wob_color
+wob_color_blend_premultiplied(struct wob_color foreground, struct wob_color background)
+{
+	struct wob_color result = {
+		.a = foreground.a + background.a * (1 - foreground.a),
+		.r = foreground.r + background.r * (1 - foreground.a),
+		.b = foreground.b + background.b * (1 - foreground.a),
+		.g = foreground.g + background.g * (1 - foreground.a),
+	};
+
+	return result;
+}
+
 uint32_t
 wob_color_to_argb(const struct wob_color color)
 {

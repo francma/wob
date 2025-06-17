@@ -63,6 +63,7 @@ struct wob_colors {
 
 struct wob_style {
 	char *name;
+	char *font_path;
 	struct wob_colors colors;
 	struct wob_colors overflow_colors;
 	struct wl_list link;

@@ -8,6 +8,7 @@
 #include <unistd.h>
 
 #include "config.h"
+#include "font.h"
 #include "global_configuration.h"
 #include "log.h"
 #include "wob.h"
@@ -99,8 +100,25 @@ main(int argc, char **argv)
 		config->sandbox = false;
 	}
 
+	struct wob_font_manager *font_manager = wob_font_manager_create();
+	if (config->default_style.font_path != NULL) {
+		wob_font_manager_load_font(font_manager, config->default_style.font_path);
+	}
+
+	struct wob_style *style = NULL;
+	wl_list_for_each (style, &config->styles, link) {
+		if (style->font_path != NULL) {
+			wob_font_manager_load_font(font_manager, config->default_style.font_path);
+		}
+	}
+
 	wob_config_debug(config);
 	free(wob_config_path);
 
-	return wob_run(config);
+	int result = wob_run(config, font_manager);
+
+	wob_config_destroy(config);
+	wob_font_manager_destroy(font_manager);
+
+	return result;
 }

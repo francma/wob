@@ -14,6 +14,10 @@ struct wob_color {
 	float b;
 };
 
+struct wob_color wob_color_from_argb8888(uint32_t argb);
+
+struct wob_color wob_color_blend_premultiplied(struct wob_color foreground, struct wob_color background);
+
 uint32_t wob_color_to_argb(struct wob_color color);
 
 uint32_t wob_color_to_rgba(struct wob_color color);
