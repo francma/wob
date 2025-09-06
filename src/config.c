@@ -683,7 +683,7 @@ wob_config_match_output(struct wob_config *config, const char *match)
 	struct wob_output_config *output_config = NULL;
 	bool output_found = false;
 	wl_list_for_each (output_config, &config->outputs, link) {
-		if (strstr(output_config->match, match) == 0) {
+		if (strstr(match, output_config->match) != NULL) {
 			output_found = true;
 			break;
 		}
