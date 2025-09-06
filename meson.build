@@ -44,11 +44,10 @@ if not fs.is_absolute(sysconfdir)
   sysconfdir = prefix / sysconfdir
 endif
 
-global_configuration_h = configuration_data({
-  'WOB_VERSION': '"@0@"'.format(meson.project_version()),
-  'WOB_ETC_CONFIG_FOLDER_PATH': '"@0@"'.format(sysconfdir),
-})
-configure_file(output: 'global_configuration.h', configuration: global_configuration_h)
+global_configuration_h = configuration_data()
+
+global_configuration_h.set_quoted('WOB_VERSION', meson.project_version())
+global_configuration_h.set_quoted('WOB_ETC_CONFIG_FOLDER_PATH', sysconfdir)
 
 wayland_scanner_code = generator(
   wayland_scanner,
@@ -87,11 +86,14 @@ endforeach
 
 wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c', 'src/shm.c', wl_proto_src, wl_proto_headers]
 wob_dependencies = [wayland_client, rt, inih, libm]
+
 if seccomp.found()
   wob_dependencies += seccomp
   wob_sources += 'src/pledge_seccomp.c'
+  global_configuration_h.set('WOB_PLEDGE_ENABLED', 'true')
 else
   wob_sources += 'src/pledge.c'
+  global_configuration_h.set('WOB_PLEDGE_ENABLED', 'false')
 endif
 
 executable(
@@ -146,3 +148,5 @@ if get_option('systemd-unit-files').enabled()
   )
   install_data('etc/systemd/wob.socket', install_dir: systemd_unit_dir)
 endif
+
+configure_file(output: 'global_configuration.h', configuration: global_configuration_h)
