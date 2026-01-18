@@ -14,6 +14,7 @@
 #include "image.h"
 #include "log.h"
 #include "pledge.h"
+#include "readline.h"
 #include "shm.h"
 #include "viewporter.h"
 #include "wlr-layer-shell-unstable-v1.h"
@@ -563,6 +564,8 @@ wob_run(struct wob_config *config)
 		},
 	};
 
+	bool was_prev_input_valid = true;
+
 	for (;;) {
 		char input_buffer[INPUT_BUFFER_LENGTH] = {0};
 
@@ -618,27 +621,39 @@ wob_run(struct wob_config *config)
 						goto _exit_cleanup;
 					}
 
-					// strip newline from the end of the buffer
-					strtok(input_buffer, "\n");
+					// if we didn't get newline, the input is too long
+					char *newline_pos = strchr(input_buffer, '\n');
+					if (newline_pos == NULL) {
+						wob_log_warn("Received input too long");
+						was_prev_input_valid = false;
+						break;
+					}
+					// if we didn't find newline in previous input it means that
+					// we still getting the leftovers and need to skip them
+					if (!was_prev_input_valid) {
+						was_prev_input_valid = true;
+						break;
+					}
 
-					char *str_end;
-					char *token = strtok(input_buffer, " ");
-					unsigned long percentage = strtoul(token, &str_end, 10);
-					if (*str_end != '\0') {
-						wob_log_warn("Invalid value received '%s'", token);
+					// trim newline from input
+					*newline_pos = '\0';
+
+					unsigned long percentage;
+					char style_buffer[INPUT_BUFFER_LENGTH] = {0};
+					if (!wob_readline(input_buffer, &percentage, style_buffer)) {
+						wob_log_warn("Invalid value received '%s'", input_buffer);
 						break;
 					}
 
 					struct wob_style *selected_style = &state->config->default_style;
-					token = strtok(NULL, "");
-					wob_log_info("Received input { value = %lu, style = %s }", percentage, token != NULL ? token : "<empty>");
-					if (token != NULL) {
-						struct wob_style *selected_style_search = wob_config_find_style(state->config, token);
+					wob_log_info("Received input { value = %lu, style = %s }", percentage, strlen(style_buffer) > 0 ? style_buffer : "<empty>");
+					if (strlen(style_buffer) > 0) {
+						struct wob_style *selected_style_search = wob_config_find_style(state->config, style_buffer);
 						if (selected_style_search != NULL) {
 							selected_style = selected_style_search;
 						}
 						else {
-							wob_log_warn("Style named '%s' not found, using the default one", token);
+							wob_log_warn("Style named '%s' not found, using the default one", style_buffer);
 						}
 					}
 
