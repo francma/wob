@@ -84,7 +84,7 @@ foreach proto : wl_proto_xml
     command: [wayland_scanner, 'private-code', '@INPUT@', '@OUTPUT@'])
 endforeach
 
-wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c', 'src/shm.c', wl_proto_src, wl_proto_headers]
+wob_sources = ['src/main.c', 'src/image.c', 'src/log.c', 'src/color.c', 'src/config.c', 'src/wob.c', 'src/shm.c', 'src/readline.c', wl_proto_src, wl_proto_headers]
 wob_dependencies = [wayland_client, rt, inih, libm]
 
 if seccomp.found()
@@ -110,6 +110,12 @@ if cmocka.found()
     ['test/color_test.c', 'src/color.c'],
     dependencies: [cmocka]
   ))
+
+  test('readline', executable(
+     'readline_test',
+     ['test/readline_test.c', 'src/readline.c'],
+     dependencies: [cmocka]
+   ))
 endif
 
 scdoc = dependency('scdoc', version: '>=1.9.2', native: true, required: get_option('man-pages'))
