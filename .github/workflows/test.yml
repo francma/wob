@@ -7,7 +7,7 @@ on:
   pull_request:
 
 jobs:
-  test:
+  test-alpine:
     runs-on: ubuntu-latest
     container: alpine:3.21
     steps:
@@ -15,6 +15,20 @@ jobs:
       - name: Install dependencies
         run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev
       - name: Run tests
+        run: meson setup test && ninja -C test test
+
+  test-archlinux:
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: pacman -Syu --noconfirm && pacman -S --noconfirm base-devel meson wayland wayland-protocols gcc libinih cmocka
+      - name: Run tests
+        env:
+          CFLAGS: "-fsanitize=address"
+          CXXFLAGS: "-fsanitize=address"
+          LDFLAGS: "-fsanitize=address"
         run: meson setup test && ninja -C test test
 
   analyze:
