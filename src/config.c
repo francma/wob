@@ -167,6 +167,91 @@ parse_orientation(const char *str, enum wob_orientation *value)
 	return false;
 }
 
+int parse_segments(
+    const char *input,
+    struct wob_segment_bounds **boundsOut,
+    struct wob_color **colorsOut
+) {
+    int capacity = 8;
+    int count = 0;
+
+    struct wob_segment_bounds *bounds =
+        malloc(sizeof(struct wob_segment_bounds) * capacity);
+    struct wob_color *colors =
+        malloc(sizeof(struct wob_color) * capacity);
+
+    if (!bounds || !colors) {
+        free(bounds);
+        free(colors);
+        return -1;
+    }
+
+    const char *p = input;
+
+    while (*p) {
+        /* Find start of sublist */
+        if (*p == '[' && *(p + 1) != '[') {
+            p++;
+
+            double lower, upper;
+            char hex[10];
+
+            /* Parse: lower, upper, "hex" */
+            int matched = sscanf(
+                p,
+                " %lf , %lf , \"%9[^\"]\"",
+                &lower,
+                &upper,
+                hex
+            );
+
+            if (matched == 3) {
+                if (count >= capacity) {
+                    capacity *= 2;
+
+                    bounds = realloc(
+                        bounds,
+                        sizeof(struct wob_segment_bounds) * capacity
+                    );
+                    colors = realloc(
+                        colors,
+                        sizeof(struct wob_color) * capacity
+                    );
+
+                    if (!bounds || !colors) {
+                        free(bounds);
+                        free(colors);
+                        return -1;
+                    }
+                }
+
+                bounds[count].lowerBound = lower;
+                bounds[count].upperBound = upper;
+
+                unsigned int r, g, b, a;
+
+                if (hex[0] == '#')
+                    sscanf(hex + 1, "%2x%2x%2x%2x", &r, &g, &b, &a);
+                else
+                    sscanf(hex, "%2x%2x%2x%2x", &r, &g, &b, &a);
+
+                colors[count].r = r / 255.0f;
+                colors[count].g = g / 255.0f;
+                colors[count].b = b / 255.0f;
+                colors[count].a = a / 255.0f;
+
+                count++;
+            }
+        }
+
+        p++;
+    }
+
+    *boundsOut = bounds;
+    *colorsOut = colors;
+    return count;
+}
+
 int
 handler(void *user, const char *section, const char *name, const char *value)
 {
@@ -295,6 +380,11 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "segments") == 0) {
+            config->dimensions.segments.number = parse_segments(value,
+                                                                 &config->dimensions.segments.segmentArray,
+                                                                 &config->default_style.colors.segmentColours);
+        }
 		if (strcmp(name, "output_mode") == 0) {
 			wob_log_warn("output_mode was removed, now it always behaves as \"focused\"");
 			return 0;
