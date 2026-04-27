@@ -1,3 +1,4 @@
+#include <stdio.h>
 #define WOB_FILE "config.c"
 
 #define MIN_PERCENTAGE_BAR_WIDTH 1
@@ -199,7 +200,7 @@ int parse_segments(
             /* Parse: lower, upper, "hex" */
             int matched = sscanf(
                 p,
-                " %lf , %lf , \"%9[^\"]\"",
+                "%lf, %lf, %9[^\"]",
                 &lower,
                 &upper,
                 hex
@@ -225,8 +226,8 @@ int parse_segments(
                     }
                 }
 
-                bounds[count].lowerBound = lower;
-                bounds[count].upperBound = upper;
+                bounds[count].lowerBound = lower / 100;
+                bounds[count].upperBound = upper / 100;
 
                 unsigned int r, g, b, a;
 
@@ -239,7 +240,6 @@ int parse_segments(
                 colors[count].g = g / 255.0f;
                 colors[count].b = b / 255.0f;
                 colors[count].a = a / 255.0f;
-
                 count++;
             }
         }
@@ -382,8 +382,9 @@ handler(void *user, const char *section, const char *name, const char *value)
 		}
 		if (strcmp(name, "segments") == 0) {
             config->dimensions.segments.number = parse_segments(value,
-                                                                 &config->dimensions.segments.segmentArray,
-                                                                 &config->default_style.colors.segmentColours);
+                                                                 &(config->dimensions.segments.segmentArray),
+                                                                 &(config->default_style.colors.segmentColours));
+            return 1;
         }
 		if (strcmp(name, "output_mode") == 0) {
 			wob_log_warn("output_mode was removed, now it always behaves as \"focused\"");
@@ -802,6 +803,7 @@ wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale)
 		.bar_padding = scale_apply(dimensions.bar_padding, scale),
 		.border_offset = scale_apply(dimensions.border_offset, scale),
 		.border_size = scale_apply(dimensions.border_size, scale),
+        .segments = dimensions.segments,
 		.orientation = dimensions.orientation,
 	};
 
