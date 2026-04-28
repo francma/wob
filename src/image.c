@@ -30,8 +30,7 @@ void draw_segments(uint32_t* image_data, unsigned long width,
     unsigned long adjusted_width = width * percentage;
 
     for (int i = number_of_segments - 1; i >= 0; i--) {
-        if (adjusted_width >= width * segment_bounds[i].lowerBound) {
-            // printf("Colour: " WOB_COLOR_PRINTF_FORMAT "\n", WOB_COLOR_PRINTF_RGBA(unadjusted_segment_colours[i]));
+        if (adjusted_width >= width * segment_bounds[i].lowerBound && segment_bounds[i].lowerBound <= segment_bounds[i].upperBound) {
             if (adjusted_width > width * segment_bounds[i].upperBound) {
                 fill_rectangle(
                         image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
@@ -109,7 +108,7 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 
             if (number_of_segments > 0 && segment_colours != NULL) {
                 draw_segments(data,
-                              bar_width,
+                              bar_width + 1,
                               bar_height,
                               stride,
                               percentage,
