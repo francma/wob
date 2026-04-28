@@ -21,6 +21,40 @@ fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uin
 	}
 }
 
+void draw_segments_vertical(uint32_t* image_data, unsigned long actualWidth, unsigned long styledWidth,
+                   unsigned long height, unsigned long stride,
+                   double percentage, unsigned long number_of_segments,
+                   struct wob_segment_bounds* segment_bounds,
+                   uint32_t* segment_colours
+) {
+    unsigned long adjusted_height = height * percentage;
+
+    for (int i = number_of_segments - 1; i >= 0; i--) {
+        if (segment_bounds[i].lowerBound > segment_bounds[i].upperBound ||
+            adjusted_height < height * segment_bounds[i].lowerBound
+        ) {
+            continue;
+        }
+        if (adjusted_height > height * segment_bounds[i].upperBound) {
+            fill_rectangle(
+                            image_data + (int)((1 - segment_bounds[i].upperBound) * height) * actualWidth,
+                            styledWidth,
+                            height * (segment_bounds[i].upperBound - segment_bounds[i].lowerBound),
+                            stride, segment_colours[i]
+            );
+
+        }
+        else {
+            fill_rectangle(
+                            image_data + (int)((1 - percentage) * height) * actualWidth,
+                            styledWidth,
+                            height * (percentage - segment_bounds[i].lowerBound),
+                            stride, segment_colours[i]
+            );
+        }
+    }
+}
+
 void draw_segments(uint32_t* image_data, unsigned long width,
                    unsigned long height, unsigned long stride,
                    double percentage, unsigned long number_of_segments,
@@ -30,21 +64,25 @@ void draw_segments(uint32_t* image_data, unsigned long width,
     unsigned long adjusted_width = width * percentage;
 
     for (int i = number_of_segments - 1; i >= 0; i--) {
-        if (adjusted_width >= width * segment_bounds[i].lowerBound && segment_bounds[i].lowerBound <= segment_bounds[i].upperBound) {
-            if (adjusted_width > width * segment_bounds[i].upperBound) {
-                fill_rectangle(
-                        image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
-                         (double)width * (segment_bounds[i].upperBound - segment_bounds[i].lowerBound),
-                                height, stride, segment_colours[i]
-                );
-            }
-            else {
-                fill_rectangle(
-                        image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
-                         adjusted_width - width * segment_bounds[i].lowerBound,
-                                height, stride, segment_colours[i]
-                );
-            }
+        if (adjusted_width < width * segment_bounds[i].lowerBound ||
+            segment_bounds[i].lowerBound > segment_bounds[i].upperBound
+        ) {
+            continue;
+        }
+
+        if (adjusted_width > width * segment_bounds[i].upperBound) {
+            fill_rectangle(
+                    image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
+                     (double)width * (segment_bounds[i].upperBound - segment_bounds[i].lowerBound),
+                            height, stride, segment_colours[i]
+            );
+        }
+        else {
+            fill_rectangle(
+                    image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
+                     adjusted_width - width * segment_bounds[i].lowerBound,
+                            height, stride, segment_colours[i]
+            );
         }
     }
 }
@@ -108,7 +146,7 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 
             if (number_of_segments > 0 && segment_colours != NULL) {
                 draw_segments(data,
-                              bar_width + 1,
+                              bar_width + 1, // fixes a weird bug where a single-pixel column of the original bar colour is visble at the end
                               bar_height,
                               stride,
                               percentage,
@@ -116,28 +154,31 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
                               segment_bounds,
                               segment_colours
                              );
-
             }
 
 			break;
 		case WOB_ORIENTATION_VERTICAL:
-                break;
-        // 	height = bar_height * percentage;
-		// 	width = bar_width;
-		// 	data = image_data + (offset * (dimensions.width + 1)) + (bar_height - height) * dimensions.width;
-
-            // for (int i = numberOfBounds - 1; i >= 0; i--) {
-                // if (width >= bar_height * test.segmentArray[i].lowerBound) {
-                    // if (width > bar_height * test.segmentArray[i].upperBound) {
-                        // fill_rectangle(data, width, (double)bar_height * test.segmentArray[i].upperBound, stride, segment_colours[i]);
-                    // }
-                    // else {
-                        // fill_rectangle(data, width, height, stride, segment_colours[i]);
-                    // }
-                // }
-            // }
-		// 	break;
+            height = bar_height * percentage;
+            width = bar_width;
+            data = image_data + (offset * (dimensions.width + 1));
+            
+            if (number_of_segments > 0 && segment_colours != NULL) {
+                fill_rectangle(
+                    data + (bar_height - height) * dimensions.width,
+                    width, height, stride, bar_color
+                );
+                
+                draw_segments_vertical(data,
+                              dimensions.width,
+                              bar_width,
+                              bar_height,
+                              stride,
+                              percentage,
+                              number_of_segments,
+                              segment_bounds,
+                              segment_colours
+                             );
+            }
+            break;
 	}
-
-    // free();
 }
