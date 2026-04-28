@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <wayland-util.h>
 #define WOB_FILE "image.c"
 
 #include "image.h"
@@ -19,6 +21,35 @@ fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uin
 	}
 }
 
+void draw_segments(uint32_t* image_data, unsigned long width,
+                   unsigned long height, unsigned long stride,
+                   double percentage, unsigned long number_of_segments,
+                   struct wob_segment_bounds* segment_bounds,
+                   uint32_t* segment_colours
+) {
+    unsigned long adjusted_width = width * percentage;
+
+    for (int i = number_of_segments - 1; i >= 0; i--) {
+        if (adjusted_width >= width * segment_bounds[i].lowerBound) {
+            // printf("Colour: " WOB_COLOR_PRINTF_FORMAT "\n", WOB_COLOR_PRINTF_RGBA(unadjusted_segment_colours[i]));
+            if (adjusted_width > width * segment_bounds[i].upperBound) {
+                fill_rectangle(
+                        image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
+                         (double)width * (segment_bounds[i].upperBound - segment_bounds[i].lowerBound),
+                                height, stride, segment_colours[i]
+                );
+            }
+            else {
+                fill_rectangle(
+                        image_data + (uint32_t)(width * segment_bounds[i].lowerBound),
+                         adjusted_width - width * segment_bounds[i].lowerBound,
+                                height, stride, segment_colours[i]
+                );
+            }
+        }
+    }
+}
+
 void
 wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage)
 {
@@ -28,10 +59,13 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
     
     unsigned long number_of_segments = dimensions.segments.number;
     struct wob_color* unadjusted_segment_colours = colors.segmentColours;
-    uint32_t *segment_colours = calloc(dimensions.segments.number, sizeof(uint32_t));
+    uint32_t *segment_colours = NULL;
 
-    for (unsigned long i = 0; i < dimensions.segments.number; i++) {
-        segment_colours[i] = wob_color_to_argb(wob_color_premultiply_alpha(unadjusted_segment_colours[i]));
+    if (number_of_segments > 0 && unadjusted_segment_colours != NULL) {
+        segment_colours = calloc(dimensions.segments.number, sizeof(uint32_t));
+        for (unsigned long i = 0; i < dimensions.segments.number; i++) {
+            segment_colours[i] = wob_color_to_argb(wob_color_premultiply_alpha(unadjusted_segment_colours[i]));
+        }
     }
 
     struct wob_segment_bounds* segment_bounds = dimensions.segments.segmentArray;
@@ -73,28 +107,17 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
             
             fill_rectangle(data, width, height, stride, bar_color);
 
-            if (number_of_segments > 0) {
-            for (int i = number_of_segments - 1; i >= 0; i--) {
-                if (width >= bar_width * segment_bounds[i].lowerBound) {
-                    if (width > bar_width * segment_bounds[i].upperBound) {
-                        fill_rectangle(
-                                data + (uint32_t)(bar_width * segment_bounds[i].lowerBound),
-                                 (double)bar_width * (segment_bounds[i].upperBound - segment_bounds[i].lowerBound),
-                                        height, stride, segment_colours[i]
-                        );
-                    }
-                    else {
-                        fill_rectangle(
-                                data + (uint32_t)(bar_width * segment_bounds[i].lowerBound),
-                                 width - bar_width * segment_bounds[i].lowerBound,
-                                        height, stride, segment_colours[i]
-                        );
-                    }
-                }
-            }
-            }
-            else {
-                fill_rectangle(data, width, height, stride, bar_color);
+            if (number_of_segments > 0 && segment_colours != NULL) {
+                draw_segments(data,
+                              bar_width,
+                              bar_height,
+                              stride,
+                              percentage,
+                              number_of_segments,
+                              segment_bounds,
+                              segment_colours
+                             );
+
             }
 
 			break;
