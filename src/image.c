@@ -136,6 +136,7 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	offset = dimensions.border_offset + dimensions.border_size + dimensions.bar_padding;
 	size_t bar_width = dimensions.width - 2 * offset;
 	size_t bar_height = dimensions.height - 2 * offset;
+
 	switch (dimensions.orientation) {
 		case WOB_ORIENTATION_HORIZONTAL:
 			height = bar_height;
@@ -161,13 +162,13 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
             height = bar_height * percentage;
             width = bar_width;
             data = image_data + (offset * (dimensions.width + 1));
+
+            fill_rectangle(
+                data + (bar_height - height) * dimensions.width,
+                width, height, stride, bar_color
+            );
             
             if (number_of_segments > 0 && segment_colours != NULL) {
-                fill_rectangle(
-                    data + (bar_height - height) * dimensions.width,
-                    width, height, stride, bar_color
-                );
-                
                 draw_segments_vertical(data,
                               dimensions.width,
                               bar_width,
