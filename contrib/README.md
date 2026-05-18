@@ -75,3 +75,17 @@ light -U 5 && light -G | cut -d'.' -f1 > $WOBSOCK
 brightnessctl set 5%- | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 brightnessctl set +5% | sed -En 's/.*\(([0-9]+)%\).*/\1/p' > $WOBSOCK
 ```
+
+### Critical battery level
+
+```
+exec bash -c 'while true; do \
+    BAT_ID="BAT0"; \
+    BAT=$(cat /sys/class/power_supply/${BAT_ID}/capacity); \
+    STATUS=$(cat /sys/class/power_supply/${BAT_ID}/status); \
+    if [ "$BAT" -le 15 ] && [ "$STATUS" = "Discharging" ]; then \
+        echo "$BAT" > "$WOBSOCK"; \
+    fi; \
+    sleep 60; \
+done'
+```
