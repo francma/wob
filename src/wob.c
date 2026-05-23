@@ -123,7 +123,7 @@ wob_buffer_create_argb8888(int shmid, const struct wob_dimensions dimensions)
 		wob_log_panic("calloc failed");
 	}
 
-	*wob_buffer = (struct wob_buffer) {
+	*wob_buffer = (struct wob_buffer){
 		.wl_buffer = wl_buffer,
 		.dimensions = dimensions,
 		.shm_data = shm_data,
@@ -306,7 +306,7 @@ wob_create_surface(struct wob *app)
 		wob_log_panic("calloc failed");
 	}
 
-	*rendered = (struct wob_surface) {
+	*rendered = (struct wob_surface){
 		.wlr_layer_surface = wlr_layer_surface,
 		.wl_surface = wl_surface,
 		.dimensions = dimensions,
@@ -504,33 +504,36 @@ handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 	}
 }
 
+struct wl_display *wl_display;
+int _shmid;
+
+int
+wob_connect()
+{
+	_shmid = wob_shm_open();
+	wl_display = wl_display_connect(NULL);
+	if (wl_display == NULL) {
+		wob_log_panic("wl_display_connect failed");
+	}
+
+	return 0;
+}
+
 int
 wob_run(struct wob_config *config)
 {
 	int _exit_code;
-
 	wl_surface_frame_listener.done = &wl_surface_frame_done;
 
 	struct wob *state = calloc(1, sizeof(struct wob));
-
-	state->shmid = wob_shm_open();
-
 	state->config = config;
+	state->shmid = _shmid;
 	wl_list_init(&state->wob_outputs);
 
 	static const struct wl_registry_listener wl_registry_listener = {
 		.global = handle_global,
 		.global_remove = handle_global_remove,
 	};
-
-	struct wl_display *wl_display = wl_display_connect(NULL);
-	if (wl_display == NULL) {
-		wob_log_panic("wl_display_connect failed");
-	}
-
-	if (config->sandbox) {
-		wob_pledge();
-	}
 
 	struct wl_registry *wl_registry = wl_display_get_registry(wl_display);
 	if (wl_registry == NULL) {

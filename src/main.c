@@ -5,12 +5,56 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include "config.h"
 #include "global_configuration.h"
 #include "log.h"
+#include "pledge.h"
 #include "wob.h"
+
+bool
+wob_file_get_contents(char **contents, char *path)
+{
+	FILE *fp = fopen(path, "r");
+	if (fp == NULL) {
+		wob_log_error("Failed to open config file %s", path);
+		return false;
+	}
+
+	int fd = fileno(fp);
+	if (fd == -1) {
+		perror("fileno");
+		return false;
+	}
+
+	struct stat st;
+	if (fstat(fd, &st) == -1) {
+		perror("fstat");
+		return false;
+	}
+
+	if (st.st_size > 1024 * 10) {
+		wob_log_error("File too big");
+		return false;
+	}
+
+	size_t file_size = (size_t) st.st_size;
+
+	*contents = calloc(file_size + 1, sizeof(char));
+	if (*contents == NULL) {
+		return false;
+	}
+
+	size_t bytes_read = fread(*contents, 1, file_size, fp);
+	if (bytes_read != file_size) {
+		free(*contents);
+		return false;
+	}
+
+	return true;
+}
 
 int
 main(int argc, char **argv)
@@ -84,23 +128,36 @@ main(int argc, char **argv)
 		wob_config_path = wob_config_default_path();
 	}
 
-	struct wob_config *config = wob_config_create();
+	char *raw_config_string = NULL;
 	if (wob_config_path != NULL) {
 		wob_log_info("Using configuration file at %s", wob_config_path);
-		if (!wob_config_load(config, wob_config_path)) {
+		if (!wob_file_get_contents(&raw_config_string, wob_config_path)) {
+			return false;
+		}
+
+		printf("%s\n", raw_config_string);
+	}
+
+	wob_connect();
+
+	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
+	if (disable_pledge_env == NULL || strcmp(disable_pledge_env, "1") != 0) {
+		wob_pledge();
+	}
+
+	struct wob_config *config = wob_config_create();
+	if (raw_config_string != NULL) {
+		if (!wob_config_load(config, raw_config_string)) {
 			wob_config_destroy(config);
 			free(wob_config_path);
+			free(raw_config_string);
 			return EXIT_FAILURE;
 		}
 	}
 
-	char *disable_pledge_env = getenv("WOB_DISABLE_PLEDGE");
-	if (disable_pledge_env != NULL && strcmp(disable_pledge_env, "0") != 0) {
-		config->sandbox = false;
-	}
-
 	wob_config_debug(config);
 	free(wob_config_path);
+	free(raw_config_string);
 
 	return wob_run(config);
 }
