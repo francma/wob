@@ -100,19 +100,12 @@ main(int argc, char **argv)
 		config->sandbox = false;
 	}
 
-	struct wob_font_manager *font_manager = wob_font_manager_create();
-	if (config->font_path != NULL) {
-		// TODO add style fonts
-		wob_font_manager_load_font(font_manager, config->font_path);
-	}
-
 	wob_config_debug(config);
 	free(wob_config_path);
 
-	int result = wob_run(config, font_manager);
+	int result = wob_run(config);
 
 	wob_config_destroy(config);
-	wob_font_manager_destroy(font_manager);
 
 	return result;
 }

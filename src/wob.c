@@ -44,7 +44,6 @@ struct wob_surface {
 	double desired_percentage;
 	struct wob_colors desired_colors;
 	struct wob_font *desired_font;
-	unsigned long desired_font_size;
 };
 
 struct wob_output {
@@ -202,7 +201,6 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 	struct wob_margin margin = app->config->margin;
 	struct wob_dimensions dimensions = app->config->dimensions;
 	enum wob_anchor anchor = app->config->anchor;
-	unsigned long font_size = app->config->font_size;
 
 	// try to match output config
 	struct wob_output_config *output_config = NULL;
@@ -218,7 +216,6 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 		margin = output_config->margin;
 		dimensions = output_config->dimensions;
 		anchor = output_config->anchor;
-		font_size = output_config->dimensions.font_size;
 	}
 
 	struct wob_surface *surface = app->surface;
@@ -228,7 +225,6 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 		zwlr_layer_surface_v1_set_size(surface->wlr_layer_surface, dimensions.width, dimensions.height);
 
 		surface->dimensions = dimensions;
-		surface->desired_font_size = font_size;
 		wl_surface_commit(surface->wl_surface);
 	}
 
@@ -270,6 +266,7 @@ wob_create_surface(struct wob *app)
 		.border_size = 0,
 		.border_offset = 0,
 		.orientation = WOB_ORIENTATION_HORIZONTAL,
+		.font_size = 0,
 	};
 
 	struct wob_margin margin = {.top = 0, .right = 0, .bottom = 0, .left = 0};
@@ -327,7 +324,6 @@ wob_create_surface(struct wob *app)
 		.desired_colors = (struct wob_color) {.a = 0, .r = 0, .g = 0, .b = 0},
 		.desired_percentage = 0,
 		.desired_font = NULL,
-		.desired_font_size = 0,
 	};
 
 	wl_surface_commit(wl_surface);
@@ -517,7 +513,7 @@ handle_global_remove(void *data, struct wl_registry *registry, uint32_t name)
 }
 
 int
-wob_run(struct wob_config *config, struct wob_font_manager *font_manager)
+wob_run(struct wob_config *config)
 {
 	int _exit_code;
 
@@ -708,9 +704,7 @@ wob_run(struct wob_config *config, struct wob_font_manager *font_manager)
 
 					state->surface->desired_colors = effective_colors;
 					state->surface->desired_percentage = (double) percentage / (double) state->config->max;
-
-					struct wob_font *font = wob_font_manager_get(font_manager, config->font_path);
-					state->surface->desired_font = font;
+					state->surface->desired_font = state->config->font;
 
 					wl_display_flush(wl_display);
 				}

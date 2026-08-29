@@ -24,8 +24,8 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	uint32_t background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
 	uint32_t border_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.border));
 
-	background_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF333333)));
-	bar_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF00AA00)));
+	background_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF000000)));
+	bar_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF33913e)));
 	border_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFFFFFFFF)));
 	font_color = wob_color_from_argb8888(0xFFFFFFFF);
 
@@ -34,7 +34,7 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	uint32_t width;
 	uint32_t offset;
 	uint32_t stride = dimensions.width;
-	uint32_t font_size = 20; // FIXME
+	uint32_t font_size = dimensions.font_size;
 
 	height = dimensions.height;
 	width = dimensions.width;
@@ -76,9 +76,10 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	}
 
 	char percentage_buff[64] = {0};
+	// FIXME, not percentage, but value
 	snprintf(percentage_buff, 64, "%d", (int) (percentage * 100));
 	struct wob_rendered_text_dimensions text_dimensions = wob_font_render_text_dimensions(font, percentage_buff, font_size);
-	wob_log_debug("declared font height %d, rendered text width: %d x %d\n", font_size, text_dimensions.w, text_dimensions.h);
+	wob_log_debug("declared font height %d, rendered text size: %d x %d\n", font_size, text_dimensions.w, text_dimensions.h);
 
 	if (text_dimensions.w > bar_width || text_dimensions.h > bar_height) {
 		wob_log_warn("bar text is too big for the bar to be rendered, skipping!");
@@ -88,7 +89,7 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	// get to the X position
 	data = image_data + (dimensions.width - text_dimensions.w) / 2;
 	// get to the Y position
-	data += stride * (dimensions.height - text_dimensions.h) / 2;
+	data += stride * ((dimensions.height - text_dimensions.h) / 2);
 
 	wob_font_render_text(font, percentage_buff, font_size, font_color, data, stride);
 }

@@ -5,31 +5,16 @@
 
 struct wob_font {};
 
-struct wob_font_manager {};
-
-struct wob_font_manager *
-wob_font_manager_create()
-{
-	return NULL;
-}
-
-void
-wob_font_manager_destroy(struct wob_font_manager *manager)
-{
-}
-
-void
-wob_font_manager_load_font(struct wob_font_manager *manager, const char *fpath)
+struct wob_font *wob_font_create(const char *fpath)
 {
 	wob_log_error("STUB wob_font_manager_load_font!");
-}
-
-struct wob_font *
-wob_font_manager_get(struct wob_font_manager *manager, const char *fpath)
-{
-	wob_log_error("STUB wob_font_manager_get!");
 
 	return NULL;
+}
+
+void wob_font_destroy(struct wob_font *font)
+{
+	// intentionally left blank
 }
 
 struct wob_rendered_text_dimensions

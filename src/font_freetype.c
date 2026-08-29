@@ -8,16 +8,12 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-FT_Library library;
+static bool library_initialized = false;
+static FT_Library library;
 
 struct wob_font {
 	char *name;
 	FT_Face data;
-	struct wl_list link;
-};
-
-struct wob_font_manager {
-	struct wl_list fonts;
 };
 
 void
@@ -41,53 +37,25 @@ draw_glyph(uint32_t *pixels, size_t stride, FT_Bitmap *ft_bitmap, struct wob_col
 	}
 }
 
-struct wob_font_manager *
-wob_font_manager_create()
+struct wob_font *wob_font_create(const char *fpath)
 {
-	struct wob_font_manager *manager = malloc(sizeof(struct wob_font_manager));
-
-	FT_Init_FreeType(&library);
-
-	wl_list_init(&manager->fonts);
-
-	return manager;
-}
-
-void
-wob_font_manager_destroy(struct wob_font_manager *manager)
-{
-	struct wob_font *font, *font_tmp;
-	wl_list_for_each_safe (font, font_tmp, &manager->fonts, link) {
-		free(font->name);
-		FT_Done_Face(font->data);
-
-		free(font);
+	if (!library_initialized) {
+		FT_Init_FreeType(&library);
 	}
 
-	FT_Done_FreeType(library);
-}
-
-void
-wob_font_manager_load_font(struct wob_font_manager *manager, const char *fpath)
-{
 	struct wob_font *font = calloc(1, sizeof(struct wob_font));
 	font->name = strdup(fpath);
 	FT_New_Face(library, fpath, 0, &font->data);
 
-	wl_list_insert(&manager->fonts, &font->link);
+	return font;
 }
 
-struct wob_font *
-wob_font_manager_get(struct wob_font_manager *manager, const char *fpath)
+void wob_font_destroy(struct wob_font *font)
 {
-	struct wob_font *font;
-	wl_list_for_each (font, &manager->fonts, link) {
-		if (strcmp(font->name, fpath) == 0) {
-			return font;
-		}
-	}
+	free(font->name);
+	FT_Done_Face(font->data);
 
-	return NULL;
+	free(font);
 }
 
 struct wob_rendered_text_dimensions

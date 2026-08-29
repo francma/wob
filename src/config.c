@@ -307,7 +307,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "font") == 0) {
-			config->font_path = strdup(value);
+			config->font = wob_font_create(value);
 			return 1;
 		}
 		if (strcmp(name, "font_size") == 0) {
@@ -315,7 +315,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 				wob_log_error("Font size must be a positive value.");
 				return 0;
 			}
-			config->font_size = ul;
+			config->dimensions.font_size = ul;
 			return 1;
 		}
 
@@ -529,11 +529,10 @@ wob_config_create()
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
 	config->dimensions.orientation = WOB_ORIENTATION_HORIZONTAL;
+	config->dimensions.font_size = 16;
 	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
-	config->font_path = NULL;
-	config->font_size = 16;
 	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
@@ -594,6 +593,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.dimensions.border_size = %lu", config->dimensions.border_size);
 	wob_log_debug("config.dimensions.bar_padding = %lu", config->dimensions.bar_padding);
 	wob_log_debug("config.dimensions.orientation = %lu (horizontal = %d, vertical = %d)", config->dimensions.orientation, WOB_ORIENTATION_HORIZONTAL, WOB_ORIENTATION_VERTICAL);
+	wob_log_debug("config.dimensions.font_size = %d", config->dimensions.font_size);
 	wob_log_debug("config.margin.top = %lu", config->margin.top);
 	wob_log_debug("config.margin.right = %lu", config->margin.right);
 	wob_log_debug("config.margin.bottom = %lu", config->margin.bottom);
@@ -607,8 +607,7 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.background));
 	wob_log_debug("config.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.value));
 	wob_log_debug("config.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.border));
-	wob_log_debug("config.font = %s", config->font_path != NULL ? config->font_path : "<empty>");
-	wob_log_debug("config.font_size = %d", config->font_size);
+	wob_log_debug("config.font = %s", config->font != NULL ? "FIXME" : "<empty>");
 
 	struct wob_style *style;
 	wl_list_for_each (style, &config->styles, link) {
@@ -659,8 +658,8 @@ wob_config_destroy(struct wob_config *config)
 		free(style);
 	}
 
-	if (config->font_path != NULL) {
-		free(config->font_path);
+	if (config->font != NULL) {
+		wob_font_destroy(config->font);
 	}
 
 	free(config);
@@ -742,6 +741,7 @@ wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale)
 		.border_offset = scale_apply(dimensions.border_offset, scale),
 		.border_size = scale_apply(dimensions.border_size, scale),
 		.orientation = dimensions.orientation,
+		.font_size = scale_apply(dimensions.font_size, scale),
 	};
 
 	return scaled_dimensions;
@@ -756,6 +756,7 @@ wob_dimensions_eq(struct wob_dimensions a, struct wob_dimensions b)
 	if (a.border_offset != b.border_offset) return false;
 	if (a.border_size != b.border_size) return false;
 	if (a.bar_padding != b.bar_padding) return false;
+	if (a.font_size != b.font_size) return false;
 
 	return true;
 }
