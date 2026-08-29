@@ -101,7 +101,10 @@ main(int argc, char **argv)
 	}
 
 	struct wob_font_manager *font_manager = wob_font_manager_create();
-	wob_font_manager_load_fonts_from_config(font_manager, config);
+	if (config->font_path != NULL) {
+		// TODO add style fonts
+		wob_font_manager_load_font(font_manager, config->font_path);
+	}
 
 	wob_config_debug(config);
 	free(wob_config_path);

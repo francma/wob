@@ -406,7 +406,7 @@ handler(void *user, const char *section, const char *name, const char *value)
 				wob_log_error("Font size must be a positive value.");
 				return 0;
 			}
-			output_config->font_size = ul;
+			output_config->dimensions.font_size = ul;
 			return 1;
 		}
 
@@ -639,7 +639,7 @@ wob_config_debug(struct wob_config *config)
 			WOB_ORIENTATION_HORIZONTAL,
 			WOB_ORIENTATION_VERTICAL
 		);
-		wob_log_debug("config.output.%s.font_size = %d", output_config->id, output_config->font_size);
+		wob_log_debug("config.output.%s.font_size = %d", output_config->id, output_config->dimensions.font_size);
 	}
 }
 

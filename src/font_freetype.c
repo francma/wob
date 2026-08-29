@@ -30,7 +30,7 @@ draw_glyph(uint32_t *pixels, size_t stride, FT_Bitmap *ft_bitmap, struct wob_col
 			struct wob_color background = wob_color_from_argb8888(pixels[width]);
 			struct wob_color foreground = font_color;
 
-			foreground.a = alpha / 255.0f;
+			foreground.a = (float) alpha / 255.0f;
 			foreground = wob_color_premultiply_alpha(foreground);
 
 			struct wob_color result = wob_color_blend_premultiplied(foreground, background);
@@ -77,14 +77,6 @@ wob_font_manager_load_font(struct wob_font_manager *manager, const char *fpath)
 	wl_list_insert(&manager->fonts, &font->link);
 }
 
-void
-wob_font_manager_load_fonts_from_config(struct wob_font_manager *manager, struct wob_config *config)
-{
-	if (config->font_path != NULL) {
-		wob_font_manager_load_font(manager, config->font_path);
-	}
-}
-
 struct wob_font *
 wob_font_manager_get(struct wob_font_manager *manager, const char *fpath)
 {
@@ -98,10 +90,10 @@ wob_font_manager_get(struct wob_font_manager *manager, const char *fpath)
 	return NULL;
 }
 
-struct wob_font_text_dimensions
-wob_font_render_text_dimensions(struct wob_font *font, char *text, int font_size)
+struct wob_rendered_text_dimensions
+wob_font_render_text_dimensions(struct wob_font *font, char *text, uint8_t font_size)
 {
-	struct wob_font_text_dimensions dimensions = {.h = 0, .w = 0};
+	struct wob_rendered_text_dimensions dimensions = {.h = 0, .w = 0};
 
 	FT_Face ft_face = font->data;
 	FT_Set_Pixel_Sizes(ft_face, 0, font_size);
@@ -135,7 +127,7 @@ wob_font_render_text_dimensions(struct wob_font *font, char *text, int font_size
 }
 
 void
-wob_font_render_text(struct wob_font *font, char *text, int font_size, struct wob_color font_color, uint32_t *argb8888_buffer, size_t argb8888_buffer_size)
+wob_font_render_text(struct wob_font *font, const char *text, int font_size, struct wob_color font_color, uint32_t *argb8888_buffer, size_t argb8888_buffer_stride)
 {
 	FT_Face ft_face = font->data;
 	FT_UInt previous = 0;
@@ -149,7 +141,7 @@ wob_font_render_text(struct wob_font *font, char *text, int font_size, struct wo
 		FT_Load_Glyph(ft_face, glyph_index, FT_LOAD_DEFAULT);
 		FT_Render_Glyph(ft_face->glyph, FT_RENDER_MODE_NORMAL);
 
-		draw_glyph(argb8888_buffer, argb8888_buffer_size, &ft_face->glyph->bitmap, font_color);
+		draw_glyph(argb8888_buffer, argb8888_buffer_stride, &ft_face->glyph->bitmap, font_color);
 
 		argb8888_buffer += ft_face->glyph->advance.x / 64;
 		if (has_kerning && previous != 0) {

@@ -44,6 +44,7 @@ struct wob_dimensions {
 	unsigned long border_size;
 	unsigned long bar_padding;
 	enum wob_orientation orientation;
+	unsigned long font_size;
 };
 
 struct wob_output_config {
@@ -53,7 +54,6 @@ struct wob_output_config {
 	struct wob_dimensions dimensions;
 	struct wob_margin margin;
 	unsigned long anchor;
-	unsigned long font_size;
 };
 
 struct wob_colors {
