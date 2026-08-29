@@ -37,7 +37,8 @@ draw_glyph(uint32_t *pixels, size_t stride, FT_Bitmap *ft_bitmap, struct wob_col
 	}
 }
 
-struct wob_font *wob_font_create(const char *fpath)
+struct wob_font *
+wob_font_create(const char *fpath)
 {
 	if (!library_initialized) {
 		FT_Init_FreeType(&library);
@@ -50,7 +51,8 @@ struct wob_font *wob_font_create(const char *fpath)
 	return font;
 }
 
-void wob_font_destroy(struct wob_font *font)
+void
+wob_font_destroy(struct wob_font *font)
 {
 	free(font->name);
 	FT_Done_Face(font->data);

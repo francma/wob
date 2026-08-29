@@ -5,14 +5,16 @@
 
 struct wob_font {};
 
-struct wob_font *wob_font_create(const char *fpath)
+struct wob_font *
+wob_font_create(const char *fpath)
 {
 	wob_log_error("STUB wob_font_manager_load_font!");
 
 	return NULL;
 }
 
-void wob_font_destroy(struct wob_font *font)
+void
+wob_font_destroy(struct wob_font *font)
 {
 	// intentionally left blank
 }

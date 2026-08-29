@@ -126,7 +126,7 @@ wob_buffer_create_argb8888(int shmid, const struct wob_dimensions dimensions)
 		wob_log_panic("calloc failed");
 	}
 
-	*wob_buffer = (struct wob_buffer) {
+	*wob_buffer = (struct wob_buffer){
 		.wl_buffer = wl_buffer,
 		.dimensions = dimensions,
 		.shm_data = shm_data,
@@ -311,7 +311,7 @@ wob_create_surface(struct wob *app)
 		wob_log_panic("calloc failed");
 	}
 
-	*rendered = (struct wob_surface) {
+	*rendered = (struct wob_surface){
 		.wlr_layer_surface = wlr_layer_surface,
 		.wl_surface = wl_surface,
 		.dimensions = dimensions,
@@ -321,7 +321,7 @@ wob_create_surface(struct wob *app)
 		.anchor = 0,
 		.wp_viewport = wp_viewport,
 		.fractional = wp_fractional,
-		.desired_colors = (struct wob_color) {.a = 0, .r = 0, .g = 0, .b = 0},
+		.desired_colors = (struct wob_color){.a = 0, .r = 0, .g = 0, .b = 0},
 		.desired_percentage = 0,
 		.desired_font = NULL,
 	};

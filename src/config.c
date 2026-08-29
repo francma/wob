@@ -530,15 +530,15 @@ wob_config_create()
 	config->dimensions.bar_padding = 4;
 	config->dimensions.orientation = WOB_ORIENTATION_HORIZONTAL;
 	config->dimensions.font_size = 16;
-	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
+	config->margin = (struct wob_margin){.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
-	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->default_style.overflow_colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 
 	return config;
 }

@@ -24,9 +24,9 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	uint32_t background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
 	uint32_t border_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.border));
 
-	background_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF000000)));
-	bar_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF33913e)));
-	border_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFFFFFFFF)));
+	// background_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF000000)));
+	// bar_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF33913e)));
+	// border_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFFFFFFFF)));
 	font_color = wob_color_from_argb8888(0xFFFFFFFF);
 
 	uint32_t *data;
