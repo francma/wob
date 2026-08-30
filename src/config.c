@@ -509,33 +509,26 @@ wob_config_create()
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
 	config->dimensions.orientation = WOB_ORIENTATION_HORIZONTAL;
-	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
+	config->margin = (struct wob_margin){.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
-	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
-	config->default_style.overflow_colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 
 	return config;
 }
 
 bool
-wob_config_load(struct wob_config *config, const char *config_path)
+wob_config_load(struct wob_config *config, const char *input)
 {
-	int res = ini_parse(config_path, handler, config);
-
-	if (res == -1 || res == -2) {
-		wob_log_error("Failed to open config file %s", config_path);
-
-		return false;
-	}
+	int res = ini_parse_string(input, handler, config);
 
 	if (res != 0) {
-		wob_log_error("Failed to parse config file %s, error at line %d", config_path, res);
-
+		wob_log_error("Failed to parse config file, error at line %d", res);
 		return false;
 	}
 
