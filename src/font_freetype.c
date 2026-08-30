@@ -8,7 +8,7 @@
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 
-static bool library_initialized = false;
+static int font_counter = 0;
 static FT_Library library;
 
 struct wob_font {
@@ -40,8 +40,9 @@ draw_glyph(uint32_t *pixels, size_t stride, FT_Bitmap *ft_bitmap, struct wob_col
 struct wob_font *
 wob_font_create(const char *fpath)
 {
-	if (!library_initialized) {
+	if (font_counter == 0) {
 		FT_Init_FreeType(&library);
+		font_counter += 1;
 	}
 
 	struct wob_font *font = calloc(1, sizeof(struct wob_font));
@@ -58,6 +59,11 @@ wob_font_destroy(struct wob_font *font)
 	FT_Done_Face(font->data);
 
 	free(font);
+
+	font_counter -= 1;
+	if (font_counter == 0) {
+		FT_Done_FreeType(library);
+	}
 }
 
 struct wob_rendered_text_dimensions
@@ -91,6 +97,8 @@ wob_font_render_text_dimensions(struct wob_font *font, char *text, uint8_t font_
 		}
 
 		previous = glyph_index;
+
+		FT_Done_Glyph(glyph);
 	}
 
 	return dimensions;

@@ -38,7 +38,7 @@ rt = cc.find_library('rt')
 libm = cc.find_library('m')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 inih = dependency('inih')
-freetype2 = dependency('freetype2', required: get_option('text'))
+freetype2 = dependency('freetype2', required: get_option('freetype2'))
 
 sysconfdir = get_option('sysconfdir')
 if not fs.is_absolute(sysconfdir)

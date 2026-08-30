@@ -7,6 +7,8 @@
 
 struct wob_font;
 
+struct wob_font_library;
+
 struct wob_rendered_text_dimensions {
 	size_t w;
 	size_t h;

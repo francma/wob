@@ -41,6 +41,7 @@ struct wob_surface {
 	uint32_t scale;
 
 	// TODO move somewhere?
+	unsigned long desired_value;
 	double desired_percentage;
 	struct wob_colors desired_colors;
 	struct wob_font *desired_font;
@@ -171,7 +172,7 @@ layer_surface_configure(void *data, struct zwlr_layer_surface_v1 *zwlr_surface, 
 
 		// redraw only if we have dimensions set, otherwise keep the transparent pixel
 		if (surface->dimensions.height != 1 || surface->dimensions.width != 1) {
-			wob_image_draw(surface->wob_buffer->shm_data, surface->wob_buffer->dimensions, surface->desired_colors, surface->desired_percentage, surface->desired_font);
+			wob_image_draw(surface->wob_buffer->shm_data, surface->wob_buffer->dimensions, surface->desired_colors, surface->desired_percentage, surface->desired_value, surface->desired_font);
 		}
 
 		if (surface->wp_viewport != NULL) {
@@ -323,6 +324,7 @@ wob_create_surface(struct wob *app)
 		.fractional = wp_fractional,
 		.desired_colors = (struct wob_color){.a = 0, .r = 0, .g = 0, .b = 0},
 		.desired_percentage = 0,
+		.desired_value = 0,
 		.desired_font = NULL,
 	};
 
@@ -341,7 +343,7 @@ wl_surface_frame_done(void *data, struct wl_callback *cb, uint32_t time)
 	struct wob_surface *surface = data;
 	wob_log_debug("rendering frame");
 
-	wob_image_draw(surface->wob_buffer->shm_data, surface->wob_buffer->dimensions, surface->desired_colors, surface->desired_percentage, surface->desired_font);
+	wob_image_draw(surface->wob_buffer->shm_data, surface->wob_buffer->dimensions, surface->desired_colors, surface->desired_percentage, surface->desired_value, surface->desired_font);
 
 	wl_surface_attach(surface->wl_surface, surface->wob_buffer->wl_buffer, 0, 0);
 	wl_surface_damage_buffer(surface->wl_surface, 0, 0, INT32_MAX, INT32_MAX);
@@ -646,15 +648,15 @@ wob_run(struct wob_config *config)
 					// trim newline from input
 					*newline_pos = '\0';
 
-					unsigned long percentage;
+					unsigned long number_value;
 					char style_buffer[INPUT_BUFFER_LENGTH] = {0};
-					if (!wob_readline(input_buffer, &percentage, style_buffer)) {
+					if (!wob_readline(input_buffer, &number_value, style_buffer)) {
 						wob_log_warn("Invalid value received '%s'", input_buffer);
 						break;
 					}
 
 					struct wob_style *selected_style = &state->config->default_style;
-					wob_log_info("Received input { value = %lu, style = %s }", percentage, strlen(style_buffer) > 0 ? style_buffer : "<empty>");
+					wob_log_info("Received input { value = %lu, style = %s }", number_value, strlen(style_buffer) > 0 ? style_buffer : "<empty>");
 					if (strlen(style_buffer) > 0) {
 						struct wob_style *selected_style_search = wob_config_find_style(state->config, style_buffer);
 						if (selected_style_search != NULL) {
@@ -665,20 +667,21 @@ wob_run(struct wob_config *config)
 						}
 					}
 
-					if (percentage > state->config->max) {
+					unsigned long number_value_wrapped = number_value;
+					effective_colors = selected_style->colors;
+					if (number_value > state->config->max) {
 						effective_colors = selected_style->overflow_colors;
 						switch (state->config->overflow_mode) {
 							case WOB_OVERFLOW_MODE_WRAP:
-								percentage %= state->config->max;
+								number_value_wrapped = number_value % state->config->max;
 								break;
 							case WOB_OVERFLOW_MODE_NOWRAP:
-								percentage = state->config->max;
+								number_value_wrapped = state->config->max;
 								break;
 						}
 					}
-					else {
-						effective_colors = selected_style->colors;
-					}
+
+					double percentage = (double) number_value_wrapped / (double) state->config->max;
 
 					if (wl_list_empty(&state->wob_outputs)) {
 						wob_log_info("No output found to render wob on");
@@ -687,7 +690,7 @@ wob_run(struct wob_config *config)
 
 					wob_log_info(
 						"Rendering { value = %lu, bg = " WOB_COLOR_PRINTF_FORMAT ", border = " WOB_COLOR_PRINTF_FORMAT ", bar = " WOB_COLOR_PRINTF_FORMAT " }",
-						percentage,
+						number_value,
 						WOB_COLOR_PRINTF_RGBA(effective_colors.background),
 						WOB_COLOR_PRINTF_RGBA(effective_colors.border),
 						WOB_COLOR_PRINTF_RGBA(effective_colors.value)
@@ -703,7 +706,8 @@ wob_run(struct wob_config *config)
 					}
 
 					state->surface->desired_colors = effective_colors;
-					state->surface->desired_percentage = (double) percentage / (double) state->config->max;
+					state->surface->desired_percentage = percentage;
+					state->surface->desired_value = number_value;
 					state->surface->desired_font = state->config->font;
 
 					wl_display_flush(wl_display);
