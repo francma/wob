@@ -19,15 +19,9 @@ fill_rectangle(uint32_t *pixels, size_t width, size_t height, size_t stride, uin
 void
 wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage, struct wob_font *font)
 {
-	struct wob_color font_color;
 	uint32_t bar_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.value));
 	uint32_t background_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.background));
 	uint32_t border_color = wob_color_to_argb(wob_color_premultiply_alpha(colors.border));
-
-	// background_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF000000)));
-	// bar_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFF33913e)));
-	// border_color = wob_color_to_argb(wob_color_premultiply_alpha(wob_color_from_argb8888(0xFFFFFFFF)));
-	font_color = wob_color_from_argb8888(0xFFFFFFFF);
 
 	uint32_t *data;
 	uint32_t height;
@@ -91,5 +85,5 @@ wob_image_draw(uint32_t *image_data, struct wob_dimensions dimensions, struct wo
 	// get to the Y position
 	data += stride * ((dimensions.height - text_dimensions.h) / 2);
 
-	wob_font_render_text(font, percentage_buff, font_size, font_color, data, stride);
+	wob_font_render_text(font, percentage_buff, font_size, colors.font, data, stride);
 }

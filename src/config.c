@@ -267,6 +267,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font_color") == 0) {
+			if (!parse_color(value, &config->default_style.colors.font)) {
+				wob_log_error("Font color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
 		if (strcmp(name, "overflow_background_color") == 0) {
 			if (!parse_color(value, &config->default_style.overflow_colors.background)) {
 				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
@@ -452,6 +459,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font_color") == 0) {
+			if (!parse_color(value, &style->colors.font)) {
+				wob_log_error("Font color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
 		if (strcmp(name, "overflow_background_color") == 0) {
 			if (!parse_color(value, &style->overflow_colors.background)) {
 				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
@@ -534,11 +548,13 @@ wob_config_create()
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
 	config->default_style.colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.value = (struct wob_color){.a = 1.0f, .r = 0.2f, .g = 0.57f, .b = 0.24f};
 	config->default_style.colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.font = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 	config->default_style.overflow_colors.background = (struct wob_color){.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.value = (struct wob_color){.a = 1.0f, .r = 0.65f, .g = 0.21f, .b = 0.21f};
 	config->default_style.overflow_colors.border = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.overflow_colors.font = (struct wob_color){.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 
 	return config;
 }

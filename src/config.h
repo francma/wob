@@ -61,6 +61,7 @@ struct wob_colors {
 	struct wob_color background;
 	struct wob_color border;
 	struct wob_color value;
+	struct wob_color font;
 };
 
 struct wob_style {
