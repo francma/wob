@@ -20,3 +20,4 @@ BinPackParameters: false
 ForEachMacros: ['wl_list_for_each_safe', 'wl_list_for_each']
 AlignAfterOpenBracket: BlockIndent
 AllowShortIfStatementsOnASingleLine: WithoutElse
+SpaceBeforeCpp11BracedList: true
