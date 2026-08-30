@@ -43,7 +43,7 @@ wob_readline(char *input, unsigned long *out_value, char *out_style)
 					GOTO(S1);
 				}
 				if (*c == '\0') {
-					GOTO(S3);
+					GOTO(S4);
 				}
 				if (*c == ' ') {
 					GOTO(S2);
