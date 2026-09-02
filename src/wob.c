@@ -204,11 +204,12 @@ layer_surface_enter(void *data, struct wl_surface *wl_surface, struct wl_output 
 	if (selected_output->name != NULL) {
 		output_config = wob_config_match_output(app->config, selected_output->name);
 	}
-	if (output_config != NULL && selected_output->description != NULL) {
+	if (output_config == NULL && selected_output->description != NULL) {
 		output_config = wob_config_match_output(app->config, selected_output->description);
 	}
 
 	if (output_config != NULL) {
+		wob_log_debug("selected output %s", output_config->id);
 		margin = output_config->margin;
 		dimensions = output_config->dimensions;
 		anchor = output_config->anchor;
