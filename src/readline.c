@@ -2,7 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-enum states { S0, S00, S1, S2, S3, S4 };
+enum states { S0, S00, S1, S2, S3, END };
 
 #define GOTO(X)                                                                                                                                                                                        \
 	s = X;                                                                                                                                                                                             \
@@ -33,7 +33,7 @@ wob_readline(char *input, unsigned long *out_value, char *out_style)
 					GOTO(S2);
 				}
 				if (*c == '\0') {
-					GOTO(S4);
+					GOTO(END);
 				}
 
 				return false;
@@ -43,7 +43,7 @@ wob_readline(char *input, unsigned long *out_value, char *out_style)
 					GOTO(S1);
 				}
 				if (*c == '\0') {
-					GOTO(S3);
+					GOTO(END);
 				}
 				if (*c == ' ') {
 					GOTO(S2);
@@ -59,11 +59,11 @@ wob_readline(char *input, unsigned long *out_value, char *out_style)
 				return false;
 			case S3:
 				if (*c == '\0') {
-					GOTO(S4);
+					GOTO(END);
 				}
 
 				GOTO(S3);
-			case S4:
+			case END:
 				*out_value = number;
 				if (style_start != NULL) {
 					strcpy(out_style, style_start);
