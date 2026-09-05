@@ -314,7 +314,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			return 1;
 		}
 		if (strcmp(name, "font") == 0) {
-			config->font = wob_font_create(value);
+			struct wob_font *font = wob_font_create(value);
+			if (font == NULL) {
+				wob_log_error("Unable to load font at path %s", value);
+				return 0;
+			}
+
+			config->font = font;
 			return 1;
 		}
 		if (strcmp(name, "font_size") == 0) {
@@ -554,6 +560,7 @@ wob_config_create()
 	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
+	config->font = NULL;
 	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
 	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 0.2f, .g = 0.57f, .b = 0.24f};
 	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};

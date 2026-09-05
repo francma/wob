@@ -78,7 +78,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	wob_log_info("wob version %s started with pid %jd, text = %s, pledge = %s", WOB_VERSION, getpid(), WOB_TEXT_ENABLED ? "YES" : "NO", WOB_PLEDGE_ENABLED ? "YES" : "NO");
+	wob_log_info("wob version %s started with pid %jd, freetype2 = %s, pledge = %s", WOB_VERSION, getpid(), WOB_TEXT_ENABLED ? "YES" : "NO", WOB_PLEDGE_ENABLED ? "YES" : "NO");
 
 	if (wob_config_path == NULL) {
 		wob_config_path = wob_config_default_path();
