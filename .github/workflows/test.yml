@@ -13,7 +13,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev freetype-dev
       - name: Run tests
         run: meson setup test && ninja -C test test
 
@@ -23,7 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Install dependencies
-        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev clang22 clang22-extra-tools clang22-analyzer
+        run: apk update && apk add meson wayland-dev musl-dev wayland-protocols gcc inih-dev cmocka-dev clang22 clang22-extra-tools clang22-analyzer freetype-dev
       - name: Run clang-analyzer
         if: success() || failure()
         run: scan-build meson setup clang-analyzer && scan-build --status-bugs ninja -C clang-analyzer

@@ -5,7 +5,8 @@
 #include <stdint.h>
 
 #include "config.h"
+#include "font.h"
 
-void wob_image_draw(uint32_t *data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage);
+void wob_image_draw(uint32_t *data, struct wob_dimensions dimensions, struct wob_colors colors, double percentage, unsigned long value, struct wob_font *font);
 
 #endif

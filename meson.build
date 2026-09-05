@@ -38,6 +38,7 @@ rt = cc.find_library('rt')
 libm = cc.find_library('m')
 seccomp = dependency('libseccomp', required: get_option('seccomp'))
 inih = dependency('inih')
+freetype2 = dependency('freetype2', required: get_option('freetype2'))
 
 sysconfdir = get_option('sysconfdir')
 if not fs.is_absolute(sysconfdir)
@@ -94,6 +95,15 @@ if seccomp.found()
 else
   wob_sources += 'src/pledge.c'
   global_configuration_h.set('WOB_PLEDGE_ENABLED', 'false')
+endif
+
+if freetype2.found()
+  wob_dependencies += freetype2
+  wob_sources += 'src/font_freetype.c'
+  global_configuration_h.set('WOB_TEXT_ENABLED', 'true')
+else
+  wob_sources += 'src/font_stub.c'
+  global_configuration_h.set('WOB_TEXT_ENABLED', 'false')
 endif
 
 executable(

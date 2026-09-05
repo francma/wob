@@ -267,6 +267,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font_color") == 0) {
+			if (!parse_color(value, &config->default_style.colors.font)) {
+				wob_log_error("Font color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
 		if (strcmp(name, "overflow_background_color") == 0) {
 			if (!parse_color(value, &config->default_style.overflow_colors.background)) {
 				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
@@ -304,6 +311,24 @@ handler(void *user, const char *section, const char *name, const char *value)
 				wob_log_error("Invalid argument for orientation. Valid options are horizontal and vertical");
 				return 0;
 			}
+			return 1;
+		}
+		if (strcmp(name, "font") == 0) {
+			struct wob_font *font = wob_font_create(value);
+			if (font == NULL) {
+				wob_log_error("Unable to load font at path %s", value);
+				return 0;
+			}
+
+			config->font = font;
+			return 1;
+		}
+		if (strcmp(name, "font_size") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Font size must be a positive value.");
+				return 0;
+			}
+			config->dimensions.font_size = ul;
 			return 1;
 		}
 
@@ -389,6 +414,14 @@ handler(void *user, const char *section, const char *name, const char *value)
 			output_config->dimensions.bar_padding = ul;
 			return 1;
 		}
+		if (strcmp(name, "font_size") == 0) {
+			if (parse_number(value, &ul) == false) {
+				wob_log_error("Font size must be a positive value.");
+				return 0;
+			}
+			output_config->dimensions.font_size = ul;
+			return 1;
+		}
 
 		wob_log_warn("Unknown config key %s", name);
 		return 1;
@@ -432,6 +465,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 			}
 			return 1;
 		}
+		if (strcmp(name, "font_color") == 0) {
+			if (!parse_color(value, &style->colors.font)) {
+				wob_log_error("Font color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
 		if (strcmp(name, "overflow_background_color") == 0) {
 			if (!parse_color(value, &style->overflow_colors.background)) {
 				wob_log_error("Overflow background color must be in RRGGBB[AA] format.");
@@ -449,6 +489,13 @@ handler(void *user, const char *section, const char *name, const char *value)
 		if (strcmp(name, "overflow_bar_color") == 0) {
 			if (!parse_color(value, &style->overflow_colors.value)) {
 				wob_log_error("Overflow bar color must be in RRGGBB[AA] format.");
+				return 0;
+			}
+			return 1;
+		}
+		if (strcmp(name, "overflow_font_color") == 0) {
+			if (!parse_color(value, &style->overflow_colors.font)) {
+				wob_log_error("Overflow font color must be in RRGGBB[AA] format.");
 				return 0;
 			}
 			return 1;
@@ -509,15 +556,19 @@ wob_config_create()
 	config->dimensions.border_size = 4;
 	config->dimensions.bar_padding = 4;
 	config->dimensions.orientation = WOB_ORIENTATION_HORIZONTAL;
+	config->dimensions.font_size = 16;
 	config->margin = (struct wob_margin) {.top = 0, .left = 0, .bottom = 0, .right = 0};
 	config->anchor = WOB_ANCHOR_CENTER;
 	config->overflow_mode = WOB_OVERFLOW_MODE_WRAP;
+	config->font = NULL;
 	config->default_style.colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.value = (struct wob_color) {.a = 1.0f, .r = 0.2f, .g = 0.57f, .b = 0.24f};
 	config->default_style.colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.colors.font = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 	config->default_style.overflow_colors.background = (struct wob_color) {.a = 1.0f, .r = 0.0f, .g = 0.0f, .b = 0.0f};
-	config->default_style.overflow_colors.value = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 0.0f, .b = 0.0f};
+	config->default_style.overflow_colors.value = (struct wob_color) {.a = 1.0f, .r = 0.65f, .g = 0.21f, .b = 0.21f};
 	config->default_style.overflow_colors.border = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
+	config->default_style.overflow_colors.font = (struct wob_color) {.a = 1.0f, .r = 1.0f, .g = 1.0f, .b = 1.0f};
 
 	return config;
 }
@@ -585,15 +636,20 @@ wob_config_debug(struct wob_config *config)
 	wob_log_debug("config.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.background));
 	wob_log_debug("config.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.value));
 	wob_log_debug("config.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.overflow_colors.border));
+	wob_log_debug("config.font = %s", config->font != NULL ? *(char **) config->font : "<empty>");
+	wob_log_debug("config.dimensions.font_size = %d", config->dimensions.font_size);
+	wob_log_debug("config.colors.font = " WOB_COLOR_PRINTF_FORMAT, WOB_COLOR_PRINTF_RGBA(config->default_style.colors.font));
 
 	struct wob_style *style;
 	wl_list_for_each (style, &config->styles, link) {
 		wob_log_debug("config.style.%s.colors.background = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.background));
 		wob_log_debug("config.style.%s.colors.value = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.value));
 		wob_log_debug("config.style.%s.colors.border = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.border));
+		wob_log_debug("config.style.%s.colors.font = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->colors.font));
 		wob_log_debug("config.style.%s.overflow_colors.background = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.background));
 		wob_log_debug("config.style.%s.overflow_colors.value = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.value));
 		wob_log_debug("config.style.%s.overflow_colors.border = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.border));
+		wob_log_debug("config.style.%s.overflow_colors.font = " WOB_COLOR_PRINTF_FORMAT, style->name, WOB_COLOR_PRINTF_RGBA(style->overflow_colors.font));
 	}
 
 	struct wob_output_config *output_config;
@@ -615,6 +671,7 @@ wob_config_debug(struct wob_config *config)
 			WOB_ORIENTATION_HORIZONTAL,
 			WOB_ORIENTATION_VERTICAL
 		);
+		wob_log_debug("config.output.%s.font_size = %d", output_config->id, output_config->dimensions.font_size);
 	}
 }
 
@@ -632,6 +689,10 @@ wob_config_destroy(struct wob_config *config)
 	wl_list_for_each_safe (style, style_tmp, &config->styles, link) {
 		free(style->name);
 		free(style);
+	}
+
+	if (config->font != NULL) {
+		wob_font_destroy(config->font);
 	}
 
 	free(config);
@@ -713,6 +774,7 @@ wob_dimensions_apply_scale(struct wob_dimensions dimensions, uint32_t scale)
 		.border_offset = scale_apply(dimensions.border_offset, scale),
 		.border_size = scale_apply(dimensions.border_size, scale),
 		.orientation = dimensions.orientation,
+		.font_size = scale_apply(dimensions.font_size, scale),
 	};
 
 	return scaled_dimensions;
@@ -727,6 +789,7 @@ wob_dimensions_eq(struct wob_dimensions a, struct wob_dimensions b)
 	if (a.border_offset != b.border_offset) return false;
 	if (a.border_size != b.border_size) return false;
 	if (a.bar_padding != b.bar_padding) return false;
+	if (a.font_size != b.font_size) return false;
 
 	return true;
 }

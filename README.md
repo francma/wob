@@ -17,6 +17,7 @@ Releases are signed with [5C6DA024DDE27178073EA103F4B432D5D67990E3](https://keys
 Install dependencies:
 
 - wayland
+- [freetype](https://freetype.org/) (optional: font rendering)
 - [inih](https://github.com/benhoyt/inih)
 - wayland-protocols \*
 - meson \*

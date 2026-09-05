@@ -5,6 +5,7 @@
 #include <wayland-util.h>
 
 #include "color.h"
+#include "font.h"
 
 enum wob_overflow_mode {
 	WOB_OVERFLOW_MODE_WRAP,
@@ -44,6 +45,7 @@ struct wob_dimensions {
 	unsigned long border_size;
 	unsigned long bar_padding;
 	enum wob_orientation orientation;
+	unsigned long font_size;
 };
 
 struct wob_output_config {
@@ -59,6 +61,7 @@ struct wob_colors {
 	struct wob_color background;
 	struct wob_color border;
 	struct wob_color value;
+	struct wob_color font;
 };
 
 struct wob_style {
@@ -79,6 +82,7 @@ struct wob_config {
 	struct wl_list styles;
 	struct wl_list outputs;
 	bool sandbox;
+	struct wob_font *font;
 };
 
 struct wob_config *wob_config_create();

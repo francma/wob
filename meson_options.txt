@@ -2,3 +2,4 @@ option('man-pages', type: 'feature', value: 'auto', description: 'Generate and i
 option('seccomp', type: 'feature', value: 'auto', description: 'Use seccomp on Linux')
 option('tests', type: 'feature', value: 'auto', description: 'Build tests')
 option('systemd-unit-files', type: 'feature', value: 'enabled', description: 'Install systemd unit files')
+option('freetype2', type: 'feature', value: 'auto', description: 'Build with freetype2 text rendering')

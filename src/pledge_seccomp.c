@@ -17,6 +17,7 @@ wob_pledge(void)
 {
 	// clang-format off
 	const int scmp_sc[] = {
+		SCMP_SYS(brk),
 		SCMP_SYS(clock_gettime),
 		SCMP_SYS(close),
 		SCMP_SYS(exit),

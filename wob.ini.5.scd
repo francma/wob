@@ -67,6 +67,15 @@ You can run `wob -vv` to find the default values.
 
 	*width* and *height* is kept as is, you most likely want to set *height* greater than *width* in *vertical* mode
 
+*font*
+	Absolute path for value text to use. Leave empty if you don't wish to display entered value rendered on the bar.
+
+*font_size*
+	Font height in pixels.
+
+*font_color*
+	Font color, in RRGGBB[AA] format.
+
 # SECTION: output.*
 
 Replace *\** with user friendly name of your choosing.
@@ -99,6 +108,9 @@ Replace *\** with user friendly name of your choosing.
 *margin*
 	Anchor margin, in pixels. Either as a single value or 4 values (top right bottom left).
 
+*font_size*
+	Font height in pixels.
+
 # SECTION: style.*
 
 *border_color*
@@ -118,6 +130,9 @@ Replace *\** with user friendly name of your choosing.
 
 *overflow_border_color*
 	Overflow border color, in RRGGBB[AA] format.
+
+*font_color*
+	Font color, in RRGGBB[AA] format.
 
 # EXAMPLE
 
