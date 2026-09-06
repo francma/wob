@@ -2,6 +2,7 @@
 #define _WOB_CONFIG_H
 
 #include <stdbool.h>
+#include <string.h>
 #include <wayland-util.h>
 
 #include "color.h"
@@ -37,12 +38,23 @@ struct wob_margin {
 	unsigned long left;
 };
 
+struct wob_segment_bounds {
+    double lowerBound;
+    double upperBound;
+};
+
+struct wob_segments {
+    unsigned long number;
+    struct wob_segment_bounds* segmentArray;
+};
+
 struct wob_dimensions {
 	unsigned long width;
 	unsigned long height;
 	unsigned long border_offset;
 	unsigned long border_size;
 	unsigned long bar_padding;
+    struct wob_segments segments;
 	enum wob_orientation orientation;
 };
 
@@ -59,6 +71,7 @@ struct wob_colors {
 	struct wob_color background;
 	struct wob_color border;
 	struct wob_color value;
+    struct wob_color* segmentColours;
 };
 
 struct wob_style {
