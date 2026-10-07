@@ -5,6 +5,8 @@
 
 #define INPUT_BUFFER_LENGTH 255
 
+int wob_connect();
+
 int wob_run(struct wob_config *config);
 
 #endif

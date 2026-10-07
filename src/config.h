@@ -2,6 +2,7 @@
 #define _WOB_CONFIG_H
 
 #include <stdbool.h>
+#include <stdio.h>
 #include <wayland-util.h>
 
 #include "color.h"
@@ -83,7 +84,7 @@ struct wob_config {
 
 struct wob_config *wob_config_create();
 
-bool wob_config_load(struct wob_config *config, const char *config_path);
+bool wob_config_load(struct wob_config *config, const char *input);
 
 void wob_config_destroy(struct wob_config *config);
 
